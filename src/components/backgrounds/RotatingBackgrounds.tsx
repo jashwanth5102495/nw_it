@@ -3,13 +3,15 @@ import Threads from './Threads';
 import FaultyTerminal from './FaultyTerminal';
 import LetterGlitch from './LetterGlitch';
 import LightRays from './LightRays';
+import Waves from '../Waves';
+import DotGrid from '../DotGrid';
 
 interface RotatingBackgroundsProps {
   interval?: number; // in milliseconds
 }
 
 const RotatingBackgrounds: React.FC<RotatingBackgroundsProps> = ({ 
-  interval = 10000 // 10 seconds default
+  interval = 7000 // 7 seconds default
 }) => {
   const [currentBackground, setCurrentBackground] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -76,6 +78,48 @@ const RotatingBackgrounds: React.FC<RotatingBackgroundsProps> = ({
           outerVignette={false}
           smooth={true}
         />
+      )
+    },
+    {
+      name: 'Waves',
+      component: (
+        <Waves
+          lineColor="rgba(255,255,255,0.22)"
+          backgroundColor="transparent"
+          waveSpeedX={0.02}
+          waveSpeedY={0.01}
+          waveAmpX={40}
+          waveAmpY={20}
+          friction={0.9}
+          tension={0.01}
+          maxCursorMove={120}
+          xGap={12}
+          yGap={36}
+        />
+      )
+    },
+    {
+      name: 'Ripple Grid',
+      component: (
+        <Waves
+          lineColor="rgba(138,180,248,0.3)"
+          backgroundColor="transparent"
+          waveSpeedX={0.028}
+          waveSpeedY={0.012}
+          waveAmpX={50}
+          waveAmpY={24}
+          friction={0.92}
+          tension={0.012}
+          maxCursorMove={140}
+          xGap={14}
+          yGap={40}
+        />
+      )
+    },
+    {
+      name: 'Dot Grid',
+      component: (
+        <DotGrid dotSize={8} gap={22} baseColor="#6b7280" activeColor="#93c5fd" proximity={120} />
       )
     }
   ];

@@ -1,0 +1,158 @@
+/* Shuffle Component Styles - Completely Isolated */
+.shuffle-component {
+  /* Reset any inherited styles to ensure isolation */
+  all: unset;
+  display: inline-block;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  word-spacing: inherit;
+  text-decoration: inherit;
+  text-transform: inherit;
+  white-space: inherit;
+  
+  /* Ensure no interference from other components */
+  position: relative;
+  z-index: auto;
+  
+  /* Prevent any grid or flex interference */
+  grid-area: unset;
+  flex: unset;
+  align-self: unset;
+  justify-self: unset;
+}
+
+/* Character wrapper styles */
+.shuffle-component .shuffle-char-wrapper {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  
+  /* Ensure no external styles interfere */
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  box-shadow: none;
+  outline: none;
+  
+  /* Prevent any grid/flex interference */
+  grid-area: unset;
+  flex: unset;
+  align-self: unset;
+  justify-self: unset;
+}
+
+/* Character inner element styles */
+.shuffle-component .shuffle-char-inner {
+  position: relative;
+  display: inline-block;
+  
+  /* Reset all possible inherited styles */
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  box-shadow: none;
+  outline: none;
+  
+  /* Ensure proper text rendering */
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  word-spacing: inherit;
+  text-decoration: inherit;
+  text-transform: inherit;
+  white-space: nowrap;
+  
+  /* Prevent any layout interference */
+  grid-area: unset;
+  flex: unset;
+  align-self: unset;
+  justify-self: unset;
+  
+  /* Ensure smooth animations */
+  will-change: transform, color;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hover state for interactive elements */
+.shuffle-component:hover .shuffle-char-inner {
+  /* Maintain inheritance while allowing hover effects */
+  transition: none; /* GSAP handles transitions */
+}
+
+/* Ensure no interference from common CSS frameworks */
+.shuffle-component,
+.shuffle-component *,
+.shuffle-component *::before,
+.shuffle-component *::after {
+  /* Reset box-sizing if needed */
+  box-sizing: content-box;
+}
+
+/* Prevent any potential conflicts with other animation libraries */
+.shuffle-component .shuffle-char-wrapper,
+.shuffle-component .shuffle-char-inner {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Accessibility - respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .shuffle-component .shuffle-char-wrapper,
+  .shuffle-component .shuffle-char-inner {
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .shuffle-component {
+    /* Ensure text remains readable in high contrast mode */
+    color: inherit;
+    background: transparent;
+  }
+}
+
+/* Print styles - disable animations for print */
+@media print {
+  .shuffle-component .shuffle-char-wrapper,
+  .shuffle-component .shuffle-char-inner {
+    transform: none !important;
+    position: static !important;
+    overflow: visible !important;
+  }
+}
+
+/* Ensure proper stacking context */
+.shuffle-component {
+  /* Create new stacking context only if needed */
+  isolation: isolate;
+}
+
+/* Performance optimizations */
+.shuffle-component .shuffle-char-inner {
+  /* GPU acceleration for smooth animations */
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Fallback for browsers without GSAP support */
+.no-js .shuffle-component .shuffle-char-wrapper,
+.no-js .shuffle-component .shuffle-char-inner {
+  transform: none;
+  position: static;
+  overflow: visible;
+}

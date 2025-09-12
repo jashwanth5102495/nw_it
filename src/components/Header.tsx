@@ -1,8 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../contexts/ThemeContext';
 
-const Header = () => {
+interface HeaderProps {
+  hideDock?: boolean;
+}
+
+const Header = ({ hideDock = false }: HeaderProps) => {
     const navigate = useNavigate();
+    const { theme, toggleTheme } = useTheme();
     const [scrolled, setScrolled] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -43,6 +49,10 @@ const Header = () => {
     const scrollToSection = (sectionId: string) => {
         document.querySelector(sectionId)?.scrollIntoView({ behavior: 'smooth' });
     };
+
+    if (hideDock) {
+        return null;
+    }
 
     return (
         <header className={`fixed left-1/2 transform -translate-x-1/2 z-50 transition-all duration-500 ease-out ${scrolled ? 'top-2' : 'top-4'}`}>
@@ -92,9 +102,21 @@ const Header = () => {
                         title="Career"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0H8m8 0v2a2 2 0 01-2 2H10a2 2 0 01-2-2V6m8 0H8m0 0H6a2 2 0 00-2 2v6a2 2 0 002 2h2m0 0h8m0 0h2a2 2 0 002-2V8a2 2 0 00-2-2h-2m0 0V6" />
                         </svg>
                         <span className="nav-tooltip">Career</span>
+                    </button>
+
+                    {/* Courses */}
+                    <button
+                        onClick={() => navigate('/courses')}
+                        className="nav-dock-item group relative"
+                        title="Courses"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        <span className="nav-tooltip">Courses</span>
                     </button>
 
                     {/* Contact */}
@@ -109,27 +131,29 @@ const Header = () => {
                         <span className="nav-tooltip">Contact</span>
                     </button>
 
-                    {/* Settings */}
+                    {/* Student Login */}
                     <button
-                        onClick={() => alert('Settings clicked!')}
+                        onClick={() => navigate('/student-login')}
                         className="nav-dock-item group relative"
-                        title="Settings"
+                        title="Student Login"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
-                        <span className="nav-tooltip">Settings</span>
+                        <span className="nav-tooltip">Student Login</span>
                     </button>
+
                 </div>
 
                 {/* Separator */}
                 <div className="w-px h-8 bg-white/20"></div>
 
+
+
                 {/* Right - Logo or Brand */}
                 <div className="flex items-center">
                     <div className="text-white/90 font-bold text-sm">
-                        .XYZ
+                        Jasnav It Solutions
                     </div>
                 </div>
             </nav>

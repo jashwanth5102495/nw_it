@@ -23,8 +23,26 @@ export default {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%': { transform: 'translateY(-20px)' },
         }
-      }
+      },
+      perspective: {
+        '1000': '1000px',
+      },
     },
   },
-  plugins: [],
+  plugins: [
+    function({ addUtilities }) {
+      const newUtilities = {
+        '.preserve-3d': {
+          'transform-style': 'preserve-3d',
+        },
+        '.perspective-1000': {
+          'perspective': '1000px',
+        },
+        '.backface-hidden': {
+          'backface-visibility': 'hidden',
+        },
+      }
+      addUtilities(newUtilities)
+    }
+  ],
 };

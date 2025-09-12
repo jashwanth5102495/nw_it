@@ -95,11 +95,11 @@ const AboutUs: React.FC = () => {
             
             <div className="space-y-6 text-gray-300 leading-relaxed text-lg">
               <p>
-                At <span className="text-cyan-400 font-semibold">InnovateTech Solutions</span>, we believe technology should do more than just keep up—it should set the trend. We are a full-service software company specializing in building modern, scalable, and user-friendly solutions that help businesses grow and succeed in the digital age.
+                At <strong className="text-white">Jasnav It Solutions</strong>, we are focused on productivity and creating smooth workflows that drive business success. We are a full-service software company specializing in building modern, scalable, and user-friendly solutions that help businesses optimize their operations and achieve seamless digital transformation.
               </p>
               
               <p>
-                From end-to-end project management to delivering web applications, mobile applications, and e-commerce platforms, our team ensures every project is completed on time, with precision, and with world-class design. With expertise in AI integration and automation, we bring the future into today's solutions, empowering our clients to stay ahead of the curve.
+                From end-to-end project management to delivering web applications, mobile applications, and e-commerce platforms, our team ensures every project enhances productivity and creates smooth workflows. With expertise in AI integration and automation, we streamline your business processes and eliminate bottlenecks to maximize efficiency.
               </p>
               
               <p>

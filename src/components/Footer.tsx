@@ -2,13 +2,13 @@ import React from 'react';
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-900 border-t border-gray-800">
+    <footer className="relative z-30 bg-gray-900 border-t border-gray-800">
       <div className="max-w-7xl mx-auto px-6 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="lg:col-span-2">
             <div className="flex items-center mb-6">
-              <div className="text-2xl font-bold text-white mr-2">.XYZ</div>
+              <div className="text-2xl font-bold text-white mr-2">Jasnav It Solutions</div>
               <div className="text-xl font-semibold text-gray-300">IT Solutions</div>
             </div>
             <p className="text-gray-400 mb-6 max-w-md">
@@ -61,23 +61,13 @@ const Footer = () => {
                 </svg>
                 <div>
                   <p className="text-gray-400 text-sm">Email</p>
-                  <a href="mailto:info@xyzitsolutions.com" className="text-white hover:text-blue-400 transition-colors">
-                    info@xyzitsolutions.com
+                  <a href="mailto:info@jasnav.co.in" className="text-white hover:text-blue-400 transition-colors">
+                info@jasnav.co.in
                   </a>
                 </div>
               </div>
               
-              <div className="flex items-start space-x-3">
-                <svg className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-                <div>
-                  <p className="text-gray-400 text-sm">Phone</p>
-                  <a href="tel:+1234567890" className="text-white hover:text-green-400 transition-colors">
-                    +1 (234) 567-8900
-                  </a>
-                </div>
-              </div>
+
               
               <div className="flex items-start space-x-3">
                 <svg className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,9 +77,8 @@ const Footer = () => {
                 <div>
                   <p className="text-gray-400 text-sm">Office</p>
                   <p className="text-white">
-                    123 Tech Street<br />
-                    Innovation District<br />
-                    City, State 12345
+                    Bangalore, Karnataka<br />
+                    India
                   </p>
                 </div>
               </div>
@@ -101,7 +90,7 @@ const Footer = () => {
         <div className="border-t border-gray-800 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="text-gray-400 text-sm mb-4 md:mb-0">
-              © 2024 .XYZ IT Solutions. All rights reserved.
+              © 2024 Jasnav It Solutions. All rights reserved.
             </div>
             <div className="flex space-x-6 text-sm">
               <a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</a>

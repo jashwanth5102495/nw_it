@@ -1,301 +1,646 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { 
+  BookOpen, 
+  Briefcase, 
+  Lightbulb, 
+  Star, 
+  Clock, 
+  Users, 
+  Award, 
+  TrendingUp,
+  Code,
+  Smartphone,
+  Brain,
+  Shield,
+  Database,
+  Cloud,
+  ArrowRight,
+  CheckCircle,
+  Target,
+  Zap,
+  Upload,
+  Send
+} from 'lucide-react';
 
 const Career = () => {
-  const [activeTab, setActiveTab] = useState('training');
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('overview');
+  const [hoveredCard, setHoveredCard] = useState(null);
 
-  const trainingPrograms = [
+  const stats = [
+    { label: 'Students Trained', value: '500+', icon: Users },
+    { label: 'Success Rate', value: '95%', icon: TrendingUp },
+    { label: 'Industry Partners', value: '50+', icon: Briefcase },
+    { label: 'Course Completion', value: '98%', icon: Award }
+  ];
+
+  const courses = [
     {
       id: 1,
-      title: "Web Development Bootcamp",
-      duration: "8 weeks",
-      description: "Learn modern web development with React, Node.js, and MongoDB. Build real-world projects and get certified.",
-      features: ["Live sessions", "Project-based learning", "Certificate on completion", "24/7 support", "Job placement assistance"],
-      image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800&h=600&fit=crop&crop=center"
+      title: "Full Stack Web Development",
+      category: "Web Development",
+      level: "Beginner to Advanced",
+      description: "Master modern web development with React, Node.js, and cloud deployment.",
+      duration: "12 weeks",
+      projects: 8,
+      price: "₹29,999",
+      originalPrice: "₹49,999",
+      icon: Code,
+      color: "from-blue-500 to-cyan-500",
+      features: ["Live Projects", "Industry Mentorship", "Job Guarantee", "24/7 Support"]
     },
     {
       id: 2,
       title: "AI & Machine Learning",
-      duration: "12 weeks",
-      description: "Master AI and ML fundamentals with Python, TensorFlow, and real-world applications.",
-      features: ["Hands-on AI projects", "Industry expert mentors", "Certificate on completion", "Portfolio building", "Career guidance"],
-      image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop&crop=center"
+      category: "Artificial Intelligence",
+      level: "Intermediate",
+      description: "Build intelligent systems with Python, TensorFlow, and deep learning.",
+      duration: "16 weeks",
+      projects: 10,
+      price: "₹39,999",
+      originalPrice: "₹59,999",
+      icon: Brain,
+      color: "from-purple-500 to-pink-500",
+      features: ["AI Projects", "Research Papers", "Industry Certification", "Career Support"]
     },
     {
       id: 3,
       title: "Mobile App Development",
+      category: "Mobile Development",
+      level: "Intermediate",
+      description: "Create cross-platform mobile apps with React Native and Flutter.",
+      duration: "14 weeks",
+      projects: 6,
+      price: "₹34,999",
+      originalPrice: "₹54,999",
+      icon: Smartphone,
+      color: "from-green-500 to-teal-500",
+      features: ["App Store Deploy", "UI/UX Design", "Monetization", "Portfolio Building"]
+    },
+    {
+      id: 4,
+      title: "Data Science & Analytics",
+      category: "Data Science",
+      level: "Beginner",
+      description: "Analyze data and build predictive models with Python and SQL.",
       duration: "10 weeks",
-      description: "Build iOS and Android apps with React Native and Flutter. Launch your app on app stores.",
-      features: ["Cross-platform development", "App store deployment", "Certificate on completion", "UI/UX design", "Monetization strategies"],
-      image: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&h=600&fit=crop&crop=center"
+      projects: 7,
+      price: "₹27,999",
+      originalPrice: "₹44,999",
+      icon: Database,
+      color: "from-orange-500 to-red-500",
+      features: ["Real Datasets", "Visualization", "Statistical Analysis", "Industry Tools"]
+    },
+    {
+      id: 5,
+      title: "DevOps & Cloud Computing",
+      category: "Cloud & DevOps",
+      level: "Advanced",
+      description: "Master cloud platforms, containers, and CI/CD pipelines.",
+      duration: "18 weeks",
+      projects: 9,
+      price: "₹44,999",
+      originalPrice: "₹64,999",
+      icon: Cloud,
+      color: "from-indigo-500 to-blue-500",
+      features: ["AWS/Azure", "Docker/K8s", "Automation", "Infrastructure"]
+    },
+    {
+      id: 6,
+      title: "Cybersecurity Specialist",
+      category: "Security",
+      level: "Intermediate",
+      description: "Learn ethical hacking, network security, and threat analysis.",
+      duration: "15 weeks",
+      projects: 8,
+      price: "₹32,999",
+      originalPrice: "₹52,999",
+      icon: Shield,
+      color: "from-red-500 to-orange-500",
+      features: ["Ethical Hacking", "Security Tools", "Compliance", "Incident Response"]
     }
   ];
 
   const internshipPrograms = [
     {
       id: 1,
-      title: "Software Development Internship",
-      stipend: "$500/month",
+      title: "Software Development Intern",
+      department: "Engineering",
       duration: "3-6 months",
-      description: "Work on real client projects and gain industry experience. Get mentored by senior developers.",
-      benefits: ["Monthly stipend", "Professional certificate", "Letter of recommendation", "Potential job offer", "Networking opportunities"],
-      image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=600&fit=crop&crop=center"
+      stipend: "₹15,000-25,000/month",
+      description: "Work on real client projects with our development team.",
+      requirements: ["Basic programming knowledge", "Problem-solving skills", "Team collaboration"],
+      benefits: ["Mentorship", "Certificate", "Job Opportunity", "Skill Development"]
     },
     {
       id: 2,
-      title: "AI Research Internship",
-      stipend: "$600/month",
+      title: "AI Research Intern",
+      department: "Research & Development",
       duration: "4-8 months",
-      description: "Contribute to cutting-edge AI research projects and publish papers.",
-      benefits: ["Research experience", "Publication opportunities", "Professional certificate", "Academic credit", "Conference attendance"],
-      image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=600&fit=crop&crop=center"
+      stipend: "₹20,000-30,000/month",
+      description: "Contribute to cutting-edge AI research and development.",
+      requirements: ["Python proficiency", "ML fundamentals", "Research mindset"],
+      benefits: ["Research Papers", "Conference Talks", "Industry Exposure", "Academic Credit"]
     },
     {
       id: 3,
-      title: "UI/UX Design Internship",
-      stipend: "$450/month",
+      title: "UI/UX Design Intern",
+      department: "Design",
       duration: "3-6 months",
-      description: "Design user interfaces and experiences for web and mobile applications.",
-      benefits: ["Design portfolio", "Professional certificate", "Creative freedom", "Client interaction", "Design tools access"],
-      image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&h=600&fit=crop&crop=center"
+      stipend: "₹12,000-20,000/month",
+      description: "Design user experiences for web and mobile applications.",
+      requirements: ["Design tools knowledge", "Creative thinking", "User empathy"],
+      benefits: ["Portfolio Projects", "Design Mentorship", "Client Interaction", "Tool Access"]
     }
   ];
 
-  const projectIdeas = [
+  const tabs = [
+    { id: 'overview', label: 'Career Overview', icon: Target },
+    { id: 'courses', label: 'Training Programs', icon: BookOpen },
+    { id: 'internships', label: 'Internships', icon: Briefcase }
+  ];
+
+  const successStories = [
     {
-      id: 1,
-      title: "E-Learning Platform",
-      domain: "Education Technology",
-      difficulty: "Advanced",
-      description: "Build a comprehensive e-learning platform with video streaming, quizzes, and progress tracking.",
-      problem: "Students need affordable, accessible learning platforms with interactive features.",
-      certificate: "Full-stack Development Certificate",
-      image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&h=600&fit=crop&crop=center"
+      name: "Priya Sharma",
+      role: "Full Stack Developer at TCS",
+      course: "Web Development Bootcamp",
+      salary: "₹8 LPA",
+      image: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
+      testimonial: "The hands-on projects and mentorship helped me land my dream job!"
     },
     {
-      id: 2,
-      title: "Healthcare Management System",
-      domain: "Healthcare",
-      difficulty: "Intermediate",
-      description: "Create a system for managing patient records, appointments, and medical inventory.",
-      problem: "Healthcare facilities need efficient digital systems for patient management.",
-      certificate: "Healthcare Technology Certificate",
-      image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=800&h=600&fit=crop&crop=center"
+      name: "Rahul Kumar",
+      role: "AI Engineer at Wipro",
+      course: "AI & Machine Learning",
+      salary: "₹12 LPA",
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+      testimonial: "From zero AI knowledge to building production models in 4 months!"
     },
     {
-      id: 3,
-      title: "Smart City IoT Dashboard",
-      domain: "Internet of Things",
-      difficulty: "Advanced",
-      description: "Develop a dashboard for monitoring city infrastructure using IoT sensors.",
-      problem: "Cities need real-time monitoring systems for infrastructure management.",
-      certificate: "IoT Development Certificate",
-      image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&h=600&fit=crop&crop=center"
+      name: "Sneha Patel",
+      role: "Mobile Developer at Infosys",
+      course: "Mobile App Development",
+      salary: "₹9 LPA",
+      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
+      testimonial: "The course structure and real-world projects were game-changers!"
     }
   ];
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.5
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-16">
-        {/* Header Section */}
-        <div className="text-center mb-16">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-            <span className="text-gray-400 text-sm">• Career Opportunities</span>
-          </div>
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-8">
-            Launch Your Career
-          </h1>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Join our comprehensive programs designed to accelerate your career in technology. 
-            <span className="text-green-400 font-semibold"> Starting Soon!</span>
-          </p>
+      {/* Hero Section */}
+      <section className="relative py-20 px-4 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-pink-900/20"></div>
+        <div className="absolute inset-0">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
         </div>
-
-        {/* Coming Soon Banner */}
-        <div className="bg-gradient-to-r from-green-500/20 to-blue-500/20 border border-green-500/30 rounded-2xl p-8 mb-16 text-center">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse mr-3"></div>
-            <h2 className="text-2xl font-bold text-green-400">Programs Starting Soon!</h2>
-          </div>
-          <p className="text-gray-300 text-lg">
-            Our comprehensive training and internship programs will be launching in the next few weeks. 
-            Get ready to transform your career with hands-on experience and professional certifications.
-          </p>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="flex justify-center mb-12">
-          <div className="bg-gray-900 rounded-full p-2 flex space-x-2">
-            <button
-              onClick={() => setActiveTab('training')}
-              className={`px-6 py-3 rounded-full transition-all duration-300 ${
-                activeTab === 'training'
-                  ? 'bg-white text-black font-semibold'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Training Programs
-            </button>
-            <button
-              onClick={() => setActiveTab('internship')}
-              className={`px-6 py-3 rounded-full transition-all duration-300 ${
-                activeTab === 'internship'
-                  ? 'bg-white text-black font-semibold'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Internship Programs
-            </button>
-            <button
-              onClick={() => setActiveTab('projects')}
-              className={`px-6 py-3 rounded-full transition-all duration-300 ${
-                activeTab === 'projects'
-                  ? 'bg-white text-black font-semibold'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Project Ideas
-            </button>
-          </div>
-        </div>
-
-        {/* Content Sections */}
-        {activeTab === 'training' && (
-          <div className="space-y-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Affordable Training Programs</h2>
-              <p className="text-gray-300 text-lg">Learn from industry experts at student-friendly prices</p>
+        
+        <div className="max-w-7xl mx-auto relative z-10">
+          <motion.div 
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <div className="inline-flex items-center bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-full px-6 py-2 mb-6">
+              <Zap className="w-4 h-4 text-blue-400 mr-2" />
+              <span className="text-blue-400 text-sm font-medium">Launch Your Tech Career</span>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {trainingPrograms.map((program) => (
-                <div key={program.id} className="bg-gray-900 rounded-2xl overflow-hidden border border-gray-800 hover:border-green-500/50 transition-all duration-300 hover:scale-105">
-                  <div className="h-48 overflow-hidden">
-                    <img src={program.image} alt={program.title} className="w-full h-full object-cover" />
+            
+            <h1 className="text-6xl md:text-7xl font-bold mb-6">
+              <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                Transform
+              </span>
+              <br />
+              <span className="text-white">Your Future</span>
+            </h1>
+            
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
+              Join India's most comprehensive tech training programs. From beginner to expert, 
+              we'll guide you every step of the way to your dream career.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <motion.button
+                onClick={() => navigate('/courses')}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 flex items-center justify-center"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Start Learning Today
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </motion.button>
+              <motion.button
+                onClick={() => setActiveTab('internships')}
+                className="border border-purple-500 text-purple-400 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-purple-500/10 transition-all duration-300"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Apply for Internship
+              </motion.button>
+            </div>
+          </motion.div>
+
+          {/* Stats Section */}
+          <motion.div 
+            className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {stats.map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <motion.div
+                  key={index}
+                  variants={itemVariants}
+                  className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-6 text-center hover:border-purple-500/50 transition-all duration-300"
+                >
+                  <Icon className="w-8 h-8 text-purple-400 mx-auto mb-3" />
+                  <div className="text-3xl font-bold text-white mb-1">{stat.value}</div>
+                  <div className="text-gray-400 text-sm">{stat.label}</div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Tab Navigation */}
+      <section className="px-4 mb-12">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-center mb-12">
+            <div className="bg-gray-900/80 backdrop-blur-sm rounded-2xl p-2 flex space-x-2 border border-gray-800">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`px-6 py-3 rounded-xl transition-all duration-300 flex items-center space-x-2 ${
+                      activeTab === tab.id
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                        : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span className="font-medium">{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Tab Content */}
+      <section className="px-4 pb-20">
+        <div className="max-w-7xl mx-auto">
+          {/* Overview Tab */}
+          {activeTab === 'overview' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="space-y-16"
+            >
+              <div className="text-center">
+                <h2 className="text-4xl font-bold mb-6">Why Choose Jasnav It Solutions for Your Career?</h2>
+                <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+                  We don't just teach technology - we build careers. Our comprehensive approach ensures 
+                  you're not just job-ready, but career-ready.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-8">
+                {[
+                  {
+                    icon: Target,
+                    title: "Industry-Aligned Curriculum",
+                    description: "Learn exactly what companies are looking for with our industry-vetted curriculum."
+                  },
+                  {
+                    icon: Users,
+                    title: "Expert Mentorship",
+                    description: "Get guidance from industry professionals with 10+ years of experience."
+                  },
+                  {
+                    icon: Briefcase,
+                    title: "Job Guarantee Program",
+                    description: "95% of our students get placed within 6 months of course completion."
+                  }
+                ].map((feature, index) => {
+                  const Icon = feature.icon;
+                  return (
+                    <motion.div
+                      key={index}
+                      className="bg-gradient-to-br from-gray-900/50 to-gray-800/30 border border-gray-800 rounded-2xl p-8 hover:border-purple-500/50 transition-all duration-300"
+                      whileHover={{ y: -5 }}
+                    >
+                      <Icon className="w-12 h-12 text-purple-400 mb-4" />
+                      <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
+                      <p className="text-gray-400">{feature.description}</p>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Training Programs Tab */}
+          {activeTab === 'courses' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="space-y-12"
+            >
+              <div className="text-center max-w-4xl mx-auto">
+                <h2 className="text-4xl font-bold mb-6">Professional Training Programs</h2>
+                <p className="text-xl text-gray-300 mb-8">
+                  Comprehensive courses designed by industry experts to make you job-ready in months, not years.
+                </p>
+                
+                <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/40 border border-gray-800 rounded-2xl p-12">
+                  <div className="grid md:grid-cols-3 gap-8 mb-8">
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <BookOpen className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-lg font-bold mb-2">Expert-Led Curriculum</h3>
+                      <p className="text-gray-400 text-sm">Learn from industry professionals with 10+ years of experience</p>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <Target className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-lg font-bold mb-2">Job-Ready Skills</h3>
+                      <p className="text-gray-400 text-sm">Practical training focused on real-world applications and projects</p>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <Award className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-lg font-bold mb-2">Industry Recognition</h3>
+                      <p className="text-gray-400 text-sm">Certificates valued by top companies and hiring managers</p>
+                    </div>
                   </div>
-                  <div className="p-6">
-                                         <div className="mb-4">
-                       <h3 className="text-xl font-bold text-white mb-2">{program.title}</h3>
-                       <div className="text-sm text-gray-400">{program.duration}</div>
-                     </div>
-                    <p className="text-gray-300 mb-4">{program.description}</p>
-                    <ul className="space-y-2 mb-6">
-                      {program.features.map((feature, index) => (
-                        <li key={index} className="flex items-center text-sm text-gray-400">
-                          <svg className="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                    <button className="w-full bg-green-500 text-black py-3 rounded-lg font-semibold hover:bg-green-400 transition-colors">
-                      Coming Soon
-                    </button>
+                  
+                  <div className="text-center">
+                    <h3 className="text-2xl font-bold mb-4">Ready to Transform Your Career?</h3>
+                    <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
+                      Our training programs are designed to bridge the gap between academic learning and industry requirements. 
+                      With hands-on projects, personalized mentorship, and job placement assistance, we ensure you're not just 
+                      trained but truly prepared for your dream career.
+                    </p>
+                    
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                      <motion.button
+                        onClick={() => navigate('/courses')}
+                        className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 flex items-center justify-center"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        View All Programs
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </motion.button>
+                      
+                      <motion.button
+                        onClick={() => navigate('/contact')}
+                        className="border border-purple-500 text-purple-400 px-8 py-3 rounded-lg font-semibold hover:bg-purple-500/10 transition-all duration-300"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        Get Consultation
+                      </motion.button>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+              </div>
+            </motion.div>
+          )}
 
-        {activeTab === 'internship' && (
-          <div className="space-y-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Paid Internship Programs</h2>
-              <p className="text-gray-300 text-lg">Gain real-world experience with stipend and certificates</p>
-            </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {internshipPrograms.map((program) => (
-                <div key={program.id} className="bg-gray-900 rounded-2xl overflow-hidden border border-gray-800 hover:border-blue-500/50 transition-all duration-300 hover:scale-105">
-                  <div className="h-48 overflow-hidden">
-                    <img src={program.image} alt={program.title} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <h3 className="text-xl font-bold text-white">{program.title}</h3>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-blue-400">{program.stipend}</div>
-                        <div className="text-sm text-gray-400">{program.duration}</div>
+          {/* Internships Tab */}
+          {activeTab === 'internships' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="space-y-12"
+            >
+              <div className="text-center max-w-4xl mx-auto">
+                <h2 className="text-4xl font-bold mb-6">Internship Opportunities</h2>
+                <p className="text-xl text-gray-300 mb-8">
+                  Gain real-world experience and kickstart your career with our comprehensive internship programs.
+                </p>
+                
+                <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/40 border border-gray-800 rounded-2xl p-12">
+                  <div className="mb-8">
+                    <h3 className="text-2xl font-bold mb-4">Join Our Internship Program</h3>
+                    <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
+                      We offer exciting internship opportunities across various departments including Software Development, 
+                      AI Research, UI/UX Design, and more. Our internships provide hands-on experience, mentorship, 
+                      and the chance to work on real projects that make a difference.
+                    </p>
+                    
+                    <div className="grid md:grid-cols-3 gap-6 mb-8">
+                      <div className="text-center">
+                        <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center mx-auto mb-3">
+                          <Users className="w-6 h-6 text-white" />
+                        </div>
+                        <h4 className="font-semibold mb-2">Expert Mentorship</h4>
+                        <p className="text-sm text-gray-400">Learn from industry professionals</p>
+                      </div>
+                      
+                      <div className="text-center">
+                        <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mx-auto mb-3">
+                          <Briefcase className="w-6 h-6 text-white" />
+                        </div>
+                        <h4 className="font-semibold mb-2">Real Projects</h4>
+                        <p className="text-sm text-gray-400">Work on live client projects</p>
+                      </div>
+                      
+                      <div className="text-center">
+                        <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mx-auto mb-3">
+                          <Award className="w-6 h-6 text-white" />
+                        </div>
+                        <h4 className="font-semibold mb-2">Career Growth</h4>
+                        <p className="text-sm text-gray-400">Potential for full-time offers</p>
                       </div>
                     </div>
-                    <p className="text-gray-300 mb-4">{program.description}</p>
-                    <ul className="space-y-2 mb-6">
-                      {program.benefits.map((benefit, index) => (
-                        <li key={index} className="flex items-center text-sm text-gray-400">
-                          <svg className="w-4 h-4 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                          {benefit}
-                        </li>
-                      ))}
-                    </ul>
-                    <button className="w-full bg-blue-500 text-black py-3 rounded-lg font-semibold hover:bg-blue-400 transition-colors">
-                      Coming Soon
-                    </button>
+                  </div>
+                  
+                  <div className="border-t border-gray-700 pt-8">
+                    <h3 className="text-xl font-bold mb-6 text-center">Apply for Internship</h3>
+                    
+                    <div className="max-w-2xl mx-auto">
+                      <div className="border-2 border-dashed border-gray-600 rounded-xl p-8 text-center hover:border-blue-500 transition-colors duration-300">
+                        <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                           <Upload className="w-8 h-8 text-white" />
+                         </div>
+                        
+                        <h4 className="text-lg font-semibold mb-2">Upload Your Resume</h4>
+                        <p className="text-gray-400 mb-4">Drag and drop your resume here, or click to browse</p>
+                        
+                        <input
+                          type="file"
+                          accept=".pdf,.doc,.docx"
+                          className="hidden"
+                          id="resume-upload"
+                        />
+                        
+                        <label
+                          htmlFor="resume-upload"
+                          className="inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 cursor-pointer"
+                        >
+                          Choose File
+                        </label>
+                        
+                        <p className="text-xs text-gray-500 mt-3">Supported formats: PDF, DOC, DOCX (Max 5MB)</p>
+                      </div>
+                      
+                      <div className="mt-6 space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">Full Name *</label>
+                          <input
+                            type="text"
+                            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                            placeholder="Enter your full name"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">Email Address *</label>
+                          <input
+                            type="email"
+                            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                            placeholder="Enter your email address"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">Phone Number *</label>
+                          <input
+                            type="tel"
+                            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                            placeholder="Enter your phone number"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">Preferred Department</label>
+                          <select className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none">
+                            <option value="">Select Department</option>
+                            <option value="software-development">Software Development</option>
+                            <option value="ai-research">AI Research</option>
+                            <option value="ui-ux-design">UI/UX Design</option>
+                            <option value="data-science">Data Science</option>
+                            <option value="marketing">Digital Marketing</option>
+                            <option value="business-development">Business Development</option>
+                          </select>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">Cover Letter</label>
+                          <textarea
+                            rows={4}
+                            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none resize-none"
+                            placeholder="Tell us why you're interested in this internship..."
+                          ></textarea>
+                        </div>
+                        
+                        <motion.button
+                           className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 flex items-center justify-center"
+                           whileHover={{ scale: 1.02 }}
+                           whileTap={{ scale: 0.98 }}
+                         >
+                           Submit Application
+                           <Send className="w-4 h-4 ml-2" />
+                         </motion.button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+              </div>
+            </motion.div>
+          )}
 
-        {activeTab === 'projects' && (
-          <div className="space-y-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Project Ideas & Problem Statements</h2>
-              <p className="text-gray-300 text-lg">Build real applications and earn certificates upon completion</p>
-            </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {projectIdeas.map((project) => (
-                <div key={project.id} className="bg-gray-900 rounded-2xl overflow-hidden border border-gray-800 hover:border-purple-500/50 transition-all duration-300 hover:scale-105">
-                  <div className="h-48 overflow-hidden">
-                    <img src={project.image} alt={project.title} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <h3 className="text-xl font-bold text-white">{project.title}</h3>
-                      <div className="text-right">
-                        <div className="text-sm bg-purple-500 text-white px-3 py-1 rounded-full">{project.difficulty}</div>
-                        <div className="text-xs text-gray-400 mt-1">{project.domain}</div>
+          {/* Success Stories Tab */}
+          {activeTab === 'success' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="space-y-12"
+            >
+              <div className="text-center">
+                <h2 className="text-4xl font-bold mb-6">Success Stories</h2>
+                <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+                  Meet our alumni who transformed their careers and are now working at top companies.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-8">
+                {successStories.map((story, index) => (
+                  <motion.div
+                    key={index}
+                    className="bg-gradient-to-br from-gray-900/80 to-gray-800/40 border border-gray-800 rounded-2xl p-8 hover:border-green-500/50 transition-all duration-300"
+                    whileHover={{ y: -5 }}
+                  >
+                    <div className="flex items-center mb-6">
+                      <img 
+                        src={story.image} 
+                        alt={story.name}
+                        className="w-16 h-16 rounded-full object-cover mr-4"
+                      />
+                      <div>
+                        <h3 className="text-lg font-bold">{story.name}</h3>
+                        <div className="text-blue-400 text-sm">{story.role}</div>
+                        <div className="text-green-400 font-semibold">{story.salary}</div>
                       </div>
                     </div>
-                    <p className="text-gray-300 mb-4">{project.description}</p>
+                    
                     <div className="mb-4">
-                      <h4 className="text-sm font-semibold text-purple-400 mb-2">Problem Statement:</h4>
-                      <p className="text-sm text-gray-400">{project.problem}</p>
+                      <div className="text-purple-400 text-sm font-medium mb-2">Course: {story.course}</div>
                     </div>
-                    <div className="mb-6">
-                      <h4 className="text-sm font-semibold text-green-400 mb-2">Certificate:</h4>
-                      <p className="text-sm text-gray-400">{project.certificate}</p>
-                    </div>
-                    <button className="w-full bg-purple-500 text-white py-3 rounded-lg font-semibold hover:bg-purple-400 transition-colors">
-                      Coming Soon
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Call to Action */}
-        <div className="mt-20 bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 rounded-2xl p-12 text-center">
-          <h2 className="text-3xl font-bold mb-6">Ready to Transform Your Career?</h2>
-          <p className="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
-            Join our programs and gain the skills, experience, and certifications you need to succeed in the tech industry. 
-            Our affordable programs are designed specifically for students.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-green-500 text-black px-8 py-4 rounded-full font-semibold hover:bg-green-400 transition-colors">
-              Get Notified When Programs Start
-            </button>
-            <button className="bg-transparent border border-white text-white px-8 py-4 rounded-full font-semibold hover:bg-white hover:text-black transition-colors">
-              Learn More
-            </button>
-          </div>
+                    
+                    <blockquote className="text-gray-300 italic">
+                      "{story.testimonial}"
+                    </blockquote>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
         </div>
-      </div>
+      </section>
     </div>
   );
 };

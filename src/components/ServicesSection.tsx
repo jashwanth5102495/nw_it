@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CircularGallery from './CircularGallery';
 
 const ServicesSection = () => {
+  const navigate = useNavigate();
   const [savedService, setSavedService] = useState<number | null>(null);
   const [currentServiceIndex, setCurrentServiceIndex] = useState(0);
   const galleryRef = useRef<any>(null);
@@ -130,6 +132,8 @@ const ServicesSection = () => {
                     <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
                   </svg>
                 </button>
+
+
               </div>
 
               {/* Dynamic Counter */}

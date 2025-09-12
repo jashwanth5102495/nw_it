@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const About = () => {
   const [currentCard, setCurrentCard] = useState(2); // Start with center card
+  const [isPaused, setIsPaused] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const destinations = [
     {
@@ -44,6 +46,20 @@ const About = () => {
     setCurrentCard(prev => prev === 0 ? destinations.length - 1 : prev - 1);
   };
 
+  useEffect(() => {
+    if (!isPaused) {
+      intervalRef.current = setInterval(() => {
+        nextCard();
+      }, 7000);
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [isPaused]);
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Main Content */}
@@ -60,7 +76,11 @@ const About = () => {
         </div>
 
         {/* Horizontal Carousel Section */}
-        <div className="relative mb-16">
+        <div 
+          className="relative mb-16"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
           {/* Carousel Container */}
           <div className="flex justify-center items-center">
             <div className="flex items-center space-x-8 max-w-6xl overflow-hidden">
@@ -145,13 +165,13 @@ const About = () => {
         {/* Company Description */}
         <div className="mt-20 bg-gray-900 rounded-3xl p-12 border border-gray-800">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold mb-8 text-center text-white">About .XYZ IT Solutions</h2>
+            <h2 className="text-3xl font-bold mb-8 text-center text-white">About Jasnav It Solutions</h2>
             <div className="space-y-6 text-gray-300 text-lg leading-relaxed">
               <p>
-                At <strong className="text-white">.XYZ IT Solutions</strong>, we believe technology should do more than just keep up—it should set the trend. We are a full-service software company specializing in building modern, scalable, and user-friendly solutions that help businesses grow and succeed in the digital age.
+                At <strong className="text-white">Jasnav It Solutions</strong>, we are focused on productivity and creating smooth workflows that drive business success. We are a full-service software company specializing in building modern, scalable, and user-friendly solutions that help businesses optimize their operations and achieve seamless digital transformation.
               </p>
               <p>
-                From end-to-end project management to delivering web applications, mobile applications, and e-commerce platforms, our team ensures every project is completed on time, with precision, and with world-class design. With expertise in AI integration and automation, we bring the future into today's solutions, empowering our clients to stay ahead of the curve.
+                From end-to-end project management to delivering web applications, mobile applications, and e-commerce platforms, our team ensures every project enhances productivity and creates smooth workflows. With expertise in AI integration and automation, we streamline your business processes and eliminate bottlenecks to maximize efficiency.
               </p>
               <p>
                 Beyond client success, we are equally committed to shaping the next generation of innovators. Through our training programs and internship opportunities, we provide students with hands-on experience in trending technologies, preparing them for real-world challenges.

@@ -95,26 +95,12 @@ const Contact = () => {
               <h3 className="text-xl font-bold text-white">Email</h3>
             </div>
             <p className="text-gray-300 mb-4">Get in touch via email for general inquiries and support.</p>
-            <a href="mailto:info@xyzitsolutions.com" className="text-blue-400 hover:text-blue-300 transition-colors">
-              info@xyzitsolutions.com
+            <a href="mailto:info@jasnav.co.in" className="text-blue-400 hover:text-blue-300 transition-colors">
+                info@jasnav.co.in
             </a>
           </div>
 
-          {/* Phone */}
-          <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 hover:border-green-500/50 transition-all duration-300">
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center mr-4">
-                <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-white">Phone</h3>
-            </div>
-            <p className="text-gray-300 mb-4">Call us for immediate assistance and urgent matters.</p>
-            <a href="tel:+1234567890" className="text-green-400 hover:text-green-300 transition-colors">
-              +1 (234) 567-8900
-            </a>
-          </div>
+
 
           {/* Address */}
           <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 hover:border-purple-500/50 transition-all duration-300">
@@ -129,9 +115,8 @@ const Contact = () => {
             </div>
             <p className="text-gray-300 mb-4">Visit our office for in-person meetings and consultations.</p>
             <p className="text-purple-400">
-              123 Tech Street<br />
-              Innovation District<br />
-              City, State 12345
+              Bangalore, Karnataka<br />
+              India
             </p>
           </div>
         </div>
