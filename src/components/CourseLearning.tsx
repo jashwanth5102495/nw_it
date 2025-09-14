@@ -3194,91 +3194,96 @@ Flexbox (Flexible Box Layout) is a powerful CSS layout method that provides an e
           id: 'week2-css-grid',
           title: 'Week 2: CSS Grid Layout System',
           content: `
-# CSS Grid Layout System
+CSS Grid Layout System - Complete Guide
 
-## Introduction to CSS Grid
+What is CSS Grid?
+CSS Grid is a powerful two-dimensional layout system that revolutionizes how we create web layouts. Unlike Flexbox, which works in one dimension (either row or column), CSS Grid allows you to work with both rows and columns simultaneously, making it perfect for complex layouts.
 
-CSS Grid is a two-dimensional layout system that allows you to create complex layouts with rows and columns. Unlike Flexbox, which is primarily one-dimensional, Grid excels at creating layouts in both dimensions simultaneously.
+Key Concepts You Need to Know:
 
-## Grid Terminology
+1. Grid Container vs Grid Items
+   • Grid Container: The parent element where you apply 'display: grid'
+   • Grid Items: The direct children of the grid container
+   • Think of it like a table - the container is the table, items are the cells
 
-### Grid Container and Grid Items
-- **Grid Container**: Parent element with \`display: grid\`
-- **Grid Items**: Direct children of the grid container
+2. Grid Structure Elements
+   • Grid Lines: The invisible lines that divide your grid (like table borders)
+   • Grid Tracks: The space between two grid lines (rows or columns)
+   • Grid Cells: Individual spaces where content goes
+   • Grid Areas: Rectangular spaces made up of one or more cells
 
-### Grid Lines and Tracks
-- **Grid Lines**: The dividing lines that make up the structure of the grid
-- **Grid Tracks**: The space between two adjacent grid lines (rows or columns)
-- **Grid Cell**: The space between two adjacent row and column grid lines
-- **Grid Area**: The total space surrounded by four grid lines
+Essential Properties for Grid Containers:
 
-## Essential Grid Properties
+• display: grid → Turns your element into a grid container
+• grid-template-columns → Defines how many columns and their sizes
+• grid-template-rows → Defines how many rows and their sizes
+• gap (or grid-gap) → Sets spacing between grid items
+• grid-template-areas → Creates named sections for easier layout
 
-### Container Properties
-- \`display: grid\` - Creates a grid container
-- \`grid-template-columns\` - Defines column sizes
-- \`grid-template-rows\` - Defines row sizes
-- \`grid-gap\` or \`gap\` - Sets spacing between grid items
-- \`grid-template-areas\` - Defines named grid areas
+Essential Properties for Grid Items:
 
-### Item Properties
-- \`grid-column\` - Specifies which columns an item spans
-- \`grid-row\` - Specifies which rows an item spans
-- \`grid-area\` - Assigns an item to a named grid area
+• grid-column → Controls which columns an item spans
+• grid-row → Controls which rows an item spans
+• grid-area → Assigns item to a named area
 
-## Grid Units and Functions
+Powerful Grid Units and Functions:
 
-### The fr Unit
-The \`fr\` unit represents a fraction of the available space in the grid container.
+1. The 'fr' Unit (Fractional Unit)
+   The 'fr' unit divides available space proportionally.
+   
+   Example:
+   grid-template-columns: 1fr 2fr 1fr;
+   This creates 3 columns where the middle one is twice as wide as the others.
 
-\`\`\`css
-.grid {
-  grid-template-columns: 1fr 2fr 1fr; /* 3 columns: 25%, 50%, 25% */
-}
-\`\`\`
+2. repeat() Function
+   Saves you from writing repetitive code.
+   
+   Instead of: 1fr 1fr 1fr 1fr
+   Write: repeat(4, 1fr)
 
-### repeat() Function
-Simplifies repetitive grid definitions.
+3. minmax() Function
+   Sets minimum and maximum sizes for flexibility.
+   
+   Example:
+   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+   This creates responsive columns that are at least 250px wide.
 
-\`\`\`css
-.grid {
-  grid-template-columns: repeat(3, 1fr); /* Same as: 1fr 1fr 1fr */
-}
-\`\`\`
+Common Layout Patterns:
 
-### minmax() Function
-Defines a size range for grid tracks.
+1. Holy Grail Layout (Header, Sidebar, Main, Footer)
+   Perfect for traditional website layouts:
+   
+   .container {
+     display: grid;
+     grid-template-areas:
+       "header header header"
+       "sidebar main aside"
+       "footer footer footer";
+     grid-template-rows: auto 1fr auto;
+     grid-template-columns: 200px 1fr 200px;
+     min-height: 100vh;
+   }
 
-\`\`\`css
-.grid {
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-}
-\`\`\`
+2. Responsive Card Grid
+   Great for product listings or blog posts:
+   
+   .card-grid {
+     display: grid;
+     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+     gap: 2rem;
+   }
 
-## Common Layout Patterns
+Practical Tips:
+• Start simple with basic grids, then add complexity
+• Use browser dev tools to visualize your grid
+• Combine Grid with Flexbox for optimal layouts
+• Remember: Grid for 2D layouts, Flexbox for 1D layouts
 
-### Holy Grail Layout
-\`\`\`css
-.holy-grail {
-  display: grid;
-  grid-template-areas:
-    "header header header"
-    "sidebar main aside"
-    "footer footer footer";
-  grid-template-rows: auto 1fr auto;
-  grid-template-columns: 200px 1fr 200px;
-  min-height: 100vh;
-}
-\`\`\`
-
-### Card Grid
-\`\`\`css
-.card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-}
-\`\`\`
+Why CSS Grid is Game-Changing:
+• No more complex float or positioning hacks
+• Responsive layouts become much easier
+• Clean, semantic HTML structure
+• Better browser support than ever before
           `,
           codeExample: `<!DOCTYPE html>
 <html>
