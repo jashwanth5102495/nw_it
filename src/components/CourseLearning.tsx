@@ -7195,7 +7195,7 @@ app.listen(PORT, () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
       <Header hideDock={true} />
       
       {/* Top Navigation Bar */}
@@ -7250,9 +7250,9 @@ app.listen(PORT, () => {
         </div>
       </div>
       
-      <div className="flex max-w-7xl mx-auto">
+      <div className="flex max-w-7xl mx-auto h-screen">
         {/* Sidebar Navigation */}
-        <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-screen overflow-y-auto">
+        <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-full overflow-y-auto">
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Course Content</h2>
@@ -7342,9 +7342,9 @@ app.listen(PORT, () => {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex">
+        <div className="flex-1 flex h-0">
           {/* Left Panel - Content */}
-          <div className="w-1/2 border-r border-gray-200 dark:border-gray-700 flex flex-col bg-white dark:bg-gray-800">
+          <div className="w-1/2 border-r border-gray-200 dark:border-gray-700 flex flex-col bg-white dark:bg-gray-800 h-full">
             <div className="border-b border-gray-200 dark:border-gray-700 p-6">
               <div className="flex space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
                 <button
@@ -7503,7 +7503,7 @@ app.listen(PORT, () => {
           </div>
 
           {/* Right Panel - Code Editor with Flip Effect */}
-          <div className="w-1/2 flex flex-col bg-gray-900 relative">
+          <div className="w-1/2 flex flex-col bg-gray-900 relative h-full">
             <div className="bg-gray-800 px-4 py-3 border-b border-gray-700">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
