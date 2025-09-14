@@ -7250,7 +7250,7 @@ app.listen(PORT, () => {
         </div>
       </div>
       
-      <div className="flex max-w-7xl mx-auto h-screen">
+      <div className="flex max-w-7xl mx-auto" style={{height: 'calc(100vh - 140px)'}}>
         {/* Sidebar Navigation */}
         <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-full overflow-y-auto">
           <div className="p-6">
