@@ -7376,9 +7376,9 @@ app.listen(PORT, () => {
               </div>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-4 h-0">
               {activeTab === 'theory' ? (
-                <div className="max-w-4xl">
+                <div className="max-w-4xl h-full overflow-y-auto">
                   <div className="mb-4">
                     <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{currentLesson.title}</h1>
                     <div className="flex items-center space-x-3 text-xs text-gray-500 dark:text-gray-400 mb-3">
@@ -7427,7 +7427,7 @@ app.listen(PORT, () => {
                   </div>
                 </div>
               ) : (
-                <div>
+                <div className="h-full overflow-y-auto">
                   <div className="mb-6">
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Practice Exercise</h2>
                     <p className="text-gray-600 dark:text-gray-400">Apply what you've learned with hands-on coding exercises.</p>
