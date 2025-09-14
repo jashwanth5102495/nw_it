@@ -7195,11 +7195,11 @@ app.listen(PORT, () => {
   }
 
   return (
-    <div className="h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
+    <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       <Header hideDock={true} />
       
       {/* Top Navigation Bar */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 pt-4">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 pt-4 flex-shrink-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center space-x-4">
@@ -7250,7 +7250,7 @@ app.listen(PORT, () => {
         </div>
       </div>
       
-      <div className="flex max-w-7xl mx-auto" style={{height: 'calc(100vh - 140px)'}}>
+      <div className="flex max-w-7xl mx-auto flex-1 overflow-hidden">
         {/* Sidebar Navigation */}
         <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-full overflow-y-auto">
           <div className="p-6">
@@ -7342,7 +7342,7 @@ app.listen(PORT, () => {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex h-0">
+        <div className="flex-1 flex h-full">
           {/* Left Panel - Content */}
           <div className="w-1/2 border-r border-gray-200 dark:border-gray-700 flex flex-col bg-white dark:bg-gray-800 h-full">
             <div className="border-b border-gray-200 dark:border-gray-700 p-6">
@@ -7376,7 +7376,7 @@ app.listen(PORT, () => {
               </div>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-4 h-0">
+            <div className="flex-1 overflow-y-auto p-4">
               {activeTab === 'theory' ? (
                 <div className="max-w-4xl h-full overflow-y-auto">
                   <div className="mb-4">
@@ -7571,7 +7571,7 @@ app.listen(PORT, () => {
               </div>
             </div>
             
-            <div className="flex-1 relative overflow-hidden">
+            <div className="flex-1 relative overflow-hidden h-full">
               {/* Flip Container */}
               <div className={`absolute inset-0 transition-transform duration-700 ${isFlipping ? 'animate-pulse' : ''} ${showPreview ? 'transform rotateY-180' : ''}`}>
                 {!showPreview ? (
