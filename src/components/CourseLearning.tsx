@@ -2058,6 +2058,15 @@ body {
           id: 'js-conditionals',
           title: 'Conditionals and Loops',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <video controls style="width: 100%; max-width: 800px; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                <source src="/video-explanations/topics/javascript-basics/try2.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Watch this video explanation before diving into the concepts below.</p>
+            </div>
+            
             <h2>🔀 Conditional Statements</h2>
             <p>Conditionals allow your program to make decisions and execute different code based on conditions.</p>
             
