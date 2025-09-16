@@ -131,6 +131,18 @@ const Header = ({ hideDock = false }: HeaderProps) => {
                         <span className="nav-tooltip">Contact</span>
                     </button>
 
+                    {/* Interactive Demo */}
+                    <button
+                        onClick={() => navigate('/interactive-demo')}
+                        className="nav-dock-item group relative"
+                        title="Interactive Code Demo"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                        </svg>
+                        <span className="nav-tooltip">Code Demo</span>
+                    </button>
+
                     {/* Student Login */}
                     <button
                         onClick={() => navigate('/student-login')}

@@ -44,6 +44,187 @@ const CourseLearning = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isFlipping, setIsFlipping] = useState(false);
+  const [showFileExplorer, setShowFileExplorer] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+
+  // Sample file contents
+  const fileContents: {[key: string]: string} = {
+    'index.html': `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Portfolio</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="#home">Home</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#projects">Projects</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <main>
+        <section id="home">
+            <h1>Welcome to My Portfolio</h1>
+            <p>I'm a frontend developer passionate about creating amazing web experiences.</p>
+        </section>
+        
+        <section id="about">
+            <h2>About Me</h2>
+            <p>I love building responsive and interactive websites using modern web technologies.</p>
+        </section>
+    </main>
+    
+    <footer>
+        <p>&copy; 2024 My Portfolio. All rights reserved.</p>
+    </footer>
+    
+    <script src="script.js"></script>
+</body>
+</html>`,
+    'styles.css': `/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f4f4f4;
+}
+
+/* Header styles */
+header {
+    background: #2c3e50;
+    color: white;
+    padding: 1rem 0;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1000;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+nav a:hover {
+    color: #3498db;
+}
+
+/* Main content */
+main {
+    margin-top: 80px;
+    padding: 2rem;
+}
+
+section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 0;
+}
+
+h1, h2 {
+    margin-bottom: 1rem;
+    color: #2c3e50;
+}
+
+/* Footer */
+footer {
+    background: #34495e;
+    color: white;
+    text-align: center;
+    padding: 1rem;
+    margin-top: 2rem;
+}`,
+    'script.js': `// Portfolio JavaScript functionality
+
+// Smooth scrolling for navigation links
+document.addEventListener('DOMContentLoaded', function() {
+    const navLinks = document.querySelectorAll('nav a[href^="#"]');
+    
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+            
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+    
+    // Add active class to current section
+    window.addEventListener('scroll', function() {
+        const sections = document.querySelectorAll('section');
+        const navLinks = document.querySelectorAll('nav a');
+        
+        let current = '';
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.clientHeight;
+            if (scrollY >= (sectionTop - 200)) {
+                current = section.getAttribute('id');
+            }
+        });
+        
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === '#' + current) {
+                link.classList.add('active');
+            }
+        });
+    });
+});
+
+// Add some interactive features
+function addInteractivity() {
+    // Add hover effects to sections
+    const sections = document.querySelectorAll('section');
+    sections.forEach(section => {
+        section.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+            this.style.transition = 'transform 0.3s ease';
+        });
+        
+        section.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+}
+
+// Initialize when page loads
+window.addEventListener('load', addInteractivity);`
+  };
+
+  const handleFileClick = (fileName: string) => {
+    setSelectedFile(fileName);
+    if (fileContents[fileName]) {
+      setCode(fileContents[fileName]);
+    }
+  };
 
   // Complete Frontend Development Beginner Course - Module-based
   const courseModules: CourseModule[] = [
@@ -55,6 +236,14 @@ const CourseLearning = () => {
           id: 'html-intro',
           title: 'Introduction to HTML',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+                📹 Video Explanation Coming Soon
+              </div>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+            </div>
+            
             <h2>🌟 What is HTML?</h2>
             <p>HTML (HyperText Markup Language) is the standard markup language for creating web pages. It describes the structure of a web page using markup tags.</p>
             
@@ -95,6 +284,14 @@ const CourseLearning = () => {
           id: 'html-headings',
           title: 'HTML Headings (h1-h6)',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+                📹 Video Explanation Coming Soon
+              </div>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+            </div>
+            
             <h2>🎯 HTML Headings</h2>
             <p>HTML headings are defined with the &lt;h1&gt; to &lt;h6&gt; tags. &lt;h1&gt; defines the most important heading. &lt;h6&gt; defines the least important heading.</p>
             
@@ -140,6 +337,14 @@ const CourseLearning = () => {
           id: 'html-paragraphs',
           title: 'HTML Paragraphs and Text Formatting',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+                📹 Video Explanation Coming Soon
+              </div>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+            </div>
+            
             <h2>📝 HTML Paragraphs</h2>
             <p>The &lt;p&gt; tag defines a paragraph. Browsers automatically add space before and after paragraphs.</p>
             
@@ -185,6 +390,14 @@ const CourseLearning = () => {
           id: 'html-links',
           title: 'HTML Links and Navigation',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+                📹 Video Explanation Coming Soon
+              </div>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+            </div>
+            
             <h2>🔗 HTML Links</h2>
             <p>Links are created with the &lt;a&gt; tag. The href attribute specifies the destination.</p>
             
@@ -242,6 +455,14 @@ const CourseLearning = () => {
           id: 'html-lists',
           title: 'HTML Lists (Ordered, Unordered, Description)',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+                📹 Video Explanation Coming Soon
+              </div>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+            </div>
+            
             <h2>📋 HTML Lists</h2>
             <p>HTML supports three types of lists: ordered, unordered, and description lists.</p>
             
@@ -323,6 +544,14 @@ const CourseLearning = () => {
           id: 'html-images',
           title: 'HTML Images and Media',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+                📹 Video Explanation Coming Soon
+              </div>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+            </div>
+            
             <h2>🖼️ HTML Images</h2>
             <p>The &lt;img&gt; tag is used to embed images. It's a self-closing tag with important attributes.</p>
             
@@ -382,6 +611,14 @@ const CourseLearning = () => {
           id: 'html-tables',
           title: 'HTML Tables',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+                📹 Video Explanation Coming Soon
+              </div>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+            </div>
+            
             <h2>📊 HTML Tables</h2>
             <p>Tables are used to display data in rows and columns. They consist of several elements working together.</p>
             
@@ -462,6 +699,14 @@ const CourseLearning = () => {
           id: 'html-forms',
           title: 'HTML Forms and Input Elements',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+                📹 Video Explanation Coming Soon
+              </div>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+            </div>
+            
             <h2>📝 HTML Forms</h2>
             <p>Forms are used to collect user input. The &lt;form&gt; element contains various input elements.</p>
             
@@ -550,6 +795,14 @@ const CourseLearning = () => {
           id: 'html-semantic',
           title: 'HTML5 Semantic Elements',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+                📹 Video Explanation Coming Soon
+              </div>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+            </div>
+            
             <h2>🏗️ HTML5 Semantic Elements</h2>
             <p>Semantic elements clearly describe their meaning to both the browser and the developer.</p>
             
@@ -653,6 +906,14 @@ const CourseLearning = () => {
           id: 'css-intro',
           title: 'Introduction to CSS',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+                📹 Video Explanation Coming Soon
+              </div>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+            </div>
+            
             <h2>🎨 What is CSS?</h2>
             <p>CSS (Cascading Style Sheets) is used to style and layout web pages. It controls colors, fonts, spacing, positioning, and much more.</p>
             
@@ -1112,6 +1373,14 @@ body {
           id: 'css-colors-fonts',
           title: 'CSS Colors and Typography',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+                📹 Video Explanation Coming Soon
+              </div>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+            </div>
+            
             <h2>🎨 CSS Colors</h2>
             <p>CSS provides multiple ways to specify colors for text, backgrounds, borders, and other elements.</p>
             
@@ -1234,6 +1503,14 @@ body {
           id: 'css-box-model',
           title: 'CSS Box Model and Layout',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+                📹 Video Explanation Coming Soon
+              </div>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+            </div>
+            
             <h2>📦 The CSS Box Model</h2>
             <p>Every HTML element is a rectangular box. The CSS box model describes how the size of these boxes is calculated.</p>
             
@@ -1388,6 +1665,14 @@ body {
           id: 'css-layout',
           title: 'CSS Box Model and Layout',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+                📹 Video Explanation Coming Soon
+              </div>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+            </div>
+            
             <h2>📦 The CSS Box Model</h2>
             <p>Every HTML element is a rectangular box with:</p>
             <ul>
@@ -1433,6 +1718,14 @@ body {
           id: 'responsive-basics',
           title: 'Responsive Design Basics',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+                📹 Video Explanation Coming Soon
+              </div>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+            </div>
+            
             <h2>📱 What is Responsive Design?</h2>
             <p>Responsive design makes websites look good on all devices - desktops, tablets, and phones.</p>
             
@@ -1495,6 +1788,14 @@ body {
           id: 'js-intro',
           title: 'Introduction to JavaScript',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+                📹 Video Explanation Coming Soon
+              </div>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+            </div>
+            
             <h2>⚡ What is JavaScript?</h2>
             <p>JavaScript is a powerful programming language that makes websites interactive and dynamic. It runs in web browsers and can respond to user actions, manipulate content, and create engaging user experiences.</p>
             
@@ -1575,6 +1876,14 @@ body {
           id: 'js-variables',
           title: 'JavaScript Variables and Data Types',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+                📹 Video Explanation Coming Soon
+              </div>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+            </div>
+            
             <h2>📊 Variables in JavaScript</h2>
             <p>Variables are containers that store data values. JavaScript has different ways to declare variables and various data types.</p>
             
@@ -1673,6 +1982,14 @@ body {
           id: 'js-functions',
           title: 'JavaScript Functions',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+                📹 Video Explanation Coming Soon
+              </div>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+            </div>
+            
             <h2>🔧 Functions in JavaScript</h2>
             <p>Functions are reusable blocks of code that perform specific tasks. They help organize code and avoid repetition.</p>
             
@@ -1786,6 +2103,14 @@ body {
           id: 'js-dom',
           title: 'DOM Manipulation',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+                📹 Video Explanation Coming Soon
+              </div>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+            </div>
+            
             <h2>🌐 What is the DOM?</h2>
             <p>The DOM (Document Object Model) is a programming interface that represents HTML documents as a tree of objects. JavaScript can manipulate these objects to change content, structure, and styling.</p>
             
@@ -1911,6 +2236,14 @@ body {
           id: 'js-events',
           title: 'JavaScript Events',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+                📹 Video Explanation Coming Soon
+              </div>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+            </div>
+            
             <h2>⚡ JavaScript Events</h2>
             <p>Events are actions that happen in the browser, such as clicking a button, typing in a text field, or loading a page. JavaScript can respond to these events.</p>
             
@@ -2450,6 +2783,14 @@ body {
           id: 'python-intro',
           title: 'Introduction to Python',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+                📹 Video Explanation Coming Soon
+              </div>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+            </div>
+            
             <h2>🐍 Welcome to Python Programming</h2>
             <p>Python is a high-level, interpreted programming language known for its simplicity and readability. It's perfect for beginners and widely used in web development, data science, artificial intelligence, and automation.</p>
             
@@ -2555,6 +2896,14 @@ print("Hobby:", hobby)`,
           id: 'python-data-types',
           title: 'Python Data Types and Operations',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+                📹 Video Explanation Coming Soon
+              </div>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+            </div>
+            
             <h2>📊 Python Data Types</h2>
             <p>Python has several built-in data types that help you store and manipulate different kinds of information.</p>
             
@@ -2727,6 +3076,14 @@ print(f"\nAfter adding Chemistry: {subjects}")`,
           id: 'python-control-flow',
           title: 'Python Control Flow (If Statements and Loops)',
           content: `
+            <div style="margin-bottom: 20px; text-align: center;">
+              <h3>📹 Video Explanation</h3>
+              <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+                📹 Video Explanation Coming Soon
+              </div>
+              <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+            </div>
+            
             <h2>🔄 Python Control Flow</h2>
             <p>Control flow statements allow you to control the execution of your program based on conditions and repetition.</p>
             
@@ -3040,6 +3397,14 @@ print("\nThanks for playing! 🎮")`,
           id: 'week1-advanced-css-intro',
           title: 'Week 1: Advanced CSS - Flexbox Fundamentals',
           content: `
+<div style="margin-bottom: 20px; text-align: center;">
+  <h3>📹 Video Explanation</h3>
+  <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+    📹 Video Explanation Coming Soon
+  </div>
+  <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+</div>
+
 # Advanced CSS - Flexbox Fundamentals
 
 ## What is Flexbox?
@@ -3203,38 +3568,59 @@ Flexbox (Flexible Box Layout) is a powerful CSS layout method that provides an e
           id: 'week2-css-grid',
           title: 'Week 2: CSS Grid Layout System',
           content: `
-CSS Grid Layout System
+<div style="margin-bottom: 20px; text-align: center;">
+  <h3>📹 Video Explanation</h3>
+  <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+    📹 Video Explanation Coming Soon
+  </div>
+  <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+</div>
 
-CSS Grid is a 2D layout system for creating complex layouts with rows and columns simultaneously, unlike Flexbox (1D).
+<h2>🎯 CSS Grid Layout System</h2>
 
-Core Concepts:
-• Grid Container: Parent with 'display: grid'
-• Grid Items: Direct children of container
-• Grid Lines: Dividing lines of the grid structure
-• Grid Tracks: Space between adjacent lines (rows/columns)
-• Grid Cells: Individual content spaces
-• Grid Areas: Rectangular spaces of multiple cells
+<p>CSS Grid is a powerful 2D layout system that allows you to create complex layouts with rows and columns simultaneously. Unlike Flexbox, which is designed for one-dimensional layouts, CSS Grid excels at handling both horizontal and vertical alignment in a single container.</p>
 
-Container Properties:
-• display: grid - Creates grid container
-• grid-template-columns/rows - Defines column/row sizes
-• gap - Sets spacing between items
-• grid-template-areas - Creates named layout sections
+<h3>📋 Core Concepts</h3>
+<p>Understanding these fundamental concepts is essential for mastering CSS Grid:</p>
+<ul>
+  <li><strong>Grid Container:</strong> The parent element with 'display: grid' applied</li>
+  <li><strong>Grid Items:</strong> Direct children of the grid container</li>
+  <li><strong>Grid Lines:</strong> The dividing lines that create the grid structure</li>
+  <li><strong>Grid Tracks:</strong> The space between two adjacent grid lines (rows or columns)</li>
+  <li><strong>Grid Cells:</strong> Individual spaces where content is placed</li>
+  <li><strong>Grid Areas:</strong> Rectangular spaces spanning multiple cells</li>
+</ul>
 
-Item Properties:
-• grid-column/row - Controls item span across columns/rows
-• grid-area - Assigns item to named area
+<h3>🏗️ Container Properties</h3>
+<p>These properties are applied to the grid container to define the overall grid structure:</p>
+<ul>
+  <li><strong>display: grid</strong> - Establishes the element as a grid container</li>
+  <li><strong>grid-template-columns/rows</strong> - Defines the size and number of columns/rows</li>
+  <li><strong>gap</strong> - Sets the spacing between grid items</li>
+  <li><strong>grid-template-areas</strong> - Creates named sections for easier layout management</li>
+</ul>
 
-Key Units & Functions:
-• fr unit: Fractional space (1fr 2fr 1fr = 25% 50% 25%)
-• repeat(): Simplifies repetition (repeat(3, 1fr) = 1fr 1fr 1fr)
-• minmax(): Sets size range (minmax(250px, 1fr))
-• auto-fit/auto-fill: Responsive column creation
+<h3>📦 Item Properties</h3>
+<p>These properties control how individual grid items behave within the grid:</p>
+<ul>
+  <li><strong>grid-column/row</strong> - Controls how many columns or rows an item spans</li>
+  <li><strong>grid-area</strong> - Assigns an item to a specific named area</li>
+</ul>
 
-Common Patterns:
+<h3>🔧 Key Units & Functions</h3>
+<p>CSS Grid introduces several powerful units and functions for flexible layouts:</p>
+<ul>
+  <li><strong>fr unit:</strong> Represents fractional space (e.g., 1fr 2fr 1fr = 25% 50% 25%)</li>
+  <li><strong>repeat():</strong> Simplifies repetitive patterns (repeat(3, 1fr) = 1fr 1fr 1fr)</li>
+  <li><strong>minmax():</strong> Sets minimum and maximum size constraints (minmax(250px, 1fr))</li>
+  <li><strong>auto-fit/auto-fill:</strong> Creates responsive columns that adapt to content</li>
+</ul>
 
-1. Holy Grail Layout:
-.container {
+<h3>🎨 Common Layout Patterns</h3>
+
+<h4>1. Holy Grail Layout</h4>
+<p>A classic three-column layout with header and footer:</p>
+<pre><code>.container {
   display: grid;
   grid-template-areas:
     "header header header"
@@ -3242,21 +3628,25 @@ Common Patterns:
     "footer footer footer";
   grid-template-rows: auto 1fr auto;
   grid-template-columns: 200px 1fr 200px;
-}
+}</code></pre>
 
-2. Responsive Cards:
-.card-grid {
+<h4>2. Responsive Card Grid</h4>
+<p>Automatically adjusting card layout that responds to screen size:</p>
+<pre><code>.card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
-}
+}</code></pre>
 
-Advantages:
-• No float/positioning hacks needed
-• Easy responsive layouts
-• Clean HTML structure
-• Excellent browser support
-• Perfect for 2D layouts (use Flexbox for 1D)
+<h3>✨ Key Advantages</h3>
+<p>CSS Grid offers numerous benefits over traditional layout methods:</p>
+<ul>
+  <li><strong>No Hacks Required:</strong> Eliminates the need for float or positioning workarounds</li>
+  <li><strong>Responsive by Design:</strong> Built-in tools for creating adaptive layouts</li>
+  <li><strong>Clean HTML:</strong> Maintains semantic markup without layout-specific elements</li>
+  <li><strong>Excellent Support:</strong> Widely supported across modern browsers</li>
+  <li><strong>Perfect for 2D Layouts:</strong> Ideal for complex layouts (use Flexbox for simpler 1D layouts)</li>
+</ul>
           `,
           codeExample: `<!DOCTYPE html>
 <html>
@@ -3374,6 +3764,14 @@ Advantages:
           id: 'week3-css-animations',
           title: 'Week 3: CSS Animations and Transitions',
           content: `
+<div style="margin-bottom: 20px; text-align: center;">
+  <h3>📹 Video Explanation</h3>
+  <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+    📹 Video Explanation Coming Soon
+  </div>
+  <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+</div>
+
 # CSS Animations and Transitions
 
 ## CSS Transitions
@@ -3652,6 +4050,14 @@ The \`transform\` property allows you to rotate, scale, skew, or translate eleme
            id: 'week4-responsive-design',
            title: 'Week 4: Responsive Web Design',
            content: `
+<div style="margin-bottom: 20px; text-align: center;">
+  <h3>📹 Video Explanation</h3>
+  <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+    📹 Video Explanation Coming Soon
+  </div>
+  <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+</div>
+
 # Responsive Web Design
 
 ## What is Responsive Design?
@@ -3964,6 +4370,14 @@ Container queries allow styling based on container size:
            id: 'week5-modern-javascript',
            title: 'Week 5: Modern JavaScript (ES6+)',
            content: `
+<div style="margin-bottom: 20px; text-align: center;">
+  <h3>📹 Video Explanation</h3>
+  <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+    📹 Video Explanation Coming Soon
+  </div>
+  <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+</div>
+
 # Modern JavaScript (ES6+)
 
 ## ES6+ Features Overview
@@ -4476,6 +4890,14 @@ class UserManager {
            id: 'week6-async-javascript',
            title: 'Week 6: Asynchronous JavaScript & APIs',
            content: `
+<div style="margin-bottom: 20px; text-align: center;">
+  <h3>📹 Video Explanation</h3>
+  <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+    📹 Video Explanation Coming Soon
+  </div>
+  <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+</div>
+
 # Asynchronous JavaScript & APIs
 
 ## Understanding Asynchronous Programming
@@ -5174,6 +5596,14 @@ app.getWeatherByCity('London')
            id: 'week7-mongodb-basics',
            title: 'Week 7: MongoDB Fundamentals',
            content: `
+<div style="margin-bottom: 20px; text-align: center;">
+  <h3>📹 Video Explanation</h3>
+  <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+    📹 Video Explanation Coming Soon
+  </div>
+  <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+</div>
+
 # MongoDB Fundamentals
 
 ## What is MongoDB?
@@ -5730,6 +6160,14 @@ db.books.aggregate([
            id: 'week8-mongodb-nodejs',
            title: 'Week 8: MongoDB with Node.js Integration',
            content: `
+<div style="margin-bottom: 20px; text-align: center;">
+  <h3>📹 Video Explanation</h3>
+  <div style="width: 100%; max-width: 800px; height: 400px; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">
+    📹 Video Explanation Coming Soon
+  </div>
+  <p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!</p>
+</div>
+
 # MongoDB with Node.js Integration
 
 ## MongoDB Drivers
@@ -7343,8 +7781,99 @@ app.listen(PORT, () => {
 
         {/* Main Content Area */}
         <div className="flex-1 flex h-full">
+          {/* File Explorer Panel */}
+          {showFileExplorer && (
+            <div className="w-80 bg-gray-100 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300">
+              {/* Explorer Header */}
+              <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750">
+                <div className="flex items-center space-x-2">
+                  <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                    Explorer
+                  </span>
+                </div>
+              </div>
+              
+              {/* Project Name */}
+              <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center space-x-2">
+                  <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                    frontend-course-project
+                  </span>
+                </div>
+              </div>
+
+              {/* File Structure */}
+              <div className="flex-1 overflow-y-auto p-2">
+                <div className="space-y-1">
+                  {/* Sample file structure */}
+                  <div className="flex items-center py-1 px-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150">
+                    <svg className="w-4 h-4 mr-2 text-yellow-600 dark:text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">📁 src</span>
+                  </div>
+                  <div className="ml-4 space-y-1">
+                    <div 
+                      onClick={() => handleFileClick('index.html')}
+                      className={`flex items-center py-1 px-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150 ${selectedFile === 'index.html' ? 'bg-blue-100 dark:bg-blue-900/30' : ''}`}
+                    >
+                      <svg className="w-4 h-4 mr-2 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                      </svg>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">index.html</span>
+                    </div>
+                    <div 
+                      onClick={() => handleFileClick('styles.css')}
+                      className={`flex items-center py-1 px-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150 ${selectedFile === 'styles.css' ? 'bg-blue-100 dark:bg-blue-900/30' : ''}`}
+                    >
+                      <svg className="w-4 h-4 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" />
+                      </svg>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">styles.css</span>
+                    </div>
+                    <div 
+                      onClick={() => handleFileClick('script.js')}
+                      className={`flex items-center py-1 px-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150 ${selectedFile === 'script.js' ? 'bg-blue-100 dark:bg-blue-900/30' : ''}`}
+                    >
+                      <svg className="w-4 h-4 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">script.js</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center py-1 px-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150">
+                    <svg className="w-4 h-4 mr-2 text-yellow-600 dark:text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">📁 assets</span>
+                  </div>
+                  <div className="ml-4 space-y-1">
+                    <div className="flex items-center py-1 px-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150">
+                      <svg className="w-4 h-4 mr-2 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">logo.png</span>
+                    </div>
+                    <div className="flex items-center py-1 px-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150">
+                      <svg className="w-4 h-4 mr-2 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">background.jpg</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Left Panel - Content */}
-          <div className="w-1/2 border-r border-gray-200 dark:border-gray-700 flex flex-col bg-white dark:bg-gray-800 h-full">
+          <div className={`${showFileExplorer ? 'w-1/3' : 'w-1/2'} border-r border-gray-200 dark:border-gray-700 flex flex-col bg-white dark:bg-gray-800 h-full transition-all duration-300`}>
             <div className="border-b border-gray-200 dark:border-gray-700 p-6">
               <div className="flex space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
                 <button
@@ -7503,7 +8032,7 @@ app.listen(PORT, () => {
           </div>
 
           {/* Right Panel - Code Editor with Flip Effect */}
-          <div className="w-1/2 flex flex-col bg-gray-900 relative h-full">
+          <div className={`${showFileExplorer ? 'w-1/3' : 'w-1/2'} flex flex-col bg-gray-900 relative h-full transition-all duration-300`}>
             <div className="bg-gray-800 px-4 py-3 border-b border-gray-700">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
@@ -7522,7 +8051,9 @@ app.listen(PORT, () => {
                     ) : (
                       <>
                         <Code className="h-4 w-4 text-blue-400" />
-                        <span className="text-gray-300 font-medium text-sm">Code Editor</span>
+                        <span className="text-gray-300 font-medium text-sm">
+                          {selectedFile ? selectedFile : 'Code Editor'}
+                        </span>
                       </>
                     )}
                   </div>
@@ -7537,6 +8068,20 @@ app.listen(PORT, () => {
                       <span>Back to Code</span>
                     </button>
                   )}
+                  <button
+                    onClick={() => setShowFileExplorer(!showFileExplorer)}
+                    className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs rounded-md transition-colors duration-200 flex items-center space-x-1"
+                    title={showFileExplorer ? 'Hide File Explorer' : 'Show File Explorer'}
+                  >
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      {showFileExplorer ? (
+                        <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clipRule="evenodd" />
+                      ) : (
+                        <path fillRule="evenodd" d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" />
+                      )}
+                    </svg>
+                    <span>Files</span>
+                  </button>
                   <button
                     onClick={resetCode}
                     className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded-md transition-colors duration-200 flex items-center space-x-1"
