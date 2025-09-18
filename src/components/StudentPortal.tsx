@@ -1,73 +1,74 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  CalendarIcon, 
   HomeIcon,
   AcademicCapIcon,
   UserIcon,
-  Bars3Icon,
-  XMarkIcon,
-  PlayIcon,
-  CheckCircleIcon,
-  ChevronDownIcon,
-  MapPinIcon,
-  DocumentTextIcon,
-  BellIcon,
-  BriefcaseIcon,
-  EnvelopeIcon,
-  BuildingOfficeIcon,
+  BookOpenIcon,
+  ClipboardDocumentListIcon,
+  GlobeAltIcon,
   Cog6ToothIcon,
   QuestionMarkCircleIcon,
-  GlobeAltIcon,
-  ClipboardDocumentListIcon
+  BellIcon,
+  CloudArrowUpIcon,
+  LinkIcon
 } from '@heroicons/react/24/outline';
+
+interface CourseModule {
+  title: string;
+  duration: string;
+  topics: string[];
+}
 
 interface Course {
   id: string;
   title: string;
-  instructor: string;
-  progress: number;
-  totalLessons: number;
-  completedLessons: number;
-  duration: string;
   category: string;
   level: string;
-  nextLesson?: string;
+  description: string;
+  technologies: string[];
+  originalPrice: number;
+  discountPercent: number;
+  discountCode: string;
+  finalPrice: number;
+  duration: string;
+  projects: number;
+  modules: CourseModule[];
+  image: string;
+  rating: number;
+  students: number;
+  instructor: string;
+}
+
+interface Assignment {
+  id: string;
+  title: string;
+  courseId: string;
+  courseName: string;
+  dueDate: string;
+  status: 'pending' | 'submitted' | 'graded';
+  description: string;
+  grade?: number;
+}
+
+interface PurchaseHistory {
+  id: string;
+  courseId: string;
+  courseName: string;
+  instructor: string;
+  purchaseDate: string;
+  amount: number;
+  status: 'completed' | 'pending';
 }
 
 interface StudentProfile {
   name: string;
   email: string;
-  avatar?: string;
+  enrolledCourses?: number;
   phone?: string;
-  address?: {
-    city: string;
-    state: string;
-    country: string;
-  };
-  enrolledCourses?: Array<{
-    status: string;
-    enrollmentDate: string;
-  }>;
-  isFirstLogin?: boolean;
-}
-
-interface Assignment {
-  id: string;
-  courseId: string;
-  title: string;
-  description: string;
-  dueDate: string;
-  status: 'pending' | 'submitted' | 'graded';
-  grade?: number;
-  submittedAt?: string;
-}
-
-interface AssignmentSubmission {
-  assignmentId: string;
-  screenRecording: File | null;
-  faceRecording: File | null;
-  submittedAt: string;
+  location?: string;
+  joinDate?: string;
+  studentId?: string;
 }
 
 const StudentPortal = () => {
@@ -75,17 +76,360 @@ const StudentPortal = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showEnrollModal, setShowEnrollModal] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState<string>('');
-  const [uploadedVideo, setUploadedVideo] = useState<File | null>(null);
-  const [uploadedResume, setUploadedResume] = useState<File | null>(null);
-  const [selectedAssignment, setSelectedAssignment] = useState<string>('');
-  const [screenRecording, setScreenRecording] = useState<File | null>(null);
-  const [faceRecording, setFaceRecording] = useState<File | null>(null);
-  const [uploadStatus, setUploadStatus] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  
+  // Upload functionality state
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
+  const [uploadType, setUploadType] = useState<'file' | 'git'>('file');
+  const [gitUrl, setGitUrl] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
-  // Real course data for Rohan - courses bought by the student
+  // All available courses from the Courses page
+  const allCourses: Course[] = [
+    {
+      id: 'ai-tools-mastery',
+      title: 'A.I Tools Mastery',
+      category: 'ai',
+      level: 'beginner',
+      description: 'Master the most powerful AI tools for productivity, creativity, and business automation',
+      technologies: ['ChatGPT', 'Claude', 'Midjourney', 'Notion AI', 'GitHub Copilot'],
+      originalPrice: 3333,
+      discountPercent: 40,
+      discountCode: 'aitools01',
+      finalPrice: 2000,
+      duration: '6 weeks',
+      projects: 8,
+      image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=250&fit=crop&crop=center',
+      rating: 4.8,
+      students: 12543,
+      instructor: 'Sarah Johnson',
+      modules: [
+        {
+          title: 'AI Fundamentals & ChatGPT Mastery',
+          duration: '1 week',
+          topics: ['Understanding AI capabilities', 'Prompt engineering basics', 'ChatGPT advanced techniques', 'Custom GPTs creation']
+        },
+        {
+          title: 'Visual AI & Creative Tools',
+          duration: '1 week',
+          topics: ['Midjourney mastery', 'DALL-E techniques', 'Stable Diffusion', 'AI video generation']
+        },
+        {
+          title: 'Productivity AI Integration',
+          duration: '1 week',
+          topics: ['Notion AI workflows', 'AI writing assistants', 'Email automation', 'Calendar optimization']
+        },
+        {
+          title: 'Code AI & Development',
+          duration: '1 week',
+          topics: ['GitHub Copilot mastery', 'AI debugging', 'Code review automation', 'Documentation generation']
+        },
+        {
+          title: 'Business AI Applications',
+          duration: '1 week',
+          topics: ['Customer service automation', 'Content marketing AI', 'Data analysis with AI', 'AI strategy planning']
+        },
+        {
+          title: 'Advanced AI Workflows',
+          duration: '1 week',
+          topics: ['Multi-tool integration', 'Custom AI solutions', 'API integrations', 'Future-proofing strategies']
+        }
+      ]
+    },
+    {
+      id: 'frontend-beginner',
+      title: 'Frontend Development - Beginner',
+      category: 'frontend',
+      level: 'beginner',
+      description: 'Start your web development journey with HTML, CSS, and JavaScript fundamentals',
+      technologies: ['HTML', 'CSS', 'JavaScript', 'Git', 'VS Code'],
+      originalPrice: 1667,
+      discountPercent: 40,
+      discountCode: 'frontend01',
+      finalPrice: 1000,
+      duration: '8 weeks',
+      projects: 5,
+      image: 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=250&fit=crop&crop=center',
+      rating: 4.6,
+      students: 15678,
+      instructor: 'Mike Chen',
+      modules: [
+        {
+          title: 'HTML Fundamentals',
+          duration: '2 weeks',
+          topics: ['HTML structure', 'Semantic elements', 'Forms and inputs', 'Accessibility basics']
+        },
+        {
+          title: 'CSS Styling',
+          duration: '2 weeks',
+          topics: ['CSS selectors', 'Box model', 'Flexbox', 'Grid layout']
+        },
+        {
+          title: 'JavaScript Basics',
+          duration: '3 weeks',
+          topics: ['Variables and functions', 'DOM manipulation', 'Events', 'ES6 features']
+        },
+        {
+          title: 'Project Development',
+          duration: '1 week',
+          topics: ['Portfolio website', 'Responsive design', 'Git workflow', 'Deployment']
+        }
+      ]
+    },
+    {
+      id: 'frontend-intermediate',
+      title: 'Frontend Development - Intermediate',
+      category: 'frontend',
+      level: 'intermediate',
+      description: 'Advance your frontend skills with React, TypeScript, and modern development tools',
+      technologies: ['React', 'TypeScript', 'Tailwind CSS', 'Vite', 'npm'],
+      originalPrice: 2500,
+      discountPercent: 40,
+      discountCode: 'frontend02',
+      finalPrice: 1500,
+      duration: '10 weeks',
+      projects: 6,
+      image: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&h=250&fit=crop&crop=center',
+      rating: 4.7,
+      students: 8765,
+      instructor: 'Emma Davis',
+      modules: [
+        {
+          title: 'React Fundamentals',
+          duration: '3 weeks',
+          topics: ['Components and JSX', 'State and props', 'Hooks', 'Event handling']
+        },
+        {
+          title: 'TypeScript Integration',
+          duration: '2 weeks',
+          topics: ['Type annotations', 'Interfaces', 'Generic types', 'React with TypeScript']
+        },
+        {
+          title: 'Advanced React',
+          duration: '3 weeks',
+          topics: ['Context API', 'Custom hooks', 'Performance optimization', 'Testing']
+        },
+        {
+          title: 'Modern Tooling',
+          duration: '2 weeks',
+          topics: ['Vite setup', 'Tailwind CSS', 'Package management', 'Build optimization']
+        }
+      ]
+    },
+    {
+      id: 'frontend-advanced',
+      title: 'Frontend Development - Advanced',
+      category: 'frontend',
+      level: 'advanced',
+      description: 'Master advanced React patterns, state management, and full-stack integration',
+      technologies: ['React', 'Next.js', 'Redux', 'GraphQL', 'TypeScript'],
+      originalPrice: 3333,
+      discountPercent: 40,
+      discountCode: 'frontend03',
+      finalPrice: 2000,
+      duration: '12 weeks',
+      projects: 8,
+      image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=250&fit=crop&crop=center',
+      rating: 4.9,
+      students: 6543,
+      instructor: 'James Wilson',
+      modules: [
+        {
+          title: 'Advanced React Patterns',
+          duration: '3 weeks',
+          topics: ['Higher-order components', 'Render props', 'Compound components', 'Advanced hooks']
+        },
+        {
+          title: 'State Management',
+          duration: '3 weeks',
+          topics: ['Redux Toolkit', 'Zustand', 'React Query', 'State patterns']
+        },
+        {
+          title: 'Next.js Framework',
+          duration: '3 weeks',
+          topics: ['SSR and SSG', 'API routes', 'Dynamic routing', 'Performance optimization']
+        },
+        {
+          title: 'Full-stack Integration',
+          duration: '3 weeks',
+          topics: ['GraphQL integration', 'Authentication', 'Real-time features', 'Deployment strategies']
+        }
+      ]
+    },
+    {
+      id: 'devops-beginner',
+      title: 'DevOps - Beginner',
+      category: 'devops',
+      level: 'beginner',
+      description: 'Learn the fundamentals of DevOps with Docker, CI/CD, and cloud deployment basics',
+      technologies: ['Docker', 'Git', 'Linux', 'CI/CD', 'AWS'],
+      originalPrice: 1667,
+      discountPercent: 40,
+      discountCode: 'stuops01',
+      finalPrice: 1000,
+      duration: '8 weeks',
+      projects: 4,
+      image: 'https://images.unsplash.com/photo-1618477388954-7852f32655ec?w=400&h=250&fit=crop&crop=center',
+      rating: 4.5,
+      students: 9876,
+      instructor: 'David Wilson',
+      modules: [
+        {
+          title: 'DevOps Fundamentals',
+          duration: '2 weeks',
+          topics: ['DevOps Culture', 'Version Control', 'Git Workflows', 'Linux Basics']
+        },
+        {
+          title: 'Containerization',
+          duration: '2 weeks',
+          topics: ['Docker Basics', 'Containers', 'Images', 'Docker Compose']
+        },
+        {
+          title: 'CI/CD Basics',
+          duration: '2 weeks',
+          topics: ['Continuous Integration', 'Automated Testing', 'Deployment Pipelines', 'GitHub Actions']
+        },
+        {
+          title: 'Cloud Deployment',
+          duration: '2 weeks',
+          topics: ['AWS Basics', 'EC2', 'S3', 'Basic Monitoring']
+        }
+      ]
+    },
+    {
+      id: 'devops-advanced',
+      title: 'DevOps - Advanced',
+      category: 'devops',
+      level: 'advanced',
+      description: 'Master advanced DevOps practices with Kubernetes, Terraform, and enterprise deployment strategies',
+      technologies: ['Kubernetes', 'Terraform', 'Jenkins', 'AWS', 'Monitoring'],
+      originalPrice: 2333,
+      discountPercent: 40,
+      discountCode: 'stuops02',
+      finalPrice: 1400,
+      duration: '12 weeks',
+      projects: 6,
+      image: 'https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?w=400&h=250&fit=crop&crop=center',
+      rating: 4.9,
+      students: 5432,
+      instructor: 'Lisa Rodriguez',
+      modules: [
+        {
+          title: 'Container Orchestration',
+          duration: '3 weeks',
+          topics: ['Kubernetes Architecture', 'Pods & Services', 'Deployments', 'Helm Charts']
+        },
+        {
+          title: 'Infrastructure as Code',
+          duration: '3 weeks',
+          topics: ['Terraform Basics', 'AWS Resources', 'State Management', 'Modules']
+        },
+        {
+          title: 'Advanced CI/CD',
+          duration: '3 weeks',
+          topics: ['Jenkins Pipelines', 'Multi-environment Deployment', 'Security Scanning', 'Rollback Strategies']
+        },
+        {
+          title: 'Monitoring & Observability',
+          duration: '3 weeks',
+          topics: ['Prometheus', 'Grafana', 'Log Management', 'Alerting']
+        }
+      ]
+    },
+    {
+      id: 'mobile-advanced',
+      title: 'Mobile App Development - Advanced',
+      category: 'mobile',
+      level: 'advanced',
+      description: 'Build cross-platform mobile applications for Android and iOS using React Native with Expo',
+      technologies: ['React Native', 'Expo', 'JavaScript', 'TypeScript', 'Firebase'],
+      originalPrice: 5833,
+      discountPercent: 40,
+      discountCode: 'mobcore01',
+      finalPrice: 3500,
+      duration: '14 weeks',
+      projects: 5,
+      image: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=250&fit=crop&crop=center',
+      rating: 4.7,
+      students: 4321,
+      instructor: 'Alex Thompson',
+      modules: [
+        {
+          title: 'React Native Fundamentals',
+          duration: '3 weeks',
+          topics: ['Components', 'Navigation', 'State Management', 'Platform APIs']
+        },
+        {
+          title: 'Advanced Features',
+          duration: '4 weeks',
+          topics: ['Native Modules', 'Camera Integration', 'Push Notifications', 'Offline Storage']
+        },
+        {
+          title: 'TypeScript Integration',
+          duration: '3 weeks',
+          topics: ['Type Safety', 'Advanced Types', 'React Native Types', 'Testing']
+        },
+        {
+          title: 'Backend Integration',
+          duration: '2 weeks',
+          topics: ['Firebase Setup', 'Authentication', 'Real-time Database', 'Cloud Functions']
+        },
+        {
+          title: 'Publishing & Deployment',
+          duration: '2 weeks',
+          topics: ['App Store Submission', 'Google Play', 'Code Push', 'Analytics']
+        }
+      ]
+    },
+    {
+      id: 'browser-extensions',
+      title: 'Browser Extensions Development',
+      category: 'frontend',
+      level: 'intermediate',
+      description: 'Learn to build powerful browser extensions for Chrome, Firefox, and Edge using modern web technologies',
+      technologies: ['JavaScript', 'HTML', 'CSS', 'Web APIs', 'Manifest V3'],
+      originalPrice: 2500,
+      discountPercent: 40,
+      discountCode: 'browserext01',
+      finalPrice: 1500,
+      duration: '8 weeks',
+      projects: 4,
+      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=250&fit=crop&crop=center',
+      rating: 4.6,
+      students: 3210,
+      instructor: 'Rachel Green',
+      modules: [
+        {
+          title: 'Extension Fundamentals',
+          duration: '2 weeks',
+          topics: ['Manifest Files', 'Extension Architecture', 'Permissions', 'Content Scripts']
+        },
+        {
+          title: 'Web APIs Integration',
+          duration: '2 weeks',
+          topics: ['Chrome APIs', 'Storage API', 'Tabs API', 'Messaging']
+        },
+        {
+          title: 'Advanced Features',
+          duration: '2 weeks',
+          topics: ['Background Scripts', 'Context Menus', 'Options Pages', 'Popup Interfaces']
+        },
+        {
+          title: 'Cross-browser Development',
+          duration: '2 weeks',
+          topics: ['Firefox Extensions', 'Edge Extensions', 'Publishing', 'Distribution']
+        }
+      ]
+    }
+  ];
+
+  const categories = ['all', 'frontend', 'ai', 'devops', 'mobile'];
+  const filteredCourses = selectedCategory === 'all' 
+    ? allCourses 
+    : allCourses.filter(course => course.category === selectedCategory);
+
+  // Sample course data matching the screenshot
   const courses: Course[] = [
     {
       id: 'frontend-beginner',
@@ -95,9 +439,8 @@ const StudentPortal = () => {
       totalLessons: 24,
       completedLessons: 18,
       duration: '6 weeks',
-      category: 'Frontend',
-      level: 'Beginner',
-      nextLesson: 'JavaScript DOM Manipulation'
+      nextLesson: 'JavaScript DOM Manipulation',
+      isStarted: true
     },
     {
       id: 'frontend-intermediate',
@@ -107,189 +450,90 @@ const StudentPortal = () => {
       totalLessons: 32,
       completedLessons: 14,
       duration: '8 weeks',
-      category: 'Frontend',
-      level: 'Intermediate',
-      nextLesson: 'Advanced CSS Grid Layouts'
+      nextLesson: 'React Components',
+      isStarted: true
     }
   ];
 
-  // Sample assignments for purchased courses
+  // Available courses for browsing (using allCourses data)
+  const availableCourses = allCourses.filter(course => 
+    !courses.some(enrolledCourse => enrolledCourse.id === course.id)
+  );
+
+  // Sample assignments
   const assignments: Assignment[] = [
     {
       id: 'assignment-1',
-      courseId: 'frontend-beginner',
       title: 'Build a Responsive Landing Page',
-      description: 'Create a responsive landing page using HTML, CSS, and JavaScript. Include navigation, hero section, features, and contact form.',
-      dueDate: '2024-02-15',
-      status: 'pending'
+      courseId: 'frontend-beginner',
+      courseName: 'Frontend Development - Beginner',
+      dueDate: '2024-01-25',
+      status: 'pending',
+      description: 'Create a responsive landing page using HTML, CSS, and JavaScript'
     },
     {
       id: 'assignment-2',
-      courseId: 'frontend-beginner',
-      title: 'JavaScript Calculator Project',
-      description: 'Build a functional calculator using vanilla JavaScript with proper error handling and responsive design.',
-      dueDate: '2024-02-20',
-      status: 'pending'
+      title: 'React Component Library',
+      courseId: 'frontend-intermediate',
+      courseName: 'Frontend Development - Intermediate',
+      dueDate: '2024-01-30',
+      status: 'submitted',
+      description: 'Build a reusable component library with React and TypeScript',
+      grade: 85
     },
     {
       id: 'assignment-3',
-      courseId: 'frontend-intermediate',
-      title: 'React Todo Application',
-      description: 'Create a full-featured todo application using React with local storage, filtering, and CRUD operations.',
-      dueDate: '2024-02-25',
-      status: 'pending'
-    },
-    {
-      id: 'assignment-4',
-      courseId: 'frontend-intermediate',
-      title: 'API Integration Project',
-      description: 'Build a weather app that fetches data from a public API and displays it with proper error handling.',
-      dueDate: '2024-03-01',
-      status: 'submitted',
-      submittedAt: '2024-01-28'
+      title: 'JavaScript Algorithm Challenge',
+      courseId: 'frontend-beginner',
+      courseName: 'Frontend Development - Beginner',
+      dueDate: '2024-01-20',
+      status: 'graded',
+      description: 'Solve complex algorithms using JavaScript',
+      grade: 92
     }
   ];
 
-  // All available courses with availability status and pricing
-  const allCourses = [
-    { 
-      title: 'Frontend Development - Beginner', 
-      available: true, 
-      enrolled: true,
-      originalPrice: 2000,
-      discountedPrice: 400,
-      discountPercent: 80,
-      hasPromoCode: true
+  // Purchase history
+  const purchaseHistory: PurchaseHistory[] = [
+    {
+      id: 'purchase-1',
+      courseId: 'frontend-beginner',
+      courseName: 'Frontend Development - Beginner',
+      instructor: 'Rohan Jashvantbhai',
+      purchaseDate: '2023-12-01T10:30:00Z',
+      amount: 199,
+      status: 'completed'
     },
-    { 
-      title: 'Frontend Development - Intermediate', 
-      available: true, 
-      enrolled: true,
-      originalPrice: 3000,
-      discountedPrice: 2400,
-      discountPercent: 20,
-      hasPromoCode: false
-    },
-    { title: 'Complete JavaScript', available: true, enrolled: false, requiresAccess: true },
-    { title: 'Frontend Development - Advanced', available: false, seatsFull: true },
-    { title: 'DevOps - Beginner', available: false, seatsFull: true },
-    { title: 'DevOps - Advanced', available: false, seatsFull: true },
-    { title: 'Mobile App Development - Advanced', available: false, seatsFull: true },
-    { title: 'Browser Extensions Development', available: false, seatsFull: true }
+    {
+      id: 'purchase-2',
+      courseId: 'frontend-intermediate',
+      courseName: 'Frontend Development - Intermediate',
+      instructor: 'Rohan Jashvantbhai',
+      purchaseDate: '2023-12-15T14:20:00Z',
+      amount: 299,
+      status: 'completed'
+    }
   ];
 
   const sidebarItems = [
-    { id: 'dashboard', label: 'vStudent Manager', icon: HomeIcon },
-    { id: 'courses', label: 'My Courses', icon: BriefcaseIcon },
+    { id: 'dashboard', label: 'vStudent Manager', icon: HomeIcon, isActive: true },
+    { id: 'courses', label: 'My Courses', icon: BookOpenIcon },
     { id: 'assignments', label: 'Assignments', icon: ClipboardDocumentListIcon },
     { id: 'browse-courses', label: 'Browse Courses', icon: GlobeAltIcon },
     { id: 'profile', label: 'My Profile', icon: UserIcon },
     { id: 'settings', label: 'Settings', icon: Cog6ToothIcon },
+    { id: 'history', label: 'History', icon: ClipboardDocumentListIcon },
     { id: 'support', label: 'Support', icon: QuestionMarkCircleIcon },
   ];
 
-  const handleEnrollment = (courseTitle: string) => {
-    setSelectedCourse(courseTitle);
-    setShowEnrollModal(true);
-  };
-
-  const confirmEnrollment = () => {
-    // Here you would typically make an API call to enroll the student
-    alert(`Enrollment initiated for: ${selectedCourse}\n\nYou will be redirected to the payment gateway.`);
-    setShowEnrollModal(false);
-    setSelectedCourse('');
-  };
-
-  const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file && file.type.startsWith('video/')) {
-      setUploadedVideo(file);
-    } else {
-      alert('Please select a valid video file.');
-    }
-  };
-
-  const handleResumeUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file && (file.type === 'application/pdf' || file.type.includes('document'))) {
-      setUploadedResume(file);
-    } else {
-      alert('Please select a valid PDF or document file.');
-    }
-  };
-
-  const handleSubmitDocuments = () => {
-    if (uploadedResume) {
-      alert('Resume submitted successfully!');
-      // Here you would typically upload the file to your server
-    } else {
-      alert('Please upload your resume first.');
-    }
-  };
-
-  const handleContinueLearning = (courseId: string) => {
-    // Navigate to course learning page based on course ID with proper URL structure
-    if (courseId === 'frontend-beginner') {
-      navigate('/course-learning/frontend-development-beginner/html-module/html-intro');
-    } else if (courseId === 'frontend-intermediate') {
-      navigate('/course-learning-intermediate/frontend-development-intermediate/react-module/react-intro');
-    }
-  };
-
-  const handleScreenRecordingUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file && file.type.startsWith('video/')) {
-      setScreenRecording(file);
-      setUploadStatus('Screen recording uploaded successfully!');
-    } else {
-      alert('Please select a valid video file for screen recording.');
-    }
-  };
-
-  const handleFaceRecordingUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file && file.type.startsWith('video/')) {
-      setFaceRecording(file);
-      setUploadStatus('Face recording uploaded successfully!');
-    } else {
-      alert('Please select a valid video file for face recording.');
-    }
-  };
-
-  const handleAssignmentSubmit = (assignmentId: string) => {
-    if (screenRecording && faceRecording) {
-      setUploadStatus('Assignment submitted successfully!');
-      // Here you would typically upload the files to your server
-      // Reset the form
-      setScreenRecording(null);
-      setFaceRecording(null);
-      setSelectedAssignment('');
-    } else {
-      alert('Please upload both screen recording and face recording before submitting.');
-    }
-  };
-
-  const getAssignmentsForCourse = (courseId: string) => {
-    return assignments.filter(assignment => assignment.courseId === courseId);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
   useEffect(() => {
-    // Check if user is authenticated
     const currentUser = localStorage.getItem('currentUser');
     
     if (!currentUser) {
       navigate('/student-login');
       return;
     }
-    
+
     const loadStudentData = async () => {
       try {
         const userData = JSON.parse(currentUser);
@@ -297,103 +541,155 @@ const StudentPortal = () => {
           navigate('/student-login');
           return;
         }
-        
-        // Try to fetch complete student data from backend
-        try {
-          const response = await fetch(`http://localhost:5000/api/students/profile/${userData.id || userData.studentId}`, {
-            headers: {
-              'Authorization': `Bearer ${userData.token || ''}`
-            }
-          });
-          
-          if (response.ok) {
-            const result = await response.json();
-            const studentData = result.data;
-            setStudentProfile({
-              name: `${studentData.firstName} ${studentData.lastName}`,
-              email: studentData.email,
-              phone: studentData.phone,
-              address: studentData.address,
-              enrolledCourses: studentData.enrolledCourses,
-              isFirstLogin: !studentData.lastLogin
-            });
-          } else {
-            // Fallback to localStorage data
-            setStudentProfile({
-              name: `${userData.firstName} ${userData.lastName}` || 'Student',
-              email: userData.email || 'student@example.com',
-              isFirstLogin: true
-            });
-          }
-        } catch (fetchError) {
-          console.error('Error fetching student data from backend:', fetchError);
-          // Fallback to localStorage data
-          setStudentProfile({
-            name: `${userData.firstName} ${userData.lastName}` || 'Student',
-            email: userData.email || 'student@example.com',
-            isFirstLogin: true
-          });
-        }
+
+        setStudentProfile({
+          name: `${userData.firstName} ${userData.lastName}` || 'undefined undefined',
+          email: userData.email || 'student@example.com',
+          enrolledCourses: 2,
+          phone: '+1 (555) 123-4567',
+          location: 'San Francisco, CA',
+          joinDate: '2023-12-01',
+          studentId: 'STU-2023-001'
+        });
       } catch (error) {
         console.error('Error loading student data:', error);
         setStudentProfile({
-          name: 'Student',
+          name: 'undefined undefined',
           email: 'student@example.com',
-          isFirstLogin: true
+          enrolledCourses: 2
         });
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     loadStudentData();
   }, [navigate]);
+
+  const handleContinueLearning = (courseId: string) => {
+    // Navigate to course content/study material based on course ID
+    console.log('Navigating to course:', courseId);
+    
+    // Map course IDs to their respective learning routes
+    const courseRoutes: { [key: string]: string } = {
+      'frontend-beginner': '/course-learning/frontend-beginner/html-fundamentals/html-structure',
+      'frontend-intermediate': '/course-learning-intermediate/frontend-intermediate/advanced-html/semantic-html',
+      'frontend-advanced': '/course-learning-advanced/frontend-advanced/advanced-react/performance-optimization',
+      'devops-beginner': '/course-learning-devops-beginner/devops-beginner/docker-basics/containerization',
+      'devops-advanced': '/course-learning-devops-advanced/devops-advanced/kubernetes/cluster-management',
+      'mobile-advanced': '/course-learning-mobile-advanced/mobile-advanced/react-native/navigation',
+      'browser-extensions': '/course-learning-browser-extensions/browser-extensions/extension-fundamentals/manifest-files'
+    };
+
+    // Navigate to the appropriate course learning page
+    const route = courseRoutes[courseId];
+    if (route) {
+      navigate(route);
+    } else {
+      // Fallback to general course learning page
+      navigate(`/course-learning/${courseId}/module-1/lesson-1`);
+    }
+  };
+
+  const handlePurchaseCourse = (courseId: string) => {
+    // Handle course purchase
+    console.log('Purchasing course:', courseId);
+    alert(`Purchasing course: ${courseId}`);
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Check if file is a zip file
+      if (file.type === 'application/zip' || file.name.endsWith('.zip')) {
+        setSelectedFile(file);
+      } else {
+        alert('Please select a ZIP file only.');
+        event.target.value = '';
+      }
+    }
+  };
+
+  const handleSubmitAssignment = async (assignmentId: string) => {
+    if (!selectedFile && !gitUrl.trim()) {
+      alert('Please select a file or enter a Git URL.');
+      return;
+    }
+
+    setIsUploading(true);
+    
+    try {
+      // Simulate upload process
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      if (uploadType === 'file' && selectedFile) {
+        console.log('Uploading file:', selectedFile.name, 'for assignment:', assignmentId);
+        alert(`File "${selectedFile.name}" uploaded successfully for assignment!`);
+      } else if (uploadType === 'git' && gitUrl.trim()) {
+        console.log('Submitting Git URL:', gitUrl, 'for assignment:', assignmentId);
+        alert(`Git repository "${gitUrl}" submitted successfully for assignment!`);
+      }
+      
+      // Reset form
+      setSelectedFile(null);
+      setGitUrl('');
+      setSelectedAssignmentId(null);
+      
+      // Reset file input
+      const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+      
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Upload failed. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
       case 'courses':
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-white mb-6">My Purchased Courses</h2>
-            <div className="grid gap-4">
+            <h2 className="text-white text-2xl font-bold">My Courses</h2>
+            <div className="space-y-4">
               {courses.map((course) => (
-                <div key={course.id} className="bg-gray-800 rounded-2xl p-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="w-12 h-12 bg-gray-600 rounded-lg flex items-center justify-center">
-                      <span className="text-white font-bold text-lg">
-                        {course.title.charAt(0)}
-                      </span>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="text-lg font-semibold text-white">{course.title}</h4>
-                        <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm">
-                          Enrolled
-                        </span>
+                <div key={course.id} className="bg-gray-800 rounded-lg p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <span className="text-white font-bold text-lg">F</span>
                       </div>
-                      <p className="text-gray-300 text-sm mb-2">
-                        Instructor: {course.instructor} • Duration: {course.duration}
-                      </p>
-                      <div className="flex justify-between text-sm text-gray-400 mb-2">
-                        <span>Progress</span>
-                        <span>{course.progress}%</span>
-                      </div>
-                      <div className="w-full bg-gray-700 rounded-full h-2 mb-3">
-                        <div 
-                          className="bg-green-500 h-2 rounded-full transition-all duration-300" 
-                          style={{width: `${course.progress}%`}}
-                        ></div>
-                      </div>
-                      {course.nextLesson && (
+                      <div>
+                        <h4 className="text-white text-lg font-semibold">{course.title}</h4>
                         <p className="text-gray-400 text-sm">
-                          Next: {course.nextLesson}
+                          Instructor: {course.instructor} • Duration: {course.duration}
                         </p>
-                      )}
-                      <button 
+                        <div className="mt-2">
+                          <p className="text-gray-300 text-sm mb-1">Progress</p>
+                          <div className="w-96 bg-gray-700 rounded-full h-2">
+                            <div 
+                              className="bg-green-500 h-2 rounded-full transition-all duration-300" 
+                              style={{width: `${course.progress}%`}}
+                            />
+                          </div>
+                          <p className="text-gray-400 text-sm mt-1">
+                            Next: {course.nextLesson}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right flex flex-col items-end space-y-2">
+                      <p className="text-white text-sm mb-1">
+                        {course.completedLessons} of {course.totalLessons} lessons completed
+                      </p>
+                      <p className="text-white text-2xl font-bold">{course.progress}%</p>
+                      <button
                         onClick={() => handleContinueLearning(course.id)}
-                        className="mt-3 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                       >
-                        {studentProfile?.isFirstLogin || course.progress === 0 ? 'Start Learning' : 'Continue Learning'}
+                        {course.isStarted && course.progress > 0 ? 'Continue Learning' : 'Start Learning'}
                       </button>
                     </div>
                   </div>
@@ -405,352 +701,228 @@ const StudentPortal = () => {
       case 'assignments':
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-white mb-6">Course Assignments</h2>
-            <div className="grid gap-6">
-              {courses.map((course) => {
-                const courseAssignments = getAssignmentsForCourse(course.id);
-                if (courseAssignments.length === 0) return null;
-                
-                return (
-                  <div key={course.id} className="bg-gray-800 rounded-2xl p-6">
-                    <div className="flex items-center space-x-3 mb-4">
-                      <div className="w-10 h-10 bg-gray-600 rounded-lg flex items-center justify-center">
-                        <span className="text-white font-bold">{course.title.charAt(0)}</span>
-                      </div>
-                      <h3 className="text-xl font-semibold text-white">{course.title}</h3>
+            <h2 className="text-white text-2xl font-bold">Assignments</h2>
+            <div className="space-y-4">
+              {assignments.map((assignment) => (
+                <div key={assignment.id} className="bg-gray-800 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h4 className="text-white text-lg font-semibold">{assignment.title}</h4>
+                      <p className="text-gray-400 text-sm">{assignment.courseName}</p>
+                      <p className="text-gray-300 text-sm mt-2">{assignment.description}</p>
+                      <p className="text-gray-400 text-sm mt-1">Due: {new Date(assignment.dueDate).toLocaleDateString()}</p>
                     </div>
-                    
-                    <div className="space-y-4">
-                      {courseAssignments.map((assignment) => (
-                        <div key={assignment.id} className="bg-gray-700 rounded-lg p-4 border border-gray-600">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex-1">
-                              <h4 className="text-lg font-medium text-white mb-2">{assignment.title}</h4>
-                              <p className="text-gray-300 text-sm mb-2">{assignment.description}</p>
-                              <div className="flex items-center space-x-4 text-sm">
-                                <span className="text-gray-400">Due: {formatDate(assignment.dueDate)}</span>
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  assignment.status === 'pending' ? 'bg-yellow-600 text-yellow-100' :
-                                  assignment.status === 'submitted' ? 'bg-black text-gray-100' :
-                                  'bg-green-600 text-green-100'
-                                }`}>
-                                  {assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1)}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {assignment.status === 'pending' && (
-                            <div className="mt-4 space-y-4">
-                              <div className="grid md:grid-cols-2 gap-4">
-                                {/* Screen Recording Upload */}
-                                <div className="space-y-2">
-                                  <label className="block text-sm font-medium text-gray-300">
-                                    Screen Recording *
-                                  </label>
-                                  <div className="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center">
-                                    {screenRecording ? (
-                                      <div className="space-y-2">
-                                        <p className="text-green-400 text-sm">✓ {screenRecording.name}</p>
-                                        <button
-                                          onClick={() => setScreenRecording(null)}
-                                          className="text-red-400 text-xs hover:text-red-300"
-                                        >
-                                          Remove
-                                        </button>
-                                      </div>
-                                    ) : (
-                                      <div>
-                                        <input
-                                          type="file"
-                                          accept="video/*"
-                                          onChange={handleScreenRecordingUpload}
-                                          className="hidden"
-                                          id={`screen-${assignment.id}`}
-                                        />
-                                        <label
-                                          htmlFor={`screen-${assignment.id}`}
-                                          className="cursor-pointer text-gray-400 hover:text-white"
-                                        >
-                                          <div className="space-y-1">
-                                            <div className="text-2xl">📹</div>
-                                            <p className="text-sm">Upload Screen Recording</p>
-                                          </div>
-                                        </label>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                                
-                                {/* Face Recording Upload */}
-                                <div className="space-y-2">
-                                  <label className="block text-sm font-medium text-gray-300">
-                                    Face Recording *
-                                  </label>
-                                  <div className="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center">
-                                    {faceRecording ? (
-                                      <div className="space-y-2">
-                                        <p className="text-green-400 text-sm">✓ {faceRecording.name}</p>
-                                        <button
-                                          onClick={() => setFaceRecording(null)}
-                                          className="text-red-400 text-xs hover:text-red-300"
-                                        >
-                                          Remove
-                                        </button>
-                                      </div>
-                                    ) : (
-                                      <div>
-                                        <input
-                                          type="file"
-                                          accept="video/*"
-                                          onChange={handleFaceRecordingUpload}
-                                          className="hidden"
-                                          id={`face-${assignment.id}`}
-                                        />
-                                        <label
-                                          htmlFor={`face-${assignment.id}`}
-                                          className="cursor-pointer text-gray-400 hover:text-white"
-                                        >
-                                          <div className="space-y-1">
-                                            <div className="text-2xl">🎥</div>
-                                            <p className="text-sm">Upload Face Recording</p>
-                                          </div>
-                                        </label>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                              
-                              {uploadStatus && (
-                                <p className="text-green-400 text-sm">{uploadStatus}</p>
-                              )}
-                              
-                              <button
-                                onClick={() => handleAssignmentSubmit(assignment.id)}
-                                disabled={!screenRecording || !faceRecording}
-                                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg font-medium transition-colors"
-                              >
-                                Submit Assignment
-                              </button>
-                            </div>
-                          )}
-                          
-                          {assignment.status === 'submitted' && assignment.submittedAt && (
-                            <div className="mt-4 p-3 bg-black/20 rounded-lg">
-                <p className="text-gray-300 text-sm">
-                                ✓ Submitted on {formatDate(assignment.submittedAt)}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                    <div className="text-right">
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        assignment.status === 'pending' ? 'bg-yellow-600 text-yellow-100' :
+                        assignment.status === 'submitted' ? 'bg-blue-600 text-blue-100' :
+                        'bg-green-600 text-green-100'
+                      }`}>
+                        {assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1)}
+                      </span>
+                      {assignment.grade && (
+                        <p className="text-white text-lg font-bold mt-2">Grade: {assignment.grade}%</p>
+                      )}
                     </div>
                   </div>
-                );
-              })}
+                  
+                  {/* Upload Section - Only show for pending assignments */}
+                  {assignment.status === 'pending' && (
+                    <div className="border-t border-gray-700 pt-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <h5 className="text-white text-md font-medium">Submit Assignment</h5>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => setUploadType('file')}
+                            className={`px-3 py-1 rounded text-sm ${
+                              uploadType === 'file' 
+                                ? 'bg-blue-600 text-white' 
+                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            }`}
+                          >
+                            ZIP File
+                          </button>
+                          <button
+                            onClick={() => setUploadType('git')}
+                            className={`px-3 py-1 rounded text-sm ${
+                              uploadType === 'git' 
+                                ? 'bg-blue-600 text-white' 
+                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            }`}
+                          >
+                            Git URL
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {uploadType === 'file' ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center space-x-3">
+                            <CloudArrowUpIcon className="w-5 h-5 text-gray-400" />
+                            <label htmlFor="file-upload" className="text-gray-300 text-sm">
+                              Upload ZIP file (max 50MB)
+                            </label>
+                          </div>
+                          <input
+                            id="file-upload"
+                            type="file"
+                            accept=".zip"
+                            onChange={handleFileUpload}
+                            className="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-700 file:cursor-pointer"
+                          />
+                          {selectedFile && (
+                            <p className="text-green-400 text-sm">Selected: {selectedFile.name}</p>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="flex items-center space-x-3">
+                            <LinkIcon className="w-5 h-5 text-gray-400" />
+                            <label className="text-gray-300 text-sm">
+                              Git Repository URL
+                            </label>
+                          </div>
+                          <input
+                            type="url"
+                            value={gitUrl}
+                            onChange={(e) => setGitUrl(e.target.value)}
+                            placeholder="https://github.com/username/repository"
+                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                      )}
+                      
+                      <button
+                        onClick={() => handleSubmitAssignment(assignment.id)}
+                        disabled={isUploading || (!selectedFile && !gitUrl.trim())}
+                        className="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center space-x-2"
+                      >
+                        {isUploading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <span>Uploading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CloudArrowUpIcon className="w-4 h-4" />
+                            <span>Submit Assignment</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-            
-            {assignments.filter(a => courses.some(c => c.id === a.courseId)).length === 0 && (
-              <div className="text-center py-12">
-                <div className="text-6xl mb-4">📝</div>
-                <p className="text-gray-400 text-lg">No assignments available</p>
-                <p className="text-gray-500 text-sm">Assignments will appear here for your enrolled courses</p>
-              </div>
-            )}
           </div>
         );
       case 'browse-courses':
         return (
-          <div className="space-y-8">
-            <div className="flex items-center justify-between">
-              <h2 className="text-3xl font-bold text-white">Browse All Courses</h2>
-              <div className="text-sm text-gray-400">
-                {allCourses.length} courses available
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-white text-2xl font-bold">Browse Courses</h2>
+              <div className="flex space-x-2">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`px-4 py-2 rounded-lg capitalize ${
+                      selectedCategory === category
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-700 text-white hover:bg-gray-600'
+                    }`}
+                  >
+                    {category === 'all' ? 'All Categories' : category}
+                  </button>
+                ))}
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {allCourses.map((course, index) => {
-                const CourseCard = (
-                  <div className="group relative bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 border border-gray-700/50 hover:border-black/30 transition-all duration-500 hover:shadow-2xl hover:shadow-black/10">
-                  {/* Background Gradient Effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-black/5 to-gray-800/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  
-                  {/* Course Header */}
-                  <div className="relative z-10 mb-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-black to-gray-800 rounded-xl flex items-center justify-center shadow-lg">
-                        <span className="text-white font-bold text-lg">{course.title.charAt(0)}</span>
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="px-2 py-1 bg-green-500/20 text-green-400 border border-green-500/30 rounded-full text-xs font-medium">
-                            Beginner
-                          </span>
-                          {course.enrolled && (
-                            <span className="px-2 py-1 bg-black/20 text-gray-400 rounded-full text-xs font-medium border border-black/30">
-                              ✓ Enrolled
-                            </span>
-                          )}
-                        </div>
-                      </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredCourses.map((course) => (
+                <div key={course.id} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                      course.level === 'beginner' ? 'bg-green-100 text-green-800' :
+                      course.level === 'intermediate' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {course.level}
+                    </span>
+                    <span className="text-gray-400 text-sm capitalize">{course.category}</span>
+                  </div>
+                  <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
+                    <span className="text-white font-bold text-lg">{course.title.charAt(0)}</span>
+                  </div>
+                  <h4 className="text-white text-lg font-semibold mb-2">{course.title}</h4>
+                  <p className="text-gray-400 text-sm mb-2">Instructor: {course.instructor}</p>
+                  <p className="text-gray-300 text-sm mb-3">{course.description}</p>
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-400">Duration: {course.duration}</p>
+                    <p className="text-sm text-gray-400">Projects: {course.projects}</p>
+                    <p className="text-sm text-gray-400">Students: {course.students.toLocaleString()}</p>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="text-gray-400 text-sm line-through">₹{course.originalPrice.toLocaleString()}</span>
+                      <span className="text-white text-xl font-bold ml-2">₹{course.finalPrice.toLocaleString()}</span>
                     </div>
-                    
-                    <h3 className="text-xl font-bold mb-3 text-white group-hover:text-gray-100 transition-colors duration-300">
-                      {course.title}
-                    </h3>
-                    <p className="text-gray-400 text-sm leading-relaxed mb-4">Master modern web development with hands-on projects and real-world applications.</p>
+                    <button
+                      onClick={() => handlePurchaseCourse(course.id)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Purchase
+                    </button>
                   </div>
-
-                  {/* Technologies */}
-                  <div className="relative z-10 mb-6">
-                    <div className="flex flex-wrap gap-2">
-                      <span className="px-3 py-1 bg-black/10 text-gray-300 rounded-lg text-xs font-medium border border-black/20">React</span>
-                      <span className="px-3 py-1 bg-black/10 text-gray-300 rounded-lg text-xs font-medium border border-black/20">JavaScript</span>
-                      <span className="px-3 py-1 bg-black/10 text-gray-300 rounded-lg text-xs font-medium border border-black/20">CSS</span>
-                    </div>
-                  </div>
-
-                  {/* Course Stats */}
-                  <div className="relative z-10 flex items-center justify-between mb-6 p-4 bg-gray-800/50 rounded-xl border border-gray-700/30">
-                    <div className="flex items-center gap-2 text-sm text-gray-300">
-                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                      </svg>
-                      <span>5 Projects</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-300">
-                      <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span>Certificate</span>
-                    </div>
-                  </div>
-
-                  {/* Pricing */}
-                  <div className="relative z-10 mb-6">
-                    {course.requiresAccess ? (
-                      <div className="text-center">
-                        <div className="text-lg font-semibold text-blue-400 mb-2">Access Required</div>
-                        <p className="text-sm text-gray-400 leading-relaxed">
-                          Access is granted based on student's resume.<br/>
-                          <span className="text-yellow-400 font-medium">Prerequisites:</span> HTML, CSS, and basic JavaScript
-                        </p>
-                      </div>
-                    ) : course.originalPrice ? (
-                      <div>
-                        <div className="flex items-center gap-3 mb-3">
-                          <span className="text-2xl font-bold text-white">₹{course.discountedPrice}</span>
-                          <span className="text-lg text-gray-500 line-through">₹{course.originalPrice}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="inline-flex items-center px-3 py-1 bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-400 rounded-full text-sm font-semibold border border-green-500/30">
-                            🎉 {course.discountPercent}% OFF
-                          </span>
-                          {course.hasPromoCode && (
-                            <div className="text-xs text-gray-400">
-                              With promo code
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center">
-                        <div className="text-lg font-semibold text-gray-400">Contact for Pricing</div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Action Button */}
-                  <div className="relative z-10">
-                    {course.enrolled ? (
-                      <button 
-                        className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 rounded-xl font-bold text-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-lg shadow-green-500/25 hover:shadow-green-500/40"
-                      >
-                        <span className="flex items-center justify-center gap-2">
-                          Continue Learning
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                          </svg>
-                        </span>
-                      </button>
-                    ) : course.requiresAccess ? (
-                      <button 
-                        onClick={() => alert('Please submit your resume for access evaluation. Our team will review your qualifications and contact you within 2-3 business days.')}
-                        className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-bold text-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40"
-                      >
-                        <span className="flex items-center justify-center gap-2">
-                          Request Access
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </span>
-                      </button>
-                    ) : course.seatsFull ? (
-                      <button 
-                        disabled
-                        className="w-full bg-gray-600 text-gray-400 py-3 rounded-xl font-bold text-lg cursor-not-allowed"
-                      >
-                        <span className="flex items-center justify-center gap-2">
-                          Seats Full
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                          </svg>
-                        </span>
-                      </button>
-                    ) : (
-                      <button 
-                        onClick={() => handleEnrollment(course.title)}
-                        className="w-full bg-gradient-to-r from-black to-gray-800 text-white py-3 rounded-xl font-bold text-lg hover:from-gray-900 hover:to-gray-700 transition-all duration-300 shadow-lg shadow-black/25 hover:shadow-black/40"
-                      >
-                        <span className="flex items-center justify-center gap-2">
-                          Buy Now
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                          </svg>
-                        </span>
-                      </button>
-                    )}
-                  </div>
-                  </div>
-                );
-
-                return (
-                  <div key={index}>
-                    {CourseCard}
-                  </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           </div>
         );
       case 'profile':
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-white mb-6">My Profile</h2>
-            <div className="bg-gray-800 rounded-2xl p-6">
+            <h2 className="text-white text-2xl font-bold">My Profile</h2>
+            <div className="bg-gray-800 rounded-lg p-6">
               <div className="flex items-center space-x-6 mb-6">
-                <div className="w-20 h-20 bg-gray-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-2xl font-bold">
-                    {studentProfile?.name?.charAt(0) || 'S'}
-                  </span>
+                <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-2xl">{studentProfile?.name?.charAt(0) || 'U'}</span>
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white">{studentProfile?.name}</h3>
+                  <h3 className="text-white text-xl font-semibold">{studentProfile?.name}</h3>
                   <p className="text-gray-400">{studentProfile?.email}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-700 rounded-lg p-4">
-                  <h4 className="text-white font-semibold mb-2">Enrolled Courses</h4>
-                  <p className="text-2xl font-bold text-green-500">{courses.length}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="text-white font-semibold mb-3">Personal Information</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-gray-400 text-sm">Student ID</label>
+                      <p className="text-white">{studentProfile?.studentId}</p>
+                    </div>
+                    <div>
+                      <label className="text-gray-400 text-sm">Phone</label>
+                      <p className="text-white">{studentProfile?.phone}</p>
+                    </div>
+                    <div>
+                      <label className="text-gray-400 text-sm">Location</label>
+                      <p className="text-white">{studentProfile?.location}</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="bg-gray-700 rounded-lg p-4">
-                  <h4 className="text-white font-semibold mb-2">Completed Lessons</h4>
-                  <p className="text-2xl font-bold text-black">
-                    {courses.reduce((total, course) => total + course.completedLessons, 0)}
-                  </p>
+                <div>
+                  <h4 className="text-white font-semibold mb-3">Academic Information</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-gray-400 text-sm">Join Date</label>
+                      <p className="text-white">{studentProfile?.joinDate ? new Date(studentProfile.joinDate).toLocaleDateString() : 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-gray-400 text-sm">Enrolled Courses</label>
+                      <p className="text-white">{studentProfile?.enrolledCourses}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -759,28 +931,72 @@ const StudentPortal = () => {
       case 'settings':
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-white mb-6">Settings</h2>
-            <div className="bg-gray-800 rounded-2xl p-6">
+            <h2 className="text-white text-2xl font-bold">Settings</h2>
+            <div className="bg-gray-800 rounded-lg p-6">
+              <h3 className="text-white text-lg font-semibold mb-4">Account Settings</h3>
               <div className="space-y-4">
-                <div className="flex items-center justify-between py-3 border-b border-gray-700">
-                  <span className="text-white">Email Notifications</span>
-                  <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">
-                    Enabled
-                  </button>
-                </div>
-                <div className="flex items-center justify-between py-3 border-b border-gray-700">
-                  <span className="text-white">Dark Mode</span>
-                  <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">
-                    On
-                  </button>
-                </div>
-                <div className="flex items-center justify-between py-3">
-                  <span className="text-white">Language</span>
-                  <button className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg text-sm">
-                    English
-                  </button>
+                <div>
+                  <h4 className="text-white font-medium mb-2">Change Password</h4>
+                  <div className="space-y-3">
+                    <input
+                      type="password"
+                      placeholder="Current Password"
+                      className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+                    />
+                    <input
+                      type="password"
+                      placeholder="New Password"
+                      className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+                    />
+                    <input
+                      type="password"
+                      placeholder="Confirm New Password"
+                      className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+                    />
+                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                      Update Password
+                    </button>
+                  </div>
                 </div>
               </div>
+            </div>
+          </div>
+        );
+      case 'history':
+        return (
+          <div className="space-y-6">
+            <h2 className="text-white text-2xl font-bold">Purchase History</h2>
+            <div className="space-y-4">
+              {purchaseHistory.map((purchase) => (
+                <div key={purchase.id} className="bg-gray-800 rounded-lg p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-white text-lg font-semibold">{purchase.courseName}</h4>
+                      <p className="text-gray-400 text-sm">Instructor: {purchase.instructor}</p>
+                      <p className="text-gray-300 text-sm mt-1">
+                        Purchase Date: {new Date(purchase.purchaseDate).toLocaleDateString()} at {new Date(purchase.purchaseDate).toLocaleTimeString()}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-white text-xl font-bold">₹{purchase.amount.toLocaleString()}</p>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        purchase.status === 'completed' ? 'bg-green-600 text-green-100' : 'bg-yellow-600 text-yellow-100'
+                      }`}>
+                        {purchase.status.charAt(0).toUpperCase() + purchase.status.slice(1)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case 'support':
+        return (
+          <div className="space-y-6">
+            <h2 className="text-white text-2xl font-bold">Support</h2>
+            <div className="bg-gray-800 rounded-lg p-6">
+              <p className="text-gray-400">Get help and support.</p>
             </div>
           </div>
         );
@@ -792,100 +1008,56 @@ const StudentPortal = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
+          <p className="text-white">Loading...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-900 flex">
-      {/* Left Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-800 shadow-lg transform ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-700">
+      {/* Sidebar */}
+      <div className="w-64 bg-gray-800 border-r border-gray-700">
+        {/* Header */}
+        <div className="p-4 border-b border-gray-700">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
               <AcademicCapIcon className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-white">vStudents.com</span>
+            <span className="text-white text-lg font-semibold">vStudents.com</span>
           </div>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-2 rounded-md text-gray-300 hover:text-white"
-          >
-            <XMarkIcon className="w-5 h-5" />
-          </button>
         </div>
-        
-        <nav className="mt-8 px-4">
-          {sidebarItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors duration-200 mb-1 ${
-                  activeTab === item.id
-                    ? 'bg-green-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="font-medium">{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-        
-        {/* AI Assistant Section */}
-        <div className="absolute bottom-20 left-4 right-4">
-          <div className="bg-green-600 rounded-lg p-4 text-white">
-            <div className="text-sm font-medium mb-2">Need Help?</div>
-            <div className="text-xs opacity-90 mb-3">
-              Let our AI Assistant Help You Achieve Smarter, Faster Learning and Course Management.
-            </div>
-            <button className="bg-green-500 hover:bg-green-400 text-white text-xs px-3 py-1 rounded transition-colors">
-              Try it!
+
+        {/* Navigation */}
+        <nav className="mt-4">
+          {sidebarItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`w-full flex items-center space-x-3 px-4 py-3 text-left transition-colors ${
+                activeTab === item.id 
+                  ? 'bg-green-600 text-white' 
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              }`}
+            >
+              <item.icon className="w-5 h-5" />
+              <span>{item.label}</span>
             </button>
-          </div>
-        </div>
-        
-        {/* User Profile */}
-        <div className="absolute bottom-4 left-4 right-4">
-          <div className="flex items-center space-x-3 px-4 py-3 bg-gray-700 rounded-lg">
-            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-medium">
-                {studentProfile?.name?.charAt(0) || 'S'}
-              </span>
-            </div>
-            <div className="flex-1">
-              <div className="text-sm font-medium text-white">
-                {studentProfile?.name || 'Student User'}
-              </div>
-            </div>
-            <ChevronDownIcon className="w-4 h-4 text-gray-400" />
-          </div>
-        </div>
+          ))}
+        </nav>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 lg:ml-0">
-        {/* Header */}
-        <header className="bg-gray-800 shadow-sm border-b border-gray-700">
-          <div className="flex items-center justify-between h-16 px-6">
+      <div className="flex-1 flex flex-col">
+        {/* Top Header */}
+        <header className="bg-gray-800 border-b border-gray-700 px-6 py-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-md text-gray-300 hover:text-white"
-              >
-                <Bars3Icon className="w-5 h-5" />
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-white">
-                  Students / {studentProfile?.name || 'Student Profile'}
-                </h1>
-              </div>
+              <h1 className="text-white text-xl font-semibold">
+                Students / {studentProfile?.name || 'undefined undefined'}
+              </h1>
             </div>
             <div className="flex items-center space-x-4">
               <BellIcon className="w-6 h-6 text-gray-400 hover:text-white cursor-pointer" />
@@ -893,263 +1065,146 @@ const StudentPortal = () => {
           </div>
         </header>
 
-        {/* Content */}
-        <main className="p-6 bg-gray-900 flex">
-          {/* Main Content Area */}
-          <div className="flex-1 mr-6">
-            {activeTab === 'dashboard' ? (
-              <>
-                {/* Student Profile Header */}
-                <div className="bg-gray-800 rounded-2xl p-6 mb-6">
-                  <div className="flex items-start space-x-6">
-                    <div className="w-20 h-20 bg-gray-600 rounded-full flex items-center justify-center">
-                      <span className="text-white text-2xl font-bold">
-                        {studentProfile?.name?.charAt(0) || 'S'}
+        {/* Content Area */}
+        <main className="flex-1 p-6">
+          {activeTab === 'dashboard' ? (
+            <>
+              {/* Student Profile Section */}
+              <div className="bg-gray-800 rounded-lg p-6 mb-6">
+                <div className="flex items-start space-x-6">
+                  {/* Avatar */}
+                  <div className="w-20 h-20 bg-gray-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-2xl font-bold">
+                      {studentProfile?.name?.charAt(0) || 'U'}
+                    </span>
+                  </div>
+                  
+                  {/* Profile Info */}
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <h2 className="text-white text-2xl font-bold">
+                        {studentProfile?.name || 'undefined undefined'}
+                      </h2>
+                      <span className="bg-gray-700 text-white px-3 py-1 rounded-full text-sm">
+                        Active
                       </span>
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h2 className="text-2xl font-bold text-white">
-                          {studentProfile?.name || 'Student Name'}
-                        </h2>
-                        <span className="bg-black text-white px-3 py-1 rounded-full text-sm">
-                          {studentProfile?.enrolledCourses?.[0]?.status?.charAt(0).toUpperCase() + studentProfile?.enrolledCourses?.[0]?.status?.slice(1) || 'Active'}
-                        </span>
+                    <p className="text-gray-400 mb-2">Frontend Development Student</p>
+                    <p className="text-gray-500 text-sm mb-4">📍 Location not specified</p>
+                    <div className="flex space-x-2">
+                      <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm">
+                        Online Learning
+                      </span>
+                      <span className="bg-gray-700 text-white px-3 py-1 rounded-full text-sm">
+                        Part-time
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Right Side Content */}
+                  <div className="w-80">
+                    <div className="bg-gray-800 rounded-lg p-4 mb-6">
+                      <h3 className="text-white text-lg font-semibold mb-4">Introduction Video</h3>
+                      <div className="w-full h-32 bg-gray-700 rounded-lg flex items-center justify-center mb-3">
+                        <div className="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center">
+                          <div className="w-0 h-0 border-l-4 border-l-white border-t-2 border-t-transparent border-b-2 border-b-transparent ml-1"></div>
+                        </div>
                       </div>
-                      <p className="text-gray-300 text-lg mb-2">
-                        {courses.length > 0 ? `${courses[0].category} Development Student` : 'Web Development Student'}
-                      </p>
-                      <div className="flex items-center space-x-1 text-gray-400 mb-4">
-                        <MapPinIcon className="w-4 h-4" />
-                        <span>
-                          {studentProfile?.address ? 
-                            `${studentProfile.address.country}, ${studentProfile.address.state}, ${studentProfile.address.city}` : 
-                            'Location not specified'
-                          }
-                        </span>
-                      </div>
-                      <div className="flex space-x-2">
-                        <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm">
-                          Online Learning
-                        </span>
-                        <span className="bg-black text-white px-3 py-1 rounded-full text-sm">
-                          Part-time
-                        </span>
+                      <p className="text-gray-400 text-sm text-center mb-3">Upload your introduction video</p>
+                      <button className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-600">
+                        Choose Video File
+                      </button>
+                    </div>
+
+                    <div className="bg-gray-800 rounded-lg p-4">
+                      <h3 className="text-white text-lg font-semibold mb-4">Documents</h3>
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-gray-400 text-sm mb-2">Upload your resume:</p>
+                          <button className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-600">
+                            Choose Resume File
+                          </button>
+                        </div>
+                        
+                        <div>
+                          <p className="text-gray-400 text-sm mb-3">Course Materials:</p>
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-3 p-2 bg-gray-700 rounded">
+                              <div className="w-4 h-4 bg-red-500 rounded"></div>
+                              <div className="flex-1">
+                                <span className="text-gray-300 text-sm">Student CV</span>
+                                <p className="text-gray-500 text-xs">PDF File</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-3 p-2 bg-gray-700 rounded">
+                              <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                              <div className="flex-1">
+                                <span className="text-gray-300 text-sm">Course Requirements</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Current Status Card */}
-                <div className="bg-green-600 rounded-2xl p-6 mb-6">
-                  <div className="flex items-center space-x-3">
-                    <CheckCircleIcon className="w-6 h-6 text-white" />
-                    <p className="text-white text-lg">
-                      I am currently enrolled in {courses.length} courses and actively learning new skills.
-                    </p>
-                  </div>
+              {/* Success Message */}
+              <div className="bg-green-600 text-white p-4 rounded-lg mb-6 flex items-center space-x-2">
+                <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center">
+                  <span className="text-green-600 text-sm">✓</span>
                 </div>
+                <span>I am currently enrolled in {studentProfile?.enrolledCourses || 2} courses and actively learning new skills.</span>
+              </div>
 
-                {/* Courses Section */}
+              {/* My Enrolled Courses */}
+              <div>
+                <h3 className="text-white text-2xl font-bold mb-6">My Enrolled Courses</h3>
                 <div className="space-y-4">
-                  <h3 className="text-xl font-bold text-white mb-4">My Enrolled Courses</h3>
                   {courses.map((course) => (
-                    <div key={course.id} className="bg-gray-800 rounded-2xl p-6">
-                      <div className="flex items-start space-x-4">
-                        <div className="w-12 h-12 bg-gray-600 rounded-lg flex items-center justify-center">
-                          <span className="text-white font-bold text-lg">
-                            {course.title.charAt(0)}
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="text-lg font-semibold text-white">{course.title}</h4>
-                            <span className="text-gray-400 text-sm">
-                              {course.completedLessons} of {course.totalLessons} lessons completed
-                            </span>
+                    <div key={course.id} className="bg-gray-800 rounded-lg p-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                            <span className="text-white font-bold text-lg">F</span>
                           </div>
-                          <p className="text-gray-300 text-sm mb-2">
-                            Instructor: {course.instructor} • Duration: {course.duration}
-                          </p>
-                          <div className="flex justify-between text-sm text-gray-400 mb-2">
-                              <span>Progress</span>
-                              <span>{course.progress}%</span>
-                            </div>
-                          <div className="w-full bg-gray-700 rounded-full h-2 mb-3">
-                              <div 
-                              className="bg-green-500 h-2 rounded-full transition-all duration-300" 
-                                style={{width: `${course.progress}%`}}
-                              ></div>
-                          </div>
-                          {course.nextLesson && (
+                          <div>
+                            <h4 className="text-white text-lg font-semibold">{course.title}</h4>
                             <p className="text-gray-400 text-sm">
-                              Next: {course.nextLesson}
+                              Instructor: {course.instructor} • Duration: {course.duration}
                             </p>
-                          )}
+                            <div className="mt-2">
+                              <p className="text-gray-300 text-sm mb-1">Progress</p>
+                              <div className="w-96 bg-gray-700 rounded-full h-2">
+                                <div 
+                                  className="bg-green-500 h-2 rounded-full transition-all duration-300" 
+                                  style={{width: `${course.progress}%`}}
+                                />
+                              </div>
+                              <p className="text-gray-400 text-sm mt-1">
+                                Next: {course.nextLesson}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-white text-sm mb-1">
+                            {course.completedLessons} of {course.totalLessons} lessons completed
+                          </p>
+                          <p className="text-white text-2xl font-bold">{course.progress}%</p>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </>
-            ) : (
-              renderTabContent()
-            )}
-          </div>
-
-          {/* Right Sidebar */}
-          <div className="w-80 space-y-6">
-            {/* Video Section */}
-            <div className="bg-gray-800 rounded-2xl p-6">
-              <h3 className="text-white font-semibold mb-4">Introduction Video</h3>
-              {uploadedVideo ? (
-                <div className="space-y-3">
-                  <div className="relative bg-gray-700 rounded-lg h-48 flex items-center justify-center">
-                    <video 
-                      src={URL.createObjectURL(uploadedVideo)} 
-                      controls 
-                      className="w-full h-full rounded-lg"
-                    />
-                  </div>
-                  <p className="text-sm text-green-400">✓ Video uploaded: {uploadedVideo.name}</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="relative bg-gray-700 rounded-lg h-48 flex flex-col items-center justify-center border-2 border-dashed border-gray-600">
-                    <PlayIcon className="w-12 h-12 text-gray-600 mb-2" />
-                    <p className="text-gray-400 text-sm text-center">Upload your introduction video</p>
-                  </div>
-                  <input
-                    type="file"
-                    accept="video/*"
-                    onChange={handleVideoUpload}
-                    className="hidden"
-                    id="video-upload"
-                  />
-                  <label
-                    htmlFor="video-upload"
-                    className="w-full bg-black hover:bg-gray-800 text-white py-2 px-4 rounded-lg cursor-pointer text-center block transition-colors"
-                  >
-                    Choose Video File
-                  </label>
-                </div>
-              )}
-            </div>
-
-            {/* Documents Section */}
-            <div className="bg-gray-800 rounded-2xl p-6">
-              <h3 className="text-white font-semibold mb-4">Documents</h3>
-              <div className="space-y-4">
-                {/* Resume Upload Section */}
-                <div className="border-2 border-dashed border-gray-600 rounded-lg p-4">
-                  <p className="text-gray-300 text-sm mb-3">Upload your resume:</p>
-                  {uploadedResume ? (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
-                        <span className="text-gray-300 text-sm">📄 {uploadedResume.name}</span>
-                        <span className="text-green-400 text-xs">✓ Uploaded</span>
-                      </div>
-                      <button
-                        onClick={handleSubmitDocuments}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors"
-                      >
-                        Submit Resume
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <input
-                        type="file"
-                        accept=".pdf,.doc,.docx"
-                        onChange={handleResumeUpload}
-                        className="hidden"
-                        id="resume-upload"
-                      />
-                      <label
-                        htmlFor="resume-upload"
-                        className="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg cursor-pointer text-center block transition-colors"
-                      >
-                        Choose Resume File
-                      </label>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Course Materials */}
-                <div className="space-y-3">
-                  <p className="text-gray-400 text-sm">Course Materials:</p>
-                  <div className="flex items-center space-x-3 p-3 bg-gray-700 rounded-lg">
-                    <DocumentTextIcon className="w-6 h-6 text-red-500" />
-                    <div>
-                      <p className="text-white text-sm font-medium">Student CV</p>
-                      <p className="text-gray-400 text-xs">PDF File</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 bg-gray-700 rounded-lg">
-                    <DocumentTextIcon className="w-6 h-6 text-black" />
-                    <div>
-                      <p className="text-white text-sm font-medium">Course Requirements</p>
-                      <p className="text-gray-400 text-xs">DOCX File</p>
-                    </div>
-                  </div>
-                </div>
               </div>
-            </div>
-
-            {/* Upcoming Classes */}
-            <div className="bg-gray-800 rounded-2xl p-6">
-              <h3 className="text-white font-semibold mb-4">Upcoming Classes</h3>
-              <div className="space-y-3">
-                <div className="p-3 bg-gray-700 rounded-lg">
-                  <div className="text-green-400 font-medium text-sm">Tuesday 22</div>
-                  <div className="text-white text-sm">11:00 AM - 12:00 PM</div>
-                  <div className="text-gray-400 text-sm">Initial Assessment</div>
-                </div>
-                <div className="p-3 bg-gray-700 rounded-lg">
-                  <div className="text-green-400 font-medium text-sm">Thursday 31</div>
-                  <div className="text-white text-sm">11:00 AM - 12:00 PM</div>
-                  <div className="text-gray-400 text-sm">Skills Evaluation</div>
-                </div>
-              </div>
-            </div>
-
-            {/* History Section */}
-            <div className="bg-gray-800 rounded-2xl p-6">
-              <h3 className="text-white font-semibold mb-4">History</h3>
-              <div className="text-sm text-gray-400">
-                <p>Last 3 updates</p>
-                <p className="mt-2">Status has changed: Active 17 Feb, 2024</p>
-              </div>
-            </div>
-          </div>
+            </>
+          ) : (
+            renderTabContent()
+          )}
         </main>
       </div>
-
-      {/* Enrollment Modal */}
-      {showEnrollModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-4">
-            <h3 className="text-xl font-bold text-white mb-4">Confirm Enrollment</h3>
-            <p className="text-gray-300 mb-6">
-              Are you sure you want to enroll in <span className="font-semibold text-white">{selectedCourse}</span>?
-            </p>
-            <div className="flex space-x-4">
-              <button
-                onClick={confirmEnrollment}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-              >
-                Confirm & Pay
-              </button>
-              <button
-                onClick={() => setShowEnrollModal(false)}
-                className="flex-1 bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

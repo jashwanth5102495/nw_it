@@ -19,7 +19,12 @@ import AdminPanel from './components/AdminPanel';
 import ProjectTracking from './components/ProjectTracking';
 import CourseLearning from './components/CourseLearning';
 import CourseLearningIntermediate from './components/CourseLearningIntermediate';
-import InteractiveCodeDemo from './pages/InteractiveCodeDemo';
+import CourseLearningJavaScript from './components/CourseLearningJavaScript';
+import CourseLearningAdvanced from './components/CourseLearningAdvanced';
+import CourseLearningDevOpsBeginner from './components/CourseLearningDevOpsBeginner';
+import CourseLearningDevOpsAdvanced from './components/CourseLearningDevOpsAdvanced';
+import CourseLearningMobileAdvanced from './components/CourseLearningMobileAdvanced';
+import CourseLearningBrowserExtensions from './components/CourseLearningBrowserExtensions';
 
 function AppInner() {
   const location = useLocation();
@@ -61,7 +66,6 @@ function AppInner() {
           <Route path="/course-learning" element={<CourseLearning />} />
           <Route path="/course-learning-intermediate/:courseId/:moduleId/:lessonId" element={<CourseLearningIntermediate />} />
           <Route path="/course-learning-intermediate" element={<CourseLearningIntermediate />} />
-          <Route path="/interactive-demo" element={<><Header /><InteractiveCodeDemo /></>} />
 
         </Routes>
       </div>

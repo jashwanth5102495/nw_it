@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import Header from './Header';
+import { useTheme } from '../contexts/ThemeContext';
+import ThemeToggle from './ThemeToggle';
 
 interface CourseModule {
   title: string;
@@ -23,14 +25,62 @@ interface Course {
   duration: string;
   projects: number;
   modules: CourseModule[];
+  image: string;
+  rating: number;
+  students: number;
+  instructor: string;
 }
 
 const Courses = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedLevel, setSelectedLevel] = useState<string>('all');
+  const [selectedDuration, setSelectedDuration] = useState<string>('all');
+  const [priceRange, setPriceRange] = useState<string>('all');
+  const [showFilters, setShowFilters] = useState<boolean>(false);
 
   const courses: Course[] = [
+    {
+      id: 'ai-tools',
+      title: 'A.I Tools Mastery',
+      category: 'ai',
+      level: 'intermediate',
+      description: 'Master the latest AI tools including ChatGPT, Claude, Midjourney, and more. Learn to leverage AI for productivity, creativity, and business growth.',
+      technologies: ['ChatGPT', 'Claude', 'Midjourney', 'GitHub Copilot', 'Notion AI'],
+      originalPrice: 15000,
+      discountPercent: 20,
+      discountCode: 'AITOOLS20',
+      finalPrice: 12000,
+      duration: '6 weeks',
+      projects: 8,
+      image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=250&fit=crop&crop=center',
+      rating: 4.9,
+      students: 2847,
+      instructor: 'Dr. Sarah Chen',
+      modules: [
+        {
+          title: 'AI Fundamentals',
+          duration: '1 week',
+          topics: ['Understanding AI', 'AI Ethics', 'Tool Selection', 'Best Practices']
+        },
+        {
+          title: 'Text Generation AI',
+          duration: '2 weeks',
+          topics: ['ChatGPT Mastery', 'Claude Advanced', 'Prompt Engineering', 'Content Creation']
+        },
+        {
+          title: 'Visual AI Tools',
+          duration: '2 weeks',
+          topics: ['Midjourney', 'DALL-E', 'Stable Diffusion', 'Image Enhancement']
+        },
+        {
+          title: 'AI for Business',
+          duration: '1 week',
+          topics: ['Workflow Automation', 'AI Integration', 'ROI Measurement', 'Future Trends']
+        }
+      ]
+    },
     {
       id: 'frontend-beginner',
       title: 'Frontend Development - Beginner',
@@ -44,6 +94,10 @@ const Courses = () => {
       finalPrice: 1200,
       duration: '6 weeks',
       projects: 3,
+      image: 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=250&fit=crop&crop=center',
+      rating: 4.6,
+      students: 12543,
+      instructor: 'John Smith',
       modules: [
         {
           title: 'HTML Fundamentals',
@@ -75,6 +129,10 @@ const Courses = () => {
       finalPrice: 2000,
       duration: '8 weeks',
       projects: 5,
+      image: 'https://images.unsplash.com/photo-1593720213428-28a5b9e94613?w=400&h=250&fit=crop&crop=center',
+      rating: 4.7,
+      students: 8932,
+      instructor: 'Emily Johnson',
       modules: [
         {
           title: 'Advanced CSS Techniques',
@@ -111,6 +169,10 @@ const Courses = () => {
       finalPrice: 2500,
       duration: '10 weeks',
       projects: 7,
+      image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=250&fit=crop&crop=center',
+      rating: 4.8,
+      students: 6421,
+      instructor: 'Michael Chen',
       modules: [
         {
           title: 'Modern Framework Mastery',
@@ -147,6 +209,10 @@ const Courses = () => {
       finalPrice: 1000,
       duration: '8 weeks',
       projects: 4,
+      image: 'https://images.unsplash.com/photo-1618477388954-7852f32655ec?w=400&h=250&fit=crop&crop=center',
+      rating: 4.5,
+      students: 9876,
+      instructor: 'David Wilson',
       modules: [
         {
           title: 'DevOps Fundamentals',
@@ -183,6 +249,10 @@ const Courses = () => {
       finalPrice: 1400,
       duration: '12 weeks',
       projects: 6,
+      image: 'https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?w=400&h=250&fit=crop&crop=center',
+      rating: 4.9,
+      students: 5432,
+      instructor: 'Lisa Rodriguez',
       modules: [
         {
           title: 'Container Orchestration',
@@ -219,6 +289,10 @@ const Courses = () => {
       finalPrice: 3500,
       duration: '14 weeks',
       projects: 5,
+      image: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=250&fit=crop&crop=center',
+      rating: 4.7,
+      students: 4321,
+      instructor: 'Alex Thompson',
       modules: [
         {
           title: 'React Native Fundamentals',
@@ -260,6 +334,10 @@ const Courses = () => {
       finalPrice: 1500,
       duration: '8 weeks',
       projects: 4,
+      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=250&fit=crop&crop=center',
+      rating: 4.6,
+      students: 3210,
+      instructor: 'Rachel Green',
       modules: [
         {
           title: 'Extension Fundamentals',
@@ -286,12 +364,13 @@ const Courses = () => {
   ];
 
   const categories = [
-    { id: 'all', name: 'All Courses' },
-    { id: 'frontend', name: 'Frontend' },
-    { id: 'backend', name: 'Backend' },
-    { id: 'fullstack', name: 'Full Stack' },
-    { id: 'mobile', name: 'Mobile' },
-    { id: 'devops', name: 'DevOps' }
+    { id: 'all', name: 'All Courses', count: courses.length },
+    { id: 'ai', name: 'Artificial Intelligence', count: courses.filter(c => c.category === 'ai').length },
+    { id: 'frontend', name: 'Frontend Development', count: courses.filter(c => c.category === 'frontend').length },
+    { id: 'backend', name: 'Backend Development', count: courses.filter(c => c.category === 'backend').length },
+    { id: 'fullstack', name: 'Full Stack', count: courses.filter(c => c.category === 'fullstack').length },
+    { id: 'mobile', name: 'Mobile Development', count: courses.filter(c => c.category === 'mobile').length },
+    { id: 'devops', name: 'DevOps & Cloud', count: courses.filter(c => c.category === 'devops').length }
   ];
 
   const levels = [
@@ -301,235 +380,409 @@ const Courses = () => {
     { id: 'advanced', name: 'Advanced' }
   ];
 
+  const durations = [
+    { id: 'all', name: 'Any Duration' },
+    { id: 'short', name: '1-6 weeks' },
+    { id: 'medium', name: '7-12 weeks' },
+    { id: 'long', name: '13+ weeks' }
+  ];
+
+  const priceRanges = [
+    { id: 'all', name: 'Any Price' },
+    { id: 'free', name: 'Free' },
+    { id: 'low', name: 'Under ₹2,000' },
+    { id: 'medium', name: '₹2,000 - ₹5,000' },
+    { id: 'high', name: 'Above ₹5,000' }
+  ];
+
   const filteredCourses = courses.filter(course => {
     const categoryMatch = selectedCategory === 'all' || course.category === selectedCategory;
     const levelMatch = selectedLevel === 'all' || course.level === selectedLevel;
-    return categoryMatch && levelMatch;
+    
+    let durationMatch = true;
+    if (selectedDuration === 'short') {
+      const weeks = parseInt(course.duration.split(' ')[0]);
+      durationMatch = weeks <= 6;
+    } else if (selectedDuration === 'medium') {
+      const weeks = parseInt(course.duration.split(' ')[0]);
+      durationMatch = weeks >= 7 && weeks <= 12;
+    } else if (selectedDuration === 'long') {
+      const weeks = parseInt(course.duration.split(' ')[0]);
+      durationMatch = weeks >= 13;
+    }
+
+    let priceMatch = true;
+    if (priceRange === 'free') {
+      priceMatch = course.finalPrice === 0;
+    } else if (priceRange === 'low') {
+      priceMatch = course.finalPrice < 2000;
+    } else if (priceRange === 'medium') {
+      priceMatch = course.finalPrice >= 2000 && course.finalPrice <= 5000;
+    } else if (priceRange === 'high') {
+      priceMatch = course.finalPrice > 5000;
+    }
+
+    return categoryMatch && levelMatch && durationMatch && priceMatch;
   });
 
   const handleEnrollNow = (course: Course) => {
     navigate(`/student-registration/${course.id}`, { state: { selectedCourse: course } });
   };
 
+  const clearAllFilters = () => {
+    setSelectedCategory('all');
+    setSelectedLevel('all');
+    setSelectedDuration('all');
+    setPriceRange('all');
+  };
+
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className={`min-h-screen transition-colors duration-300 ${
+      theme === 'dark' 
+        ? 'bg-black text-white' 
+        : 'bg-gray-50 text-gray-900'
+    }`}>
       <Header hideDock={true} />
       
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <motion.h1
-            className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            Master the Future of Technology
-          </motion.h1>
-          <motion.p
-            className="text-xl text-gray-300 max-w-3xl mx-auto mb-12"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            Transform your career with industry-leading courses designed by experts. 
-            Learn cutting-edge technologies and build real-world projects.
-          </motion.p>
-
-          {/* Filters */}
-          <div className="flex flex-col lg:flex-row gap-8 justify-center items-center mb-16">
-            {/* Category Filter */}
-            <div className="flex flex-col items-center">
-              <h3 className="text-lg font-semibold mb-4 text-gray-300">Category</h3>
-              <div className="flex flex-wrap gap-3 justify-center">
-                {categories.map((category) => (
-                  <motion.button
-                    key={category.id}
-                    onClick={() => setSelectedCategory(category.id)}
-                    className={`relative px-6 py-3 rounded-full border-2 font-medium transition-all duration-300 ${
-                      selectedCategory === category.id
-                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 border-transparent text-white shadow-lg shadow-blue-500/25'
-                        : 'border-gray-600 text-gray-300 hover:border-blue-500/50 hover:bg-blue-500/10'
-                    }`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    {category.name}
-                    {selectedCategory === category.id && (
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full"
-                        layoutId="categoryHighlight"
-                      />
-                    )}
-                  </motion.button>
-                ))}
-              </div>
+      {/* Header Section */}
+      <div className={`border-b pt-20 transition-colors duration-300 ${
+        theme === 'dark' 
+          ? 'bg-gray-900 border-gray-700' 
+          : 'bg-white border-gray-200'
+      }`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className={`text-3xl font-bold ${
+                theme === 'dark' ? 'text-white' : 'text-gray-900'
+              }`}>Courses</h1>
+              <p className={`mt-2 ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+              }`}>{filteredCourses.length} results for all courses</p>
             </div>
-
-            {/* Level Filter */}
-            <div className="flex flex-col items-center">
-              <h3 className="text-lg font-semibold mb-4 text-gray-300">Level</h3>
-              <div className="flex flex-wrap gap-3 justify-center">
-                {levels.map((level) => (
-                  <motion.button
-                    key={level.id}
-                    onClick={() => setSelectedLevel(level.id)}
-                    className={`relative px-8 py-3 rounded-full border-2 font-medium transition-all duration-300 ${
-                      selectedLevel === level.id
-                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 border-transparent text-white shadow-lg shadow-purple-500/25'
-                        : 'border-gray-600 text-gray-300 hover:border-purple-500/50 hover:bg-purple-500/10'
-                    }`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    {level.name}
-                    {selectedLevel === level.id && (
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-full"
-                        layoutId="levelHighlight"
-                      />
-                    )}
-                  </motion.button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Courses Grid */}
-      <section className="px-4 sm:px-6 lg:px-8 pb-24">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <motion.h2
-              className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              Choose Your Learning Path
-            </motion.h2>
-            <motion.p
-              className="text-gray-400 max-w-2xl mx-auto"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-            >
-              {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''} available in your selected category
-            </motion.p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-            {filteredCourses.map((course, index) => (
-              <motion.div
-                key={course.id}
-                className="group relative bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-sm border border-gray-700/50 rounded-3xl p-8 hover:border-blue-500/50 transition-all duration-500 overflow-hidden"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                whileHover={{ y: -8, scale: 1.02 }}
+            <div className="flex items-center gap-4">
+              <ThemeToggle />
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`lg:hidden px-4 py-2 rounded-lg flex items-center gap-2 transition-colors duration-200 ${
+                  theme === 'dark'
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                
-                <div className="relative z-10 mb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider ${
-                      course.level === 'beginner' ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-400 border border-green-500/30' :
-                      course.level === 'intermediate' ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border border-yellow-500/30' :
-                      'bg-gradient-to-r from-red-500/20 to-pink-500/20 text-red-400 border border-red-500/30'
-                    }`}>
-                      {course.level}
-                    </span>
-                    <div className="flex items-center gap-2 text-xs text-gray-400">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      {course.duration}
-                    </div>
-                  </div>
-                  
-                  <h3 className="text-2xl font-bold mb-3 text-white group-hover:text-blue-100 transition-colors duration-300">
-                    {course.title}
-                  </h3>
-                  <p className="text-gray-400 text-sm leading-relaxed mb-6">{course.description}</p>
-                </div>
-
-                <div className="relative z-10 mb-6">
-                  <div className="flex flex-wrap gap-2">
-                    {course.technologies.slice(0, 4).map((tech) => (
-                      <span key={tech} className="px-3 py-1 bg-blue-500/10 text-blue-300 rounded-lg text-xs font-medium border border-blue-500/20">
-                        {tech}
-                      </span>
-                    ))}
-                    {course.technologies.length > 4 && (
-                      <span className="px-3 py-1 bg-gray-500/10 text-gray-400 rounded-lg text-xs font-medium border border-gray-500/20">
-                        +{course.technologies.length - 4} more
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="relative z-10 flex items-center justify-between mb-6 p-4 bg-gray-800/50 rounded-xl border border-gray-700/30">
-                  <div className="flex items-center gap-2 text-sm text-gray-300">
-                    <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                    </svg>
-                    <span>{course.projects} Projects</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-300">
-                    <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>Certificate</span>
-                  </div>
-                </div>
-
-                <div className="relative z-10 mb-8">
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="text-3xl font-bold text-white">₹{course.finalPrice.toLocaleString()}</span>
-                    <span className="text-lg text-gray-500 line-through">₹{course.originalPrice.toLocaleString()}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="inline-flex items-center px-3 py-1 bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-400 rounded-full text-sm font-semibold border border-green-500/30">
-                      🎉 {course.discountPercent}% OFF
-                    </span>
-                    <div className="text-xs text-gray-400">
-                      Code: <span className="text-yellow-400 font-mono bg-yellow-400/10 px-2 py-1 rounded">{course.discountCode}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <motion.button
-                  onClick={() => handleEnrollNow(course)}
-                  className="relative z-10 w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    Buy Now
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </span>
-                </motion.button>
-              </motion.div>
-            ))}
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                Filters
+              </button>
+            </div>
           </div>
-          
-          {filteredCourses.length === 0 && (
-            <motion.div
-              className="text-center py-16"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6 }}
-            >
-              <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-2xl font-bold text-gray-300 mb-2">No courses found</h3>
-              <p className="text-gray-500">Try adjusting your filters to see more courses.</p>
-            </motion.div>
-          )}
         </div>
-      </section>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex gap-8">
+          {/* Left Sidebar - Filters */}
+          <div className={`${showFilters ? 'block' : 'hidden'} lg:block w-full lg:w-80 space-y-6`}>
+            <div className={`rounded-lg border p-6 transition-colors duration-300 ${
+              theme === 'dark' 
+                ? 'bg-gray-900 border-gray-700' 
+                : 'bg-white border-gray-200'
+            }`}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className={`text-lg font-semibold ${
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                }`}>Filters</h3>
+                <button
+                  onClick={clearAllFilters}
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200"
+                >
+                  Clear all
+                </button>
+              </div>
+
+              {/* Categories */}
+              <div className="mb-6">
+                <h4 className={`font-medium mb-3 ${
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                }`}>Subject</h4>
+                <div className="space-y-2">
+                  {categories.map((category) => (
+                    <label key={category.id} className="flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="category"
+                        value={category.id}
+                        checked={selectedCategory === category.id}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className={`w-4 h-4 text-blue-600 focus:ring-blue-500 ${
+                          theme === 'dark' 
+                            ? 'border-gray-600 bg-gray-800' 
+                            : 'border-gray-300 bg-white'
+                        }`}
+                      />
+                      <span className={`ml-3 text-sm flex-1 ${
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                      }`}>{category.name}</span>
+                      <span className={`text-xs ${
+                        theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                      }`}>({category.count})</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Level */}
+              <div className="mb-6">
+                <h4 className={`font-medium mb-3 ${
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                }`}>Level</h4>
+                <div className="space-y-2">
+                  {levels.map((level) => (
+                    <label key={level.id} className="flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="level"
+                        value={level.id}
+                        checked={selectedLevel === level.id}
+                        onChange={(e) => setSelectedLevel(e.target.value)}
+                        className={`w-4 h-4 text-blue-600 focus:ring-blue-500 ${
+                          theme === 'dark' 
+                            ? 'border-gray-600 bg-gray-800' 
+                            : 'border-gray-300 bg-white'
+                        }`}
+                      />
+                      <span className={`ml-3 text-sm ${
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                      }`}>{level.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Duration */}
+              <div className="mb-6">
+                <h4 className={`font-medium mb-3 ${
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                }`}>Duration</h4>
+                <div className="space-y-2">
+                  {durations.map((duration) => (
+                    <label key={duration.id} className="flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="duration"
+                        value={duration.id}
+                        checked={selectedDuration === duration.id}
+                        onChange={(e) => setSelectedDuration(e.target.value)}
+                        className={`w-4 h-4 text-blue-600 focus:ring-blue-500 ${
+                          theme === 'dark' 
+                            ? 'border-gray-600 bg-gray-800' 
+                            : 'border-gray-300 bg-white'
+                        }`}
+                      />
+                      <span className={`ml-3 text-sm ${
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                      }`}>{duration.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Price Range */}
+              <div>
+                <h4 className={`font-medium mb-3 ${
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                }`}>Price</h4>
+                <div className="space-y-2">
+                  {priceRanges.map((range) => (
+                    <label key={range.id} className="flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="price"
+                        value={range.id}
+                        checked={priceRange === range.id}
+                        onChange={(e) => setPriceRange(e.target.value)}
+                        className={`w-4 h-4 text-blue-600 focus:ring-blue-500 ${
+                          theme === 'dark' 
+                            ? 'border-gray-600 bg-gray-800' 
+                            : 'border-gray-300 bg-white'
+                        }`}
+                      />
+                      <span className={`ml-3 text-sm ${
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                      }`}>{range.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Side - Courses Grid */}
+          <div className="flex-1">
+            {filteredCourses.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="text-6xl mb-4">🔍</div>
+                <h3 className={`text-2xl font-bold mb-2 ${
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                }`}>No courses found</h3>
+                <p className={`${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                }`}>Try adjusting your filters to see more courses.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredCourses.map((course, index) => (
+                  <motion.div
+                    key={course.id}
+                    className={`rounded-lg border overflow-hidden hover:shadow-lg transition-all duration-300 ${
+                      theme === 'dark' 
+                        ? 'bg-gray-900 border-gray-700 hover:shadow-gray-900/20' 
+                        : 'bg-white border-gray-200 hover:shadow-gray-200/50'
+                    }`}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                  >
+                    {/* Course Image */}
+                    <div className="relative h-48 bg-gray-200">
+                      <img
+                        src={course.image}
+                        alt={course.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-3 left-3">
+                        <span className={`px-2 py-1 rounded text-xs font-semibold text-white ${
+                          course.level === 'beginner' ? 'bg-green-500' :
+                          course.level === 'intermediate' ? 'bg-yellow-500' :
+                          'bg-red-500'
+                        }`}>
+                          {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Course Content */}
+                    <div className="p-6">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center">
+                          {[...Array(5)].map((_, i) => (
+                            <svg
+                              key={i}
+                              className={`w-4 h-4 ${i < Math.floor(course.rating) ? 'text-yellow-400' : 'text-gray-300'}`}
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          ))}
+                        </div>
+                        <span className={`text-sm ${
+                          theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                        }`}>
+                          {course.rating} ({course.students.toLocaleString()} students)
+                        </span>
+                      </div>
+
+                      <h3 className={`text-lg font-semibold mb-2 line-clamp-2 ${
+                        theme === 'dark' ? 'text-white' : 'text-gray-900'
+                      }`}>
+                        {course.title}
+                      </h3>
+                      
+                      <p className={`text-sm mb-3 line-clamp-2 ${
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                      }`}>
+                        {course.description}
+                      </p>
+
+                      <p className={`text-sm mb-4 ${
+                        theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                      }`}>
+                        By {course.instructor}
+                      </p>
+
+                      <div className={`flex items-center gap-2 mb-4 text-sm ${
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                      }`}>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>{course.duration}</span>
+                        <span>•</span>
+                        <span>{course.projects} projects</span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-1 mb-4">
+                        {course.technologies.slice(0, 3).map((tech) => (
+                          <span
+                            key={tech}
+                            className={`px-2 py-1 rounded text-xs ${
+                              theme === 'dark' 
+                                ? 'bg-gray-800 text-gray-300' 
+                                : 'bg-gray-100 text-gray-700'
+                            }`}
+                          >
+                            {tech}
+                          </span>
+                        ))}
+                        {course.technologies.length > 3 && (
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            theme === 'dark' 
+                              ? 'bg-gray-800 text-gray-300' 
+                              : 'bg-gray-100 text-gray-700'
+                          }`}>
+                            +{course.technologies.length - 3} more
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-2xl font-bold ${
+                            theme === 'dark' ? 'text-white' : 'text-gray-900'
+                          }`}>
+                            ₹{course.finalPrice.toLocaleString()}
+                          </span>
+                          {course.discountPercent > 0 && (
+                            <span className={`text-sm line-through ${
+                              theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                            }`}>
+                              ₹{course.originalPrice.toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                        {course.discountPercent > 0 && (
+                          <span className={`text-xs font-semibold px-2 py-1 rounded ${
+                            theme === 'dark' 
+                              ? 'bg-green-900 text-green-300' 
+                              : 'bg-green-100 text-green-800'
+                          }`}>
+                            {course.discountPercent}% OFF
+                          </span>
+                        )}
+                      </div>
+
+                      <motion.button
+                        onClick={() => handleEnrollNow(course)}
+                        className={`w-full mt-4 py-3 rounded-lg font-semibold transition-colors duration-200 ${
+                          theme === 'dark'
+                            ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                            : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        }`}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        Enroll Now
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import Header from './Header';
-import { ArrowLeft, Play, Book, Code, CheckCircle, XCircle, Lightbulb, Clock, Award, Users, Star, Monitor, Send, Sun, Moon, RotateCcw } from 'lucide-react';
+import VideoPlaceholder from './VideoPlaceholder';
+import ThemeToggle from './ThemeToggle';
+import { ArrowLeft, Play, Book, Code, CheckCircle, XCircle, Lightbulb, Clock, Award, Users, Star, Monitor, Send, Sun, Moon, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Lesson {
   id: string;
@@ -224,6 +226,40 @@ window.addEventListener('load', addInteractivity);`
     if (fileContents[fileName]) {
       setCode(fileContents[fileName]);
     }
+  };
+
+  // Function to process content and replace video placeholders
+  const processContent = (content: string) => {
+    // Replace inline video placeholders with a marker
+    const videoPlaceholderRegex = /<div style="margin-bottom: 20px; text-align: center;">[\s\S]*?<div style="width: 100%; max-width: 800px; height: 400px;[^>]*>[\s\S]*?<\/div>[\s\S]*?<p style="margin-top: 10px; color: #666; font-size: 14px;">Video explanation coming soon - stay tuned!<\/p>[\s\S]*?<\/div>/g;
+    
+    return content.replace(videoPlaceholderRegex, '[VIDEO_PLACEHOLDER]');
+  };
+
+  // Function to render content with video placeholders
+  const renderContentWithVideos = (content: string) => {
+    const processedContent = processContent(content);
+    const parts = processedContent.split('[VIDEO_PLACEHOLDER]');
+    
+    const elements = [];
+    for (let i = 0; i < parts.length; i++) {
+      if (parts[i]) {
+        elements.push(
+          <div key={`content-${i}`} dangerouslySetInnerHTML={{ __html: parts[i] }} />
+        );
+      }
+      if (i < parts.length - 1) {
+        elements.push(
+          <VideoPlaceholder 
+            key={`video-${i}`} 
+            title="📹 Video Explanation Coming Soon"
+            subtitle="Video explanation coming soon - stay tuned!"
+          />
+        );
+      }
+    }
+    
+    return elements;
   };
 
   // Complete Frontend Development Beginner Course - Module-based
@@ -2582,8 +2618,10 @@ body {
           ]
         }
       ]
-        },
-        {
+    },
+    {
+      id: 'portfolio-project',
+      title: 'Portfolio Project',
       lessons: [
         {
           id: 'portfolio-planning',
@@ -7569,7 +7607,7 @@ app.listen(PORT, () => {
           module.lessons.forEach(lesson => {
             const lessonExercises = lesson.exercises;
             const completedInLesson = lessonExercises.filter(ex => 
-              newSubmittedExercises.has(ex.id)
+              newSubmittedExercises.has(ex.id || '')
             ).length;
             const lessonProgressPercent = Math.round((completedInLesson / lessonExercises.length) * 100);
             lessonProgress[lesson.id] = lessonProgressPercent;
@@ -7639,72 +7677,83 @@ app.listen(PORT, () => {
       {/* Top Navigation Bar */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 pt-4 flex-shrink-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => navigate('/student-portal')}
-                className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-              >
-                <ArrowLeft className="h-5 w-5" />
-                <span className="font-medium">Back to Dashboard</span>
-              </button>
-              <div className="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between py-4 gap-4">
+             <div className="flex items-center space-x-2 lg:space-x-4">
+               <button
+                 onClick={() => setSidebarOpen(!sidebarOpen)}
+                 className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                 title="Toggle sidebar"
+               >
+                 <Book className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+               </button>
+               <button
+                 onClick={() => navigate('/student-portal')}
+                 className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+               >
+                 <ArrowLeft className="h-5 w-5 flex-shrink-0" />
+                 <span className="font-medium hidden sm:inline">Back to Dashboard</span>
+                 <span className="font-medium sm:hidden">Back</span>
+               </button>
+              <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 hidden sm:block"></div>
+              <div className="flex items-center space-x-2 lg:space-x-3">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Code className="h-4 w-4 text-white" />
                 </div>
-                <div>
-                  <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <div className="min-w-0">
+                  <h1 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white truncate">
                     Frontend Development - Beginner
                   </h1>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Module-based course</p>
+                  <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400">Module-based course</p>
                 </div>
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
-              {/* Theme Toggle Button */}
-              <button
-                onClick={toggleTheme}
-                className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 flex items-center gap-2"
-                title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-              >
-                {theme === 'dark' ? (
-                  <Sun className="h-4 w-4 text-yellow-500" />
-                ) : (
-                  <Moon className="h-4 w-4 text-blue-600" />
-                )}
-              </button>
+            <div className="flex items-center space-x-2 lg:space-x-4">
+              {/* Theme Toggle */}
+              <ThemeToggle size="sm" />
               
-              <div className="text-right">
+              <div className="text-right hidden md:block">
                 <div className="text-sm font-medium text-gray-900 dark:text-white">Progress</div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">Module 2 of 3 • 33% Complete</div>
               </div>
-              <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div className="bg-blue-600 h-2 rounded-full" style={{width: '33%'}}></div>
+              <div className="w-24 lg:w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div className="bg-blue-600 h-2 rounded-full transition-all duration-300" style={{width: '33%'}}></div>
               </div>
             </div>
           </div>
         </div>
       </div>
       
-      <div className="flex max-w-7xl mx-auto flex-1 overflow-hidden">
+      <div className="flex max-w-7xl mx-auto flex-1 overflow-hidden relative">
+        {/* Mobile Sidebar Overlay */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+        
         {/* Sidebar Navigation */}
-        <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-full overflow-y-auto">
-          <div className="p-6">
+        <div className={`${sidebarOpen ? 'w-80' : 'w-16'} bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-full overflow-y-auto transition-all duration-300 flex flex-col ${sidebarOpen ? 'fixed lg:relative z-50 lg:z-auto' : 'relative'} lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+          <div className="p-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Course Content</h2>
+              {sidebarOpen && <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Course Content</h2>}
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ml-auto"
+                title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
               >
-                <Book className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                {sidebarOpen ? (
+                  <ChevronLeft className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                )}
               </button>
             </div>
             
             {/* Module Navigation */}
             <div className="mb-6">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Course Modules</h3>
+              {sidebarOpen && <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Course Modules</h3>}
               <div className="space-y-2 mb-4">
                 {courseModules.map((module, index) => (
                   <button
@@ -7715,26 +7764,29 @@ app.listen(PORT, () => {
                         navigate(`/course-learning/${courseId}/${module.id}/${firstLesson.id}`);
                       }
                     }}
-                    className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${
+                    className={`w-full text-left ${sidebarOpen ? 'p-3' : 'p-2'} rounded-lg transition-all duration-200 ${
                       module.id === moduleId
                         ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 text-blue-900 dark:text-blue-100'
                         : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300 border border-transparent'
                     }`}
+                    title={!sidebarOpen ? module.title : undefined}
                   >
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                    <div className={`flex items-center ${sidebarOpen ? 'space-x-3' : 'justify-center'}`}>
+                      <div className={`${sidebarOpen ? 'w-6 h-6' : 'w-8 h-8'} rounded-full flex items-center justify-center text-xs font-medium ${
                         module.id === moduleId
                           ? 'bg-blue-600 text-white'
                           : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
                       }`}>
                         {index + 1}
                       </div>
-                      <div className="flex-1">
-                        <div className="text-sm font-medium">{module.title}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {module.lessons.length} lessons
+                      {sidebarOpen && (
+                        <div className="flex-1">
+                          <div className="text-sm font-medium">{module.title}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {module.lessons.length} lessons
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </button>
                 ))}
@@ -7742,34 +7794,39 @@ app.listen(PORT, () => {
             </div>
             
             {/* Current Module Lessons */}
-            <div className="mb-6">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Current Module: {currentModule.title}</h3>
-            </div>
+            {sidebarOpen && (
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Current Module: {currentModule.title}</h3>
+              </div>
+            )}
             
-            <div className="space-y-2">
+            <div className="space-y-2 flex-1">
               {currentModule.lessons.map((lesson, index) => (
                 <button
                   key={lesson.id}
                   onClick={() => navigate(`/course-learning/${courseId}/${moduleId}/${lesson.id}`)}
-                  className={`w-full text-left p-4 rounded-lg transition-all duration-200 ${
+                  className={`w-full text-left ${sidebarOpen ? 'p-4' : 'p-2'} rounded-lg transition-all duration-200 ${
                     lesson.id === lessonId 
                       ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-600 text-blue-900 dark:text-blue-100' 
                       : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300'
                   }`}
+                  title={!sidebarOpen ? lesson.title : undefined}
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                  <div className={`flex items-center ${sidebarOpen ? 'space-x-3' : 'justify-center'}`}>
+                    <div className={`${sidebarOpen ? 'w-8 h-8' : 'w-6 h-6'} rounded-full flex items-center justify-center text-sm font-medium ${
                       lesson.id === lessonId
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
                     }`}>
                       {index + 1}
                     </div>
-                    <div className="flex-1">
-                      <div className="text-sm font-medium">{lesson.title}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">5 min</div>
-                    </div>
-                    {lesson.id === lessonId && (
+                    {sidebarOpen && (
+                      <div className="flex-1">
+                        <div className="text-sm font-medium">{lesson.title}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">5 min</div>
+                      </div>
+                    )}
+                    {sidebarOpen && lesson.id === lessonId && (
                       <Play className="h-4 w-4 text-blue-600" />
                     )}
                   </div>
@@ -7873,39 +7930,39 @@ app.listen(PORT, () => {
           )}
 
           {/* Left Panel - Content */}
-          <div className={`${showFileExplorer ? 'w-1/3' : 'w-1/2'} border-r border-gray-200 dark:border-gray-700 flex flex-col bg-white dark:bg-gray-800 h-full transition-all duration-300`}>
-            <div className="border-b border-gray-200 dark:border-gray-700 p-6">
+          <div className={`${showFileExplorer ? 'w-1/3' : 'w-1/2'} border-r border-gray-200 dark:border-gray-700 flex flex-col bg-white dark:bg-gray-800 h-full transition-all duration-300 min-w-0`}>
+            <div className="border-b border-gray-200 dark:border-gray-700 p-4 lg:p-6">
               <div className="flex space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
                 <button
                   onClick={() => setActiveTab('theory')}
-                  className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  className={`flex-1 px-2 lg:px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                     activeTab === 'theory'
                       ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
                       : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                   }`}
                 >
-                  <span className="flex items-center justify-center space-x-2">
-                    <Book className="h-4 w-4" />
-                    <span>Content</span>
+                  <span className="flex items-center justify-center space-x-1 lg:space-x-2">
+                    <Book className="h-4 w-4 flex-shrink-0" />
+                    <span className="hidden sm:inline">Content</span>
                   </span>
                 </button>
                 <button
                   onClick={() => setActiveTab('html')}
-                  className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  className={`flex-1 px-2 lg:px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                     currentExerciseId
                       ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
                       : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                   }`}
                 >
-                  <span className="flex items-center justify-center space-x-2">
-                    <Code className="h-4 w-4" />
-                    <span>Exercise</span>
+                  <span className="flex items-center justify-center space-x-1 lg:space-x-2">
+                    <Code className="h-4 w-4 flex-shrink-0" />
+                    <span className="hidden sm:inline">Exercise</span>
                   </span>
                 </button>
               </div>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-2 lg:p-4">
               {activeTab === 'theory' ? (
                 <div className="max-w-4xl h-full overflow-y-auto">
                   <div className="mb-4">
@@ -7937,7 +7994,7 @@ app.listen(PORT, () => {
                   </div>
                   <div className="bg-white dark:bg-gray-700 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-600">
                     <div className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-                      <div dangerouslySetInnerHTML={{ __html: currentLesson.content }} />
+                      {renderContentWithVideos(currentLesson.content)}
                       
                       {/* Enhanced Learning Tips */}
                       <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border-l-4 border-blue-500">
