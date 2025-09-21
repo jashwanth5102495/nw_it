@@ -10,38 +10,39 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>(() => {
-    const savedTheme = localStorage.getItem('theme') as Theme;
-    return savedTheme || 'dark';
-  });
+  const [theme] = useState<Theme>('dark');
 
   useEffect(() => {
-    localStorage.setItem('theme', theme);
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-    document.documentElement.classList.toggle('light', theme === 'light');
     
-    // Apply theme-specific CSS variables
     if (theme === 'dark') {
       document.documentElement.style.setProperty('--bg-primary', '#000000');
-      document.documentElement.style.setProperty('--bg-secondary', '#1a1a1a');
-      document.documentElement.style.setProperty('--bg-tertiary', '#2a2a2a');
+      document.documentElement.style.setProperty('--bg-secondary', '#111111');
+      document.documentElement.style.setProperty('--bg-tertiary', '#1a1a1a');
       document.documentElement.style.setProperty('--text-primary', '#ffffff');
-      document.documentElement.style.setProperty('--text-secondary', '#e5e5e5');
-      document.documentElement.style.setProperty('--text-tertiary', '#a3a3a3');
-      document.documentElement.style.setProperty('--border-color', '#404040');
+      document.documentElement.style.setProperty('--text-secondary', '#cccccc');
+      document.documentElement.style.setProperty('--text-muted', '#999999');
+      document.documentElement.style.setProperty('--border-color', '#333333');
+      document.documentElement.style.setProperty('--border-light', '#2a2a2a');
+      document.documentElement.style.setProperty('--accent-color', '#3b82f6');
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
     } else {
       document.documentElement.style.setProperty('--bg-primary', '#ffffff');
-      document.documentElement.style.setProperty('--bg-secondary', '#f8fafc');
-      document.documentElement.style.setProperty('--bg-tertiary', '#f1f5f9');
-      document.documentElement.style.setProperty('--text-primary', '#1e293b');
-      document.documentElement.style.setProperty('--text-secondary', '#475569');
-      document.documentElement.style.setProperty('--text-tertiary', '#64748b');
-      document.documentElement.style.setProperty('--border-color', '#e2e8f0');
+      document.documentElement.style.setProperty('--bg-secondary', '#f8f9fa');
+      document.documentElement.style.setProperty('--bg-tertiary', '#f1f3f4');
+      document.documentElement.style.setProperty('--text-primary', '#000000');
+      document.documentElement.style.setProperty('--text-secondary', '#666666');
+      document.documentElement.style.setProperty('--text-muted', '#888888');
+      document.documentElement.style.setProperty('--border-color', '#e0e0e0');
+      document.documentElement.style.setProperty('--border-light', '#f0f0f0');
+      document.documentElement.style.setProperty('--accent-color', '#3b82f6');
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
     }
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    // Theme is permanently set to dark - no toggle functionality
   };
 
   return (

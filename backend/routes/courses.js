@@ -85,55 +85,6 @@ router.get('/code/:courseId', async (req, res) => {
   }
 });
 
-// Validate discount code
-router.post('/validate-discount', async (req, res) => {
-  try {
-    const { courseId, discountCode } = req.body;
-    
-    if (!courseId || !discountCode) {
-      return res.status(400).json({
-        success: false,
-        message: 'Course ID and discount code are required'
-      });
-    }
-    
-    const course = await Course.findOne({ courseId });
-    
-    if (!course) {
-      return res.status(404).json({
-        success: false,
-        message: 'Course not found'
-      });
-    }
-    
-    const isValid = course.discountCode && 
-                   course.discountCode.toLowerCase() === discountCode.toLowerCase();
-    
-    if (isValid) {
-      res.json({
-        success: true,
-        message: 'Discount code is valid',
-        data: {
-          originalPrice: course.price,
-          discountPrice: course.discountPrice,
-          savings: course.price - course.discountPrice
-        }
-      });
-    } else {
-      res.status(400).json({
-        success: false,
-        message: 'Invalid discount code'
-      });
-    }
-  } catch (error) {
-    console.error('Error validating discount code:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error validating discount code',
-      error: error.message
-    });
-  }
-});
 
 // Create new course (Admin only)
 router.post('/', async (req, res) => {
@@ -256,7 +207,7 @@ router.get('/category/:category', async (req, res) => {
 // Get courses by level
 router.get('/level/:level', async (req, res) => {
   try {
-    const courses = await Course.getByLevel(req.params.level);
+    const courses = await Course.find({ level: req.params.level, isActive: true });
     
     res.json({
       success: true,
@@ -268,6 +219,228 @@ router.get('/level/:level', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching courses by level',
+      error: error.message
+    });
+  }
+});
+
+// Purchase course endpoint
+router.post('/purchase', async (req, res) => {
+  try {
+    const { courseId, studentId, paymentId, referralCode } = req.body;
+    
+    // Verify course exists
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found'
+      });
+    }
+    
+    // Calculate price with referral discount
+    let finalPrice = course.price;
+    let discount = 0;
+    
+    if (referralCode === 'REFER60') {
+      discount = 60;
+      finalPrice = course.price * 0.4; // 60% discount
+    }
+    
+    // Create purchase record
+    const Purchase = require('../models/Purchase');
+    const purchase = new Purchase({
+      studentId,
+      courseId,
+      originalPrice: course.price,
+      finalPrice,
+      discount,
+      referralCode: referralCode || null,
+      paymentId,
+      status: 'completed',
+      purchaseDate: new Date()
+    });
+    
+    await purchase.save();
+    
+    res.json({
+      success: true,
+      message: 'Course purchased successfully',
+      data: {
+        purchaseId: purchase._id,
+        courseId,
+        finalPrice,
+        discount
+      }
+    });
+  } catch (error) {
+    console.error('Error processing course purchase:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error processing course purchase',
+      error: error.message
+    });
+  }
+});
+
+// Get purchased courses for a student
+router.get('/purchased/:studentId', async (req, res) => {
+  try {
+    const Purchase = require('../models/Purchase');
+    const purchases = await Purchase.find({ 
+      studentId: req.params.studentId,
+      status: 'completed'
+    }).populate('courseId');
+    
+    const purchasedCourses = purchases.map(purchase => ({
+      ...purchase.courseId.toObject(),
+      purchaseDate: purchase.purchaseDate,
+      finalPrice: purchase.finalPrice,
+      discount: purchase.discount
+    }));
+    
+    res.json({
+      success: true,
+      data: purchasedCourses,
+      count: purchasedCourses.length
+    });
+  } catch (error) {
+    console.error('Error fetching purchased courses:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching purchased courses',
+      error: error.message
+    });
+  }
+});
+
+// Verify referral code
+router.post('/verify-referral', async (req, res) => {
+  try {
+    const { referralCode } = req.body;
+    
+    // Simple referral code validation
+    const validCodes = {
+      'REFER60': { discount: 60, description: '60% off on all courses' }
+    };
+    
+    if (validCodes[referralCode]) {
+      res.json({
+        success: true,
+        valid: true,
+        discount: validCodes[referralCode].discount,
+        description: validCodes[referralCode].description
+      });
+    } else {
+      res.json({
+        success: true,
+        valid: false,
+        message: 'Invalid referral code'
+      });
+    }
+  } catch (error) {
+    console.error('Error verifying referral code:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error verifying referral code',
+      error: error.message
+    });
+  }
+});
+
+// Update course progress
+router.post('/progress/update', async (req, res) => {
+  try {
+    const { studentId, courseId, lessonId, progress } = req.body;
+    
+    const Purchase = require('../models/Purchase');
+    
+    // Find the purchase record
+    const purchase = await Purchase.findOne({ 
+      studentId, 
+      courseId,
+      status: 'completed'
+    });
+    
+    if (!purchase) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not purchased or purchase not found'
+      });
+    }
+    
+    // Update progress
+    purchase.progress = Math.max(purchase.progress, progress);
+    purchase.lastAccessedAt = new Date();
+    
+    // Add completed lesson if provided
+    if (lessonId) {
+      const existingLesson = purchase.completedLessons.find(
+        lesson => lesson.lessonId === lessonId
+      );
+      
+      if (!existingLesson) {
+        purchase.completedLessons.push({
+          lessonId,
+          completedAt: new Date()
+        });
+      }
+    }
+    
+    await purchase.save();
+    
+    res.json({
+      success: true,
+      message: 'Progress updated successfully',
+      data: {
+        progress: purchase.progress,
+        completedLessons: purchase.completedLessons.length
+      }
+    });
+  } catch (error) {
+    console.error('Error updating course progress:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating course progress',
+      error: error.message
+    });
+  }
+});
+
+// Get course progress
+router.get('/progress/:studentId/:courseId', async (req, res) => {
+  try {
+    const { studentId, courseId } = req.params;
+    
+    const Purchase = require('../models/Purchase');
+    
+    const purchase = await Purchase.findOne({ 
+      studentId, 
+      courseId,
+      status: 'completed'
+    });
+    
+    if (!purchase) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not purchased or purchase not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: {
+        progress: purchase.progress,
+        completedLessons: purchase.completedLessons,
+        lastAccessedAt: purchase.lastAccessedAt,
+        purchaseDate: purchase.purchaseDate
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching course progress:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching course progress',
       error: error.message
     });
   }

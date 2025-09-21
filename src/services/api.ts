@@ -183,6 +183,21 @@ class ApiService {
   async trackProject(projectId: string): Promise<ApiResponse<Project>> {
     return this.request<Project>(`/projects/track/${projectId}`);
   }
+
+  // Faculty and referral code methods
+  async validateReferralCode(referralCode: string, coursePrice: number): Promise<ApiResponse<any>> {
+    return this.request<any>('/faculty/validate-referral', {
+      method: 'POST',
+      body: JSON.stringify({ referralCode, coursePrice }),
+    });
+  }
+
+  async createPaymentWithReferral(paymentData: any): Promise<ApiResponse<any>> {
+    return this.request<any>('/payments', {
+      method: 'POST',
+      body: JSON.stringify(paymentData),
+    });
+  }
 }
 
 export default new ApiService();

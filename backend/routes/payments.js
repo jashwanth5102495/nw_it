@@ -3,6 +3,7 @@ const router = express.Router();
 const Payment = require('../models/Payment');
 const Student = require('../models/Student');
 const Course = require('../models/Course');
+const Faculty = require('../models/Faculty');
 
 // Create a new payment record
 router.post('/', async (req, res) => {
@@ -16,11 +17,10 @@ router.post('/', async (req, res) => {
       originalAmount,
       studentName,
       studentEmail,
-      discountCode,
-      discountAmount,
       razorpayOrderId,
       razorpaySignature,
-      metadata
+      metadata,
+      referralCode
     } = req.body;
 
     // Validate required fields
@@ -58,6 +58,26 @@ router.post('/', async (req, res) => {
       });
     }
 
+    // Handle referral code if provided
+    let faculty = null;
+    let discountAmount = 0;
+    let commissionAmount = 0;
+
+    if (referralCode) {
+      faculty = await Faculty.findByReferralCode(referralCode);
+      if (faculty) {
+        // Calculate commission and discount
+        const calculation = faculty.calculateCommission(originalAmount || amount);
+        discountAmount = calculation.discountAmount;
+        commissionAmount = calculation.commission;
+
+        // Update faculty statistics
+        await Faculty.findByIdAndUpdate(faculty._id, {
+          $inc: { totalReferrals: 1 }
+        });
+      }
+    }
+
     // Create payment record
     const payment = new Payment({
       paymentId,
@@ -69,12 +89,15 @@ router.post('/', async (req, res) => {
       transactionId: paymentId, // Using paymentId as transactionId for Razorpay
       studentName,
       studentEmail,
-      discountCode,
-      discountAmount: discountAmount || 0,
       razorpayOrderId,
       razorpaySignature,
       metadata: metadata || {},
-      status: 'completed'
+      status: 'completed',
+      // Referral code fields
+      referralCode: referralCode || null,
+      facultyId: faculty ? faculty._id : null,
+      discountAmount,
+      commissionAmount
     });
 
     await payment.save();

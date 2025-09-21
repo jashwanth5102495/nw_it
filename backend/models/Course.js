@@ -33,17 +33,6 @@ const courseSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
-  discountPrice: {
-    type: Number,
-    default: null,
-    min: 0
-  },
-  discountCode: {
-    type: String,
-    default: null,
-    trim: true,
-    uppercase: true
-  },
   duration: {
     type: String,
     required: true
@@ -103,10 +92,7 @@ courseSchema.pre('save', function(next) {
   next();
 });
 
-// Method to get discounted price
-courseSchema.methods.getEffectivePrice = function() {
-  return this.discountPrice || this.price;
-};
+
 
 // Static method to get courses by category
 courseSchema.statics.getByCategory = async function(category) {

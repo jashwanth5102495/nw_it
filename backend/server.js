@@ -5,6 +5,7 @@ const projectRoutes = require('./routes/projects');
 const studentRoutes = require('./routes/students');
 const courseRoutes = require('./routes/courses');
 const paymentRoutes = require('./routes/payments');
+const facultyRoutes = require('./routes/faculty');
 const { router: authRoutes } = require('./routes/auth');
 require('dotenv').config();
 
@@ -20,6 +21,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/faculty', facultyRoutes);
 app.use('/api/auth', authRoutes);
 
 // Health check endpoint

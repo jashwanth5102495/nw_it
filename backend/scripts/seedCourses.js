@@ -2,17 +2,58 @@ const mongoose = require('mongoose');
 const Course = require('../models/Course');
 require('dotenv').config();
 
-// Updated courses data as requested
+// Updated courses data with new pricing structure
 const coursesData = [
+  {
+    courseId: 'AI-TOOLS-MASTERY',
+    title: 'A.I Tools Mastery',
+    description: 'Master the latest AI tools and technologies to boost productivity and automate workflows. Learn ChatGPT, Midjourney, and other cutting-edge AI platforms.',
+    category: 'Data Science',
+    level: 'Intermediate',
+    price: 12000,
+    duration: '12 weeks',
+    modules: [
+      {
+        title: 'AI Fundamentals',
+        duration: '3 weeks',
+        topics: ['Introduction to AI', 'Machine Learning Basics', 'AI Ethics', 'AI Applications']
+      },
+      {
+        title: 'ChatGPT & Language Models',
+        duration: '3 weeks',
+        topics: ['Prompt Engineering', 'Advanced ChatGPT Techniques', 'API Integration', 'Custom GPT Creation']
+      },
+      {
+        title: 'AI Image & Video Tools',
+        duration: '3 weeks',
+        topics: ['Midjourney Mastery', 'DALL-E', 'Stable Diffusion', 'AI Video Generation']
+      },
+      {
+        title: 'AI Automation & Workflows',
+        duration: '3 weeks',
+        topics: ['AI-Powered Automation', 'Workflow Integration', 'Business Applications', 'Future of AI']
+      }
+    ],
+    prerequisites: ['Basic computer skills', 'Interest in AI technology'],
+    learningOutcomes: [
+      'Master popular AI tools and platforms',
+      'Create efficient AI-powered workflows',
+      'Understand AI ethics and best practices',
+      'Build AI-integrated business solutions'
+    ],
+    instructor: {
+      name: 'Dr. Priya Sharma',
+      bio: 'AI researcher and consultant with expertise in practical AI applications for business.',
+      experience: '8+ years in AI Research, Former Google AI Team Member'
+    }
+  },
   {
     courseId: 'FRONTEND-BEGINNER',
     title: 'Frontend Development - Beginner',
     description: 'Learn the fundamentals of frontend development with HTML, CSS, and JavaScript. Perfect for beginners who want to start their web development journey.',
     category: 'Frontend Development',
     level: 'Beginner',
-    price: 299,
-    discountPrice: 199,
-    discountCode: 'FRONTEND20',
+    price: 1200,
     duration: '8 weeks',
     modules: [
       {
@@ -50,9 +91,7 @@ const coursesData = [
     description: 'Advance your frontend skills with modern frameworks, advanced CSS techniques, and JavaScript ES6+ features.',
     category: 'Frontend Development',
     level: 'Intermediate',
-    price: 399,
-    discountPrice: 299,
-    discountCode: 'FRONTEND25',
+    price: 1500,
     duration: '10 weeks',
     modules: [
       {
@@ -95,9 +134,7 @@ const coursesData = [
     description: 'Master advanced frontend concepts including performance optimization, advanced state management, and modern development workflows.',
     category: 'Frontend Development',
     level: 'Advanced',
-    price: 599,
-    discountPrice: 449,
-    discountCode: 'FRONTEND30',
+    price: 2500,
     duration: '12 weeks',
     modules: [
       {
@@ -140,9 +177,7 @@ const coursesData = [
     description: 'Introduction to DevOps practices, version control, basic automation, and deployment fundamentals.',
     category: 'DevOps',
     level: 'Beginner',
-    price: 349,
-    discountPrice: 249,
-    discountCode: 'DEVOPS20',
+    price: 1000,
     duration: '8 weeks',
     modules: [
       {
@@ -185,9 +220,7 @@ const coursesData = [
     description: 'Master advanced DevOps practices with Kubernetes, infrastructure as code, and enterprise-level automation.',
     category: 'DevOps',
     level: 'Advanced',
-    price: 599,
-    discountPrice: 449,
-    discountCode: 'DEVOPS30',
+    price: 1400,
     duration: '14 weeks',
     modules: [
       {
@@ -222,96 +255,6 @@ const coursesData = [
       name: 'Alex Thompson',
       bio: 'Principal DevOps Engineer with expertise in large-scale system architecture.',
       experience: '12+ years in DevOps, Principal Engineer at Google'
-    }
-  },
-  {
-    courseId: 'MOBILE-ADVANCED',
-    title: 'Mobile App Development - Advanced',
-    description: 'Master advanced mobile app development with React Native, native modules, and performance optimization.',
-    category: 'Mobile Development',
-    level: 'Advanced',
-    price: 549,
-    discountPrice: 399,
-    discountCode: 'MOBILE25',
-    duration: '12 weeks',
-    modules: [
-      {
-        title: 'Advanced React Native',
-        duration: '3 weeks',
-        topics: ['Native Modules', 'Bridge Communication', 'Performance Optimization', 'Memory Management']
-      },
-      {
-        title: 'Native Integration',
-        duration: '3 weeks',
-        topics: ['iOS Native Code', 'Android Native Code', 'Platform-Specific Features']
-      },
-      {
-        title: 'Advanced Features',
-        duration: '3 weeks',
-        topics: ['Push Notifications', 'Background Tasks', 'Offline Functionality', 'Security']
-      },
-      {
-        title: 'Production & Distribution',
-        duration: '3 weeks',
-        topics: ['App Store Optimization', 'Code Signing', 'Continuous Deployment', 'Analytics']
-      }
-    ],
-    prerequisites: ['React Native experience', 'Mobile development fundamentals', 'JavaScript proficiency'],
-    learningOutcomes: [
-      'Build high-performance mobile applications',
-      'Integrate native device features',
-      'Optimize apps for production deployment',
-      'Implement advanced mobile architectures'
-    ],
-    instructor: {
-      name: 'Lisa Wang',
-      bio: 'Mobile development specialist with apps used by millions of users worldwide.',
-      experience: '9+ years in Mobile Development, Senior Developer at Uber'
-    }
-  },
-  {
-    courseId: 'BROWSER-EXTENSIONS',
-    title: 'Browser Extensions Development',
-    description: 'Learn to build powerful browser extensions for Chrome, Firefox, and other browsers using modern web technologies.',
-    category: 'Frontend Development',
-    level: 'Intermediate',
-    price: 399,
-    discountPrice: 299,
-    discountCode: 'EXTENSION20',
-    duration: '8 weeks',
-    modules: [
-      {
-        title: 'Extension Fundamentals',
-        duration: '2 weeks',
-        topics: ['Manifest Files', 'Extension Architecture', 'Permissions', 'Browser APIs']
-      },
-      {
-        title: 'Content Scripts & Background',
-        duration: '2 weeks',
-        topics: ['Content Script Injection', 'Background Scripts', 'Message Passing', 'Storage APIs']
-      },
-      {
-        title: 'UI Development',
-        duration: '2 weeks',
-        topics: ['Popup Interfaces', 'Options Pages', 'Context Menus', 'Browser Action']
-      },
-      {
-        title: 'Publishing & Distribution',
-        duration: '2 weeks',
-        topics: ['Chrome Web Store', 'Firefox Add-ons', 'Extension Security', 'Updates & Maintenance']
-      }
-    ],
-    prerequisites: ['JavaScript proficiency', 'HTML/CSS knowledge', 'Basic web development experience'],
-    learningOutcomes: [
-      'Build and publish browser extensions',
-      'Integrate with browser APIs and web pages',
-      'Implement secure extension architectures',
-      'Distribute extensions across multiple browsers'
-    ],
-    instructor: {
-      name: 'James Rodriguez',
-      bio: 'Browser extension specialist with multiple successful extensions in various app stores.',
-      experience: '6+ years in Extension Development, Creator of popular productivity extensions'
     }
   }
 ];

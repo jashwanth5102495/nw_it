@@ -49,17 +49,36 @@ const paymentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  discountCode: {
+  originalAmount: {
+    type: Number,
+    required: true
+  },
+  // Referral code fields
+  referralCode: {
     type: String,
+    default: null,
+    uppercase: true
+  },
+  facultyId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Faculty',
     default: null
   },
   discountAmount: {
     type: Number,
     default: 0
   },
-  originalAmount: {
+  commissionAmount: {
     type: Number,
-    required: true
+    default: 0
+  },
+  commissionPaid: {
+    type: Boolean,
+    default: false
+  },
+  commissionPaidDate: {
+    type: Date,
+    default: null
   },
   paymentDate: {
     type: Date,
@@ -159,6 +178,82 @@ paymentSchema.statics.getCourseRevenue = async function() {
     },
     {
       $sort: { totalRevenue: -1 }
+    }
+  ]);
+};
+
+// Static method to get commission statistics
+paymentSchema.statics.getCommissionStats = async function() {
+  const stats = await this.aggregate([
+    {
+      $match: { 
+        status: 'completed',
+        referralCode: { $ne: null }
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        totalCommissions: { $sum: '$commissionAmount' },
+        totalReferralPayments: { $sum: 1 },
+        totalDiscountsGiven: { $sum: '$discountAmount' },
+        paidCommissions: {
+          $sum: { $cond: [{ $eq: ['$commissionPaid', true] }, '$commissionAmount', 0] }
+        },
+        unpaidCommissions: {
+          $sum: { $cond: [{ $eq: ['$commissionPaid', false] }, '$commissionAmount', 0] }
+        }
+      }
+    }
+  ]);
+  
+  return stats[0] || {
+    totalCommissions: 0,
+    totalReferralPayments: 0,
+    totalDiscountsGiven: 0,
+    paidCommissions: 0,
+    unpaidCommissions: 0
+  };
+};
+
+// Static method to get faculty commission summary
+paymentSchema.statics.getFacultyCommissions = async function() {
+  return await this.aggregate([
+    {
+      $match: { 
+        status: 'completed',
+        facultyId: { $ne: null }
+      }
+    },
+    {
+      $lookup: {
+        from: 'faculties',
+        localField: 'facultyId',
+        foreignField: '_id',
+        as: 'faculty'
+      }
+    },
+    {
+      $unwind: '$faculty'
+    },
+    {
+      $group: {
+        _id: '$facultyId',
+        facultyName: { $first: '$faculty.name' },
+        facultyEmail: { $first: '$faculty.email' },
+        referralCode: { $first: '$faculty.referralCode' },
+        totalCommissions: { $sum: '$commissionAmount' },
+        totalReferrals: { $sum: 1 },
+        paidCommissions: {
+          $sum: { $cond: [{ $eq: ['$commissionPaid', true] }, '$commissionAmount', 0] }
+        },
+        unpaidCommissions: {
+          $sum: { $cond: [{ $eq: ['$commissionPaid', false] }, '$commissionAmount', 0] }
+        }
+      }
+    },
+    {
+      $sort: { totalCommissions: -1 }
     }
   ]);
 };

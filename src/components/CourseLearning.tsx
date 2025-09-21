@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import Header from './Header';
 import VideoPlaceholder from './VideoPlaceholder';
-import ThemeToggle from './ThemeToggle';
+
 import { ArrowLeft, Play, Book, Code, CheckCircle, XCircle, Lightbulb, Clock, Award, Users, Star, Monitor, Send, Sun, Moon, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Lesson {
@@ -7709,9 +7709,6 @@ app.listen(PORT, () => {
             </div>
             
             <div className="flex items-center space-x-2 lg:space-x-4">
-              {/* Theme Toggle */}
-              <ThemeToggle size="sm" />
-              
               <div className="text-right hidden md:block">
                 <div className="text-sm font-medium text-gray-900 dark:text-white">Progress</div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">Module 2 of 3 • 33% Complete</div>

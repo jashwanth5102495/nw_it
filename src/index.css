@@ -582,13 +582,55 @@ active Background Animations */
   }
 }
 
-/* Remove old dock styles since we're not using the bottom dock anymore */
+/* Dock theme-aware styles */
 .dock-outer,
 .dock-panel,
 .dock-item,
 .dock-icon,
 .dock-label {
-  display: none;
+  display: flex;
+}
+
+/* Light theme dock adjustments */
+.light .dock-panel {
+  background: linear-gradient(135deg, 
+    rgba(0, 0, 0, 0.15) 0%, 
+    rgba(0, 0, 0, 0.05) 100%);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(0, 0, 0, 0.05) inset,
+    0 1px 0 rgba(0, 0, 0, 0.1) inset;
+}
+
+.light .dock-item {
+  background: linear-gradient(135deg, 
+    rgba(0, 0, 0, 0.2) 0%, 
+    rgba(0, 0, 0, 0.05) 100%);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.05) inset;
+}
+
+.light .dock-item:hover {
+  background: linear-gradient(135deg, 
+    rgba(0, 0, 0, 0.3) 0%, 
+    rgba(0, 0, 0, 0.1) 100%);
+  border-color: rgba(0, 0, 0, 0.3);
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(0, 0, 0, 0.1) inset;
+}
+
+.light .dock-icon {
+  color: #333333;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.light .dock-item:hover .dock-icon {
+  color: #000000;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
 }
 
 /* Background Effects Styles */

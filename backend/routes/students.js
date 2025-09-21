@@ -273,7 +273,7 @@ router.put('/profile/:id', authenticateStudent, authorizeOwnProfile, async (req,
 // Enroll in additional course
 router.post('/:id/enroll', authenticateStudent, authorizeOwnProfile, async (req, res) => {
   try {
-    const { courseId, paymentDetails } = req.body;
+    const { courseId, paymentDetails, referralCode } = req.body;
 
     const student = await Student.findById(req.params.id);
     if (!student) {
@@ -307,12 +307,15 @@ router.post('/:id/enroll', authenticateStudent, authorizeOwnProfile, async (req,
     student.paymentHistory.push({
       courseId: course._id,
       amount: paymentDetails.amount,
-      discountCode: paymentDetails.discountCode || null,
-      discountAmount: paymentDetails.discountAmount || 0,
       paymentMethod: paymentDetails.method,
       transactionId: paymentDetails.transactionId || `TXN-${Date.now()}`,
       status: 'completed'
     });
+
+    // Store referral code if provided
+    if (referralCode && referralCode.trim()) {
+      student.referralCode = referralCode.trim().toUpperCase();
+    }
 
     // Enroll in course
     await student.enrollInCourse(course._id);

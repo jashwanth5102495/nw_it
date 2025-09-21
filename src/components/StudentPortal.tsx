@@ -11,7 +11,8 @@ import {
   QuestionMarkCircleIcon,
   BellIcon,
   CloudArrowUpIcon,
-  LinkIcon
+  LinkIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 
 interface CourseModule {
@@ -27,10 +28,7 @@ interface Course {
   level: string;
   description: string;
   technologies: string[];
-  originalPrice: number;
-  discountPercent: number;
-  discountCode: string;
-  finalPrice: number;
+  price: number;
   duration: string;
   projects: number;
   modules: CourseModule[];
@@ -38,6 +36,16 @@ interface Course {
   rating: number;
   students: number;
   instructor: string;
+}
+
+interface CourseProgress {
+  courseId: string;
+  progress: number;
+  completedLessons: number;
+  totalLessons: number;
+  lastAccessedAt: string;
+  nextLesson: string;
+  isStarted: boolean;
 }
 
 interface Assignment {
@@ -71,6 +79,14 @@ interface StudentProfile {
   studentId?: string;
 }
 
+interface PaymentModalData {
+  course: Course;
+  originalPrice: number;
+  discountedPrice: number;
+  discount: number;
+  referralCode: string;
+}
+
 const StudentPortal = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -82,6 +98,14 @@ const StudentPortal = () => {
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
   const [uploadType, setUploadType] = useState<'file' | 'git'>('file');
   const [gitUrl, setGitUrl] = useState('');
+  
+  // Payment functionality state
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentModalData, setPaymentModalData] = useState<PaymentModalData | null>(null);
+  const [referralCode, setReferralCode] = useState('');
+  const [purchasedCourses, setPurchasedCourses] = useState<string[]>([]);
+  const [courseProgress, setCourseProgress] = useState<{ [courseId: string]: CourseProgress }>({});
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -94,10 +118,7 @@ const StudentPortal = () => {
       level: 'beginner',
       description: 'Master the most powerful AI tools for productivity, creativity, and business automation',
       technologies: ['ChatGPT', 'Claude', 'Midjourney', 'Notion AI', 'GitHub Copilot'],
-      originalPrice: 3333,
-      discountPercent: 40,
-      discountCode: 'aitools01',
-      finalPrice: 2000,
+      price: 12000,
       duration: '6 weeks',
       projects: 8,
       image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=250&fit=crop&crop=center',
@@ -106,34 +127,24 @@ const StudentPortal = () => {
       instructor: 'Sarah Johnson',
       modules: [
         {
-          title: 'AI Fundamentals & ChatGPT Mastery',
-          duration: '1 week',
-          topics: ['Understanding AI capabilities', 'Prompt engineering basics', 'ChatGPT advanced techniques', 'Custom GPTs creation']
+          title: 'AI Fundamentals',
+          duration: '3 weeks',
+          topics: ['Understanding AI', 'AI Ethics', 'Tool Selection', 'Best Practices']
         },
         {
-          title: 'Visual AI & Creative Tools',
-          duration: '1 week',
-          topics: ['Midjourney mastery', 'DALL-E techniques', 'Stable Diffusion', 'AI video generation']
+          title: 'Text Generation AI',
+          duration: '3 weeks',
+          topics: ['ChatGPT Mastery', 'Claude Advanced', 'Prompt Engineering', 'Content Creation']
         },
         {
-          title: 'Productivity AI Integration',
-          duration: '1 week',
-          topics: ['Notion AI workflows', 'AI writing assistants', 'Email automation', 'Calendar optimization']
+          title: 'Visual AI Tools',
+          duration: '3 weeks',
+          topics: ['Midjourney', 'DALL-E', 'Stable Diffusion', 'Image Enhancement']
         },
         {
-          title: 'Code AI & Development',
-          duration: '1 week',
-          topics: ['GitHub Copilot mastery', 'AI debugging', 'Code review automation', 'Documentation generation']
-        },
-        {
-          title: 'Business AI Applications',
-          duration: '1 week',
-          topics: ['Customer service automation', 'Content marketing AI', 'Data analysis with AI', 'AI strategy planning']
-        },
-        {
-          title: 'Advanced AI Workflows',
-          duration: '1 week',
-          topics: ['Multi-tool integration', 'Custom AI solutions', 'API integrations', 'Future-proofing strategies']
+          title: 'AI for Business',
+          duration: '3 weeks',
+          topics: ['Workflow Automation', 'AI Integration', 'ROI Measurement', 'Future Trends']
         }
       ]
     },
@@ -144,10 +155,7 @@ const StudentPortal = () => {
       level: 'beginner',
       description: 'Start your web development journey with HTML, CSS, and JavaScript fundamentals',
       technologies: ['HTML', 'CSS', 'JavaScript', 'Git', 'VS Code'],
-      originalPrice: 1667,
-      discountPercent: 40,
-      discountCode: 'frontend01',
-      finalPrice: 1000,
+      price: 1200,
       duration: '8 weeks',
       projects: 5,
       image: 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=250&fit=crop&crop=center',
@@ -173,7 +181,7 @@ const StudentPortal = () => {
         {
           title: 'Project Development',
           duration: '1 week',
-          topics: ['Portfolio website', 'Responsive design', 'Git workflow', 'Deployment']
+          topics: ['Portfolio website', 'Responsive design', 'Code optimization', 'Deployment']
         }
       ]
     },
@@ -183,37 +191,34 @@ const StudentPortal = () => {
       category: 'frontend',
       level: 'intermediate',
       description: 'Advance your frontend skills with React, TypeScript, and modern development tools',
-      technologies: ['React', 'TypeScript', 'Tailwind CSS', 'Vite', 'npm'],
-      originalPrice: 2500,
-      discountPercent: 40,
-      discountCode: 'frontend02',
-      finalPrice: 1500,
+      technologies: ['React', 'TypeScript', 'Tailwind CSS', 'Vite', 'React Router'],
+      price: 1500,
       duration: '10 weeks',
       projects: 6,
       image: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&h=250&fit=crop&crop=center',
       rating: 4.7,
-      students: 8765,
-      instructor: 'Emma Davis',
+      students: 9876,
+      instructor: 'Emily Rodriguez',
       modules: [
         {
           title: 'React Fundamentals',
           duration: '3 weeks',
-          topics: ['Components and JSX', 'State and props', 'Hooks', 'Event handling']
+          topics: ['Components', 'Props and State', 'Event handling', 'Lifecycle methods']
         },
         {
           title: 'TypeScript Integration',
           duration: '2 weeks',
-          topics: ['Type annotations', 'Interfaces', 'Generic types', 'React with TypeScript']
+          topics: ['Type definitions', 'Interfaces', 'Generics', 'React with TypeScript']
         },
         {
           title: 'Advanced React',
           duration: '3 weeks',
-          topics: ['Context API', 'Custom hooks', 'Performance optimization', 'Testing']
+          topics: ['Hooks', 'Context API', 'Performance optimization', 'Testing']
         },
         {
           title: 'Modern Tooling',
           duration: '2 weeks',
-          topics: ['Vite setup', 'Tailwind CSS', 'Package management', 'Build optimization']
+          topics: ['Vite setup', 'Build optimization', 'Deployment strategies', 'CI/CD']
         }
       ]
     },
@@ -222,38 +227,35 @@ const StudentPortal = () => {
       title: 'Frontend Development - Advanced',
       category: 'frontend',
       level: 'advanced',
-      description: 'Master advanced React patterns, state management, and full-stack integration',
-      technologies: ['React', 'Next.js', 'Redux', 'GraphQL', 'TypeScript'],
-      originalPrice: 3333,
-      discountPercent: 40,
-      discountCode: 'frontend03',
-      finalPrice: 2000,
+      description: 'Master advanced frontend concepts with Next.js, state management, and performance optimization',
+      technologies: ['Next.js', 'Redux Toolkit', 'GraphQL', 'Jest', 'Cypress'],
+      price: 2000,
       duration: '12 weeks',
       projects: 8,
       image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=250&fit=crop&crop=center',
       rating: 4.9,
-      students: 6543,
-      instructor: 'James Wilson',
+      students: 7654,
+      instructor: 'David Kim',
       modules: [
         {
-          title: 'Advanced React Patterns',
-          duration: '3 weeks',
-          topics: ['Higher-order components', 'Render props', 'Compound components', 'Advanced hooks']
+          title: 'Next.js Mastery',
+          duration: '4 weeks',
+          topics: ['SSR/SSG', 'API routes', 'Performance optimization', 'Deployment']
         },
         {
           title: 'State Management',
           duration: '3 weeks',
-          topics: ['Redux Toolkit', 'Zustand', 'React Query', 'State patterns']
+          topics: ['Redux Toolkit', 'Zustand', 'Context patterns', 'Data fetching']
         },
         {
-          title: 'Next.js Framework',
+          title: 'Testing & Quality',
           duration: '3 weeks',
-          topics: ['SSR and SSG', 'API routes', 'Dynamic routing', 'Performance optimization']
+          topics: ['Unit testing', 'Integration testing', 'E2E testing', 'Code quality']
         },
         {
-          title: 'Full-stack Integration',
-          duration: '3 weeks',
-          topics: ['GraphQL integration', 'Authentication', 'Real-time features', 'Deployment strategies']
+          title: 'Advanced Topics',
+          duration: '2 weeks',
+          topics: ['Micro-frontends', 'PWA', 'Web performance', 'Security']
         }
       ]
     },
@@ -262,163 +264,146 @@ const StudentPortal = () => {
       title: 'DevOps - Beginner',
       category: 'devops',
       level: 'beginner',
-      description: 'Learn the fundamentals of DevOps with Docker, CI/CD, and cloud deployment basics',
-      technologies: ['Docker', 'Git', 'Linux', 'CI/CD', 'AWS'],
-      originalPrice: 1667,
-      discountPercent: 40,
-      discountCode: 'stuops01',
-      finalPrice: 1000,
+      description: 'Learn the fundamentals of DevOps, CI/CD, and cloud infrastructure',
+      technologies: ['Docker', 'Git', 'Linux', 'AWS', 'Jenkins'],
+      price: 1000,
       duration: '8 weeks',
       projects: 4,
-      image: 'https://images.unsplash.com/photo-1618477388954-7852f32655ec?w=400&h=250&fit=crop&crop=center',
+      image: 'https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?w=400&h=250&fit=crop&crop=center',
       rating: 4.5,
-      students: 9876,
-      instructor: 'David Wilson',
+      students: 8765,
+      instructor: 'Alex Thompson',
       modules: [
         {
           title: 'DevOps Fundamentals',
           duration: '2 weeks',
-          topics: ['DevOps Culture', 'Version Control', 'Git Workflows', 'Linux Basics']
+          topics: ['DevOps culture', 'Version control', 'Linux basics', 'Command line']
         },
         {
           title: 'Containerization',
           duration: '2 weeks',
-          topics: ['Docker Basics', 'Containers', 'Images', 'Docker Compose']
+          topics: ['Docker basics', 'Container orchestration', 'Docker Compose', 'Best practices']
         },
         {
-          title: 'CI/CD Basics',
+          title: 'CI/CD Pipelines',
           duration: '2 weeks',
-          topics: ['Continuous Integration', 'Automated Testing', 'Deployment Pipelines', 'GitHub Actions']
+          topics: ['Jenkins setup', 'Pipeline creation', 'Automated testing', 'Deployment strategies']
         },
         {
-          title: 'Cloud Deployment',
+          title: 'Cloud Basics',
           duration: '2 weeks',
-          topics: ['AWS Basics', 'EC2', 'S3', 'Basic Monitoring']
+          topics: ['AWS fundamentals', 'EC2 instances', 'S3 storage', 'Basic networking']
         }
       ]
     },
     {
-      id: 'devops-advanced',
-      title: 'DevOps - Advanced',
+      id: 'devops-intermediate',
+      title: 'DevOps - Intermediate',
       category: 'devops',
-      level: 'advanced',
-      description: 'Master advanced DevOps practices with Kubernetes, Terraform, and enterprise deployment strategies',
-      technologies: ['Kubernetes', 'Terraform', 'Jenkins', 'AWS', 'Monitoring'],
-      originalPrice: 2333,
-      discountPercent: 40,
-      discountCode: 'stuops02',
-      finalPrice: 1400,
-      duration: '12 weeks',
+      level: 'intermediate',
+      description: 'Advanced DevOps practices with Kubernetes, monitoring, and infrastructure as code',
+      technologies: ['Kubernetes', 'Terraform', 'Prometheus', 'Grafana', 'Ansible'],
+      price: 1400,
+      duration: '10 weeks',
       projects: 6,
-      image: 'https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?w=400&h=250&fit=crop&crop=center',
-      rating: 4.9,
-      students: 5432,
-      instructor: 'Lisa Rodriguez',
+      image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=250&fit=crop&crop=center',
+      rating: 4.6,
+      students: 6543,
+      instructor: 'Maria Garcia',
       modules: [
         {
-          title: 'Container Orchestration',
+          title: 'Kubernetes Fundamentals',
           duration: '3 weeks',
-          topics: ['Kubernetes Architecture', 'Pods & Services', 'Deployments', 'Helm Charts']
+          topics: ['Cluster setup', 'Pods and Services', 'Deployments', 'ConfigMaps and Secrets']
         },
         {
           title: 'Infrastructure as Code',
           duration: '3 weeks',
-          topics: ['Terraform Basics', 'AWS Resources', 'State Management', 'Modules']
+          topics: ['Terraform basics', 'State management', 'Modules', 'Best practices']
         },
         {
-          title: 'Advanced CI/CD',
-          duration: '3 weeks',
-          topics: ['Jenkins Pipelines', 'Multi-environment Deployment', 'Security Scanning', 'Rollback Strategies']
+          title: 'Monitoring & Logging',
+          duration: '2 weeks',
+          topics: ['Prometheus setup', 'Grafana dashboards', 'Log aggregation', 'Alerting']
         },
         {
-          title: 'Monitoring & Observability',
-          duration: '3 weeks',
-          topics: ['Prometheus', 'Grafana', 'Log Management', 'Alerting']
+          title: 'Automation',
+          duration: '2 weeks',
+          topics: ['Ansible playbooks', 'Configuration management', 'Deployment automation', 'Security']
         }
       ]
     },
     {
-      id: 'mobile-advanced',
-      title: 'Mobile App Development - Advanced',
+      id: 'mobile-core',
+      title: 'Mobile Development - Core',
       category: 'mobile',
-      level: 'advanced',
-      description: 'Build cross-platform mobile applications for Android and iOS using React Native with Expo',
-      technologies: ['React Native', 'Expo', 'JavaScript', 'TypeScript', 'Firebase'],
-      originalPrice: 5833,
-      discountPercent: 40,
-      discountCode: 'mobcore01',
-      finalPrice: 3500,
+      level: 'intermediate',
+      description: 'Build cross-platform mobile apps with React Native and modern development practices',
+      technologies: ['React Native', 'Expo', 'TypeScript', 'Redux', 'Firebase'],
+      price: 3500,
       duration: '14 weeks',
-      projects: 5,
+      projects: 10,
       image: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=250&fit=crop&crop=center',
-      rating: 4.7,
-      students: 4321,
-      instructor: 'Alex Thompson',
+      rating: 4.8,
+      students: 5432,
+      instructor: 'James Wilson',
       modules: [
         {
-          title: 'React Native Fundamentals',
-          duration: '3 weeks',
-          topics: ['Components', 'Navigation', 'State Management', 'Platform APIs']
+          title: 'React Native Basics',
+          duration: '4 weeks',
+          topics: ['Setup and configuration', 'Components', 'Navigation', 'Styling']
         },
         {
           title: 'Advanced Features',
           duration: '4 weeks',
-          topics: ['Native Modules', 'Camera Integration', 'Push Notifications', 'Offline Storage']
-        },
-        {
-          title: 'TypeScript Integration',
-          duration: '3 weeks',
-          topics: ['Type Safety', 'Advanced Types', 'React Native Types', 'Testing']
+          topics: ['State management', 'API integration', 'Native modules', 'Performance']
         },
         {
           title: 'Backend Integration',
-          duration: '2 weeks',
-          topics: ['Firebase Setup', 'Authentication', 'Real-time Database', 'Cloud Functions']
+          duration: '3 weeks',
+          topics: ['Firebase setup', 'Authentication', 'Database', 'Push notifications']
         },
         {
           title: 'Publishing & Deployment',
-          duration: '2 weeks',
-          topics: ['App Store Submission', 'Google Play', 'Code Push', 'Analytics']
+          duration: '3 weeks',
+          topics: ['App store guidelines', 'Build process', 'Testing', 'Release management']
         }
       ]
     },
     {
       id: 'browser-extensions',
       title: 'Browser Extensions Development',
-      category: 'frontend',
+      category: 'web',
       level: 'intermediate',
-      description: 'Learn to build powerful browser extensions for Chrome, Firefox, and Edge using modern web technologies',
-      technologies: ['JavaScript', 'HTML', 'CSS', 'Web APIs', 'Manifest V3'],
-      originalPrice: 2500,
-      discountPercent: 40,
-      discountCode: 'browserext01',
-      finalPrice: 1500,
-      duration: '8 weeks',
+      description: 'Create powerful browser extensions for Chrome, Firefox, and Edge',
+      technologies: ['JavaScript', 'Chrome APIs', 'WebExtensions', 'Manifest V3', 'React'],
+      price: 1500,
+      duration: '6 weeks',
       projects: 4,
-      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=250&fit=crop&crop=center',
-      rating: 4.6,
+      image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=250&fit=crop&crop=center',
+      rating: 4.4,
       students: 3210,
-      instructor: 'Rachel Green',
+      instructor: 'Lisa Chen',
       modules: [
         {
           title: 'Extension Fundamentals',
           duration: '2 weeks',
-          topics: ['Manifest Files', 'Extension Architecture', 'Permissions', 'Content Scripts']
+          topics: ['Manifest files', 'Background scripts', 'Content scripts', 'Popup interfaces']
         },
         {
-          title: 'Web APIs Integration',
+          title: 'Advanced APIs',
           duration: '2 weeks',
-          topics: ['Chrome APIs', 'Storage API', 'Tabs API', 'Messaging']
+          topics: ['Storage API', 'Messaging', 'Permissions', 'Cross-browser compatibility']
         },
         {
-          title: 'Advanced Features',
-          duration: '2 weeks',
-          topics: ['Background Scripts', 'Context Menus', 'Options Pages', 'Popup Interfaces']
+          title: 'UI Development',
+          duration: '1 week',
+          topics: ['React integration', 'Styling', 'User experience', 'Accessibility']
         },
         {
-          title: 'Cross-browser Development',
-          duration: '2 weeks',
-          topics: ['Firefox Extensions', 'Edge Extensions', 'Publishing', 'Distribution']
+          title: 'Publishing & Distribution',
+          duration: '1 week',
+          topics: ['Store submission', 'Review process', 'Updates', 'Analytics']
         }
       ]
     }
@@ -493,24 +478,37 @@ const StudentPortal = () => {
     }
   ];
 
-  // Purchase history
+  // Purchase history - only show courses that have been actually purchased
+  const enrolledCourses = allCourses.filter(course => 
+    purchasedCourses.includes(course.id)
+  );
+
   const purchaseHistory: PurchaseHistory[] = [
     {
-      id: 'purchase-1',
-      courseId: 'frontend-beginner',
-      courseName: 'Frontend Development - Beginner',
-      instructor: 'Rohan Jashvantbhai',
-      purchaseDate: '2023-12-01T10:30:00Z',
-      amount: 199,
+      id: '1',
+      courseId: 'AI-TOOLS-MASTERY',
+      courseName: 'AI Tools Mastery',
+      instructor: 'Rohan Sharma',
+      purchaseDate: '2024-01-15',
+      amount: 4999,
       status: 'completed'
     },
     {
-      id: 'purchase-2',
-      courseId: 'frontend-intermediate',
-      courseName: 'Frontend Development - Intermediate',
-      instructor: 'Rohan Jashvantbhai',
-      purchaseDate: '2023-12-15T14:20:00Z',
-      amount: 299,
+      id: '2',
+      courseId: 'FRONTEND-INTERMEDIATE',
+      courseName: 'Advanced Frontend with React',
+      instructor: 'Rohan Sharma',
+      purchaseDate: '2024-02-20',
+      amount: 12999,
+      status: 'completed'
+    },
+    {
+      id: '3',
+      courseId: 'DEVOPS-BEGINNER',
+      courseName: 'DevOps Fundamentals',
+      instructor: 'Rohan Sharma',
+      purchaseDate: '2024-03-10',
+      amount: 9999,
       status: 'completed'
     }
   ];
@@ -518,6 +516,7 @@ const StudentPortal = () => {
   const sidebarItems = [
     { id: 'dashboard', label: 'vStudent Manager', icon: HomeIcon, isActive: true },
     { id: 'courses', label: 'My Courses', icon: BookOpenIcon },
+    { id: 'projects', label: 'Projects', icon: ClipboardDocumentListIcon },
     { id: 'assignments', label: 'Assignments', icon: ClipboardDocumentListIcon },
     { id: 'browse-courses', label: 'Browse Courses', icon: GlobeAltIcon },
     { id: 'profile', label: 'My Profile', icon: UserIcon },
@@ -542,10 +541,73 @@ const StudentPortal = () => {
           return;
         }
 
+        // Load purchased courses from localStorage first
+        const localPurchasedCourses = JSON.parse(localStorage.getItem('purchasedCourses') || '[]');
+        
+        // Fetch purchased courses from backend
+        try {
+          const response = await fetch(`http://localhost:5000/api/courses/purchased/${userData.email}`);
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+              const backendCourseIds = result.data.map((course: any) => course.id);
+              // Combine backend and localStorage courses
+              const allPurchasedCourses = [...new Set([...localPurchasedCourses, ...backendCourseIds])];
+              setPurchasedCourses(allPurchasedCourses);
+              
+              // Fetch progress for each purchased course
+              const progressPromises = allPurchasedCourses.map(async (courseId: string) => {
+                try {
+                  const progressResponse = await fetch(`http://localhost:5000/api/courses/progress/${userData.email}/${courseId}`);
+                  if (progressResponse.ok) {
+                    const progressResult = await progressResponse.json();
+                    if (progressResult.success) {
+                      return {
+                        courseId,
+                        progress: progressResult.data.progress || 0,
+                        completedLessons: progressResult.data.completedLessons?.length || 0,
+                        totalLessons: 20, // Default total lessons
+                        lastAccessedAt: progressResult.data.lastAccessedAt || new Date().toISOString(),
+                        nextLesson: 'Introduction to Course',
+                        isStarted: progressResult.data.progress > 0
+                      };
+                    }
+                  }
+                } catch (error) {
+                  console.error(`Error fetching progress for course ${courseId}:`, error);
+                }
+                
+                // Return default progress if fetch fails
+                return {
+                  courseId,
+                  progress: 0,
+                  completedLessons: 0,
+                  totalLessons: 20,
+                  lastAccessedAt: new Date().toISOString(),
+                  nextLesson: 'Introduction to Course',
+                  isStarted: false
+                };
+              });
+              
+              const progressData = await Promise.all(progressPromises);
+              const progressMap = progressData.reduce((acc, progress) => {
+                acc[progress.courseId] = progress;
+                return acc;
+              }, {} as { [courseId: string]: CourseProgress });
+              
+              setCourseProgress(progressMap);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching purchased courses:', error);
+          // Fallback to localStorage courses if backend fails
+          setPurchasedCourses(localPurchasedCourses);
+        }
+
         setStudentProfile({
           name: `${userData.firstName} ${userData.lastName}` || 'undefined undefined',
           email: userData.email || 'student@example.com',
-          enrolledCourses: 2,
+          enrolledCourses: purchasedCourses.length,
           phone: '+1 (555) 123-4567',
           location: 'San Francisco, CA',
           joinDate: '2023-12-01',
@@ -556,7 +618,7 @@ const StudentPortal = () => {
         setStudentProfile({
           name: 'undefined undefined',
           email: 'student@example.com',
-          enrolledCourses: 2
+          enrolledCourses: 0
         });
       } finally {
         setIsLoading(false);
@@ -592,9 +654,162 @@ const StudentPortal = () => {
   };
 
   const handlePurchaseCourse = (courseId: string) => {
-    // Handle course purchase
-    console.log('Purchasing course:', courseId);
-    alert(`Purchasing course: ${courseId}`);
+    const course = allCourses.find(c => c.id === courseId);
+    if (!course) return;
+
+    // Check if already purchased
+    if (purchasedCourses.includes(courseId)) {
+      alert('You have already purchased this course!');
+      return;
+    }
+
+    // Navigate to the enrollment page
+    navigate(`/course-enrollment/${courseId}`);
+  };
+
+  const handleReferralCodeChange = async (code: string) => {
+    setReferralCode(code);
+    if (paymentModalData) {
+      if (code.trim() === '') {
+        // Reset to original price if no code
+        setPaymentModalData({
+          ...paymentModalData,
+          discount: 0,
+          discountedPrice: paymentModalData.originalPrice,
+          referralCode: ''
+        });
+        return;
+      }
+
+      try {
+        // Verify referral code with backend
+        const response = await fetch('http://localhost:5000/api/courses/verify-referral', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            referralCode: code.toUpperCase()
+          })
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.valid) {
+            const discount = result.discount;
+            const discountedPrice = paymentModalData.originalPrice * (1 - discount / 100);
+            setPaymentModalData({
+              ...paymentModalData,
+              discount,
+              discountedPrice,
+              referralCode: code.toUpperCase()
+            });
+          } else {
+            // Invalid code - reset to original price
+            setPaymentModalData({
+              ...paymentModalData,
+              discount: 0,
+              discountedPrice: paymentModalData.originalPrice,
+              referralCode: code.toUpperCase()
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error verifying referral code:', error);
+        // On error, reset to original price
+        setPaymentModalData({
+          ...paymentModalData,
+          discount: 0,
+          discountedPrice: paymentModalData.originalPrice,
+          referralCode: code.toUpperCase()
+        });
+      }
+    }
+  };
+
+  const processPayment = async () => {
+    if (!paymentModalData) return;
+
+    setIsProcessingPayment(true);
+    
+    try {
+      // Initialize Razorpay payment
+      const options = {
+        key: 'rzp_test_9WsLnHkruf61R1', // Replace with your Razorpay key
+        amount: Math.round(paymentModalData.discountedPrice * 100), // Amount in paise
+        currency: 'INR',
+        name: 'VStudents',
+        description: `Purchase ${paymentModalData.course.title}`,
+        image: '/logo.png',
+        handler: async function (response: any) {
+          // Payment successful
+          console.log('Payment successful:', response);
+          
+          try {
+            // Record purchase in backend
+            const currentUser = localStorage.getItem('currentUser');
+            if (currentUser) {
+              const userData = JSON.parse(currentUser);
+              
+              const purchaseResponse = await fetch('http://localhost:5000/api/courses/purchase', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  courseId: paymentModalData.course.id,
+                  studentId: userData.email,
+                  paymentId: response.razorpay_payment_id,
+                  referralCode: paymentModalData.referralCode || null
+                })
+              });
+              
+              if (purchaseResponse.ok) {
+                const result = await purchaseResponse.json();
+                if (result.success) {
+                  // Add course to purchased courses
+                  setPurchasedCourses(prev => [...prev, paymentModalData.course.id]);
+                  
+                  // Show success message
+                  alert(`Payment successful! You can now access ${paymentModalData.course.title} in your courses.`);
+                  
+                  // Switch to My Courses tab
+                  setActiveTab('courses');
+                } else {
+                  alert('Payment successful but failed to record purchase. Please contact support.');
+                }
+              } else {
+                alert('Payment successful but failed to record purchase. Please contact support.');
+              }
+            }
+          } catch (error) {
+            console.error('Error recording purchase:', error);
+            alert('Payment successful but failed to record purchase. Please contact support.');
+          }
+          
+          // Close modal
+          setShowPaymentModal(false);
+          setPaymentModalData(null);
+          setReferralCode('');
+        },
+        prefill: {
+          name: studentProfile?.name || 'Student',
+          email: studentProfile?.email || 'student@example.com',
+          contact: studentProfile?.phone || '9999999999'
+        },
+        theme: {
+          color: '#3B82F6'
+        }
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      console.error('Payment error:', error);
+      alert('Payment failed. Please try again.');
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -653,48 +868,75 @@ const StudentPortal = () => {
         return (
           <div className="space-y-6">
             <h2 className="text-white text-2xl font-bold">My Courses</h2>
+            
+            {/* Assignment Information Message */}
+            <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm">📚</span>
+                </div>
+                <div>
+                  <h3 className="text-blue-400 font-semibold">Assignment Information</h3>
+                  <p className="text-gray-300 text-sm">
+                    Assignments will be available after completing the first two modules of each course. 
+                    Keep learning to unlock your assignments!
+                  </p>
+                </div>
+              </div>
+            </div>
+            
             <div className="space-y-4">
-              {courses.map((course) => (
-                <div key={course.id} className="bg-gray-800 rounded-lg p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <span className="text-white font-bold text-lg">F</span>
-                      </div>
-                      <div>
-                        <h4 className="text-white text-lg font-semibold">{course.title}</h4>
-                        <p className="text-gray-400 text-sm">
-                          Instructor: {course.instructor} • Duration: {course.duration}
-                        </p>
-                        <div className="mt-2">
-                          <p className="text-gray-300 text-sm mb-1">Progress</p>
-                          <div className="w-96 bg-gray-700 rounded-full h-2">
-                            <div 
-                              className="bg-green-500 h-2 rounded-full transition-all duration-300" 
-                              style={{width: `${course.progress}%`}}
-                            />
-                          </div>
-                          <p className="text-gray-400 text-sm mt-1">
-                            Next: {course.nextLesson}
+              {enrolledCourses.map((course) => {
+                const progress = courseProgress[course.id] || {
+                  progress: 0,
+                  completedLessons: 0,
+                  totalLessons: 20,
+                  nextLesson: 'Introduction to Course',
+                  isStarted: false
+                };
+                
+                return (
+                  <div key={course.id} className="bg-gray-800 rounded-lg p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                          <span className="text-white font-bold text-lg">{course.title.charAt(0)}</span>
+                        </div>
+                        <div>
+                          <h4 className="text-white text-lg font-semibold">{course.title}</h4>
+                          <p className="text-gray-400 text-sm">
+                            Instructor: {course.instructor} • Duration: {course.duration}
                           </p>
+                          <div className="mt-2">
+                            <p className="text-gray-300 text-sm mb-1">Progress</p>
+                            <div className="w-96 bg-gray-700 rounded-full h-2">
+                              <div 
+                                className="bg-green-500 h-2 rounded-full transition-all duration-300" 
+                                style={{width: `${progress.progress}%`}}
+                              />
+                            </div>
+                            <p className="text-gray-400 text-sm mt-1">
+                              Next: {progress.nextLesson}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="text-right flex flex-col items-end space-y-2">
-                      <p className="text-white text-sm mb-1">
-                        {course.completedLessons} of {course.totalLessons} lessons completed
-                      </p>
-                      <p className="text-white text-2xl font-bold">{course.progress}%</p>
-                      <button
-                        onClick={() => handleContinueLearning(course.id)}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                      >
-                        {course.isStarted && course.progress > 0 ? 'Continue Learning' : 'Start Learning'}
-                      </button>
+                      <div className="text-right flex flex-col items-end space-y-2">
+                        <p className="text-white text-sm mb-1">
+                          {progress.completedLessons} of {progress.totalLessons} lessons completed
+                        </p>
+                        <p className="text-white text-2xl font-bold">{progress.progress}%</p>
+                        <button
+                          onClick={() => handleContinueLearning(course.id)}
+                          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                        >
+                          {progress.isStarted && progress.progress > 0 ? 'Continue Learning' : 'Start Learning'}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         );
@@ -826,10 +1068,10 @@ const StudentPortal = () => {
                   <button
                     key={category}
                     onClick={() => setSelectedCategory(category)}
-                    className={`px-4 py-2 rounded-lg capitalize ${
+                    className={`px-4 py-2 rounded-lg capitalize transition-colors ${
                       selectedCategory === category
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-700 text-white hover:bg-gray-600'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-black/50 text-white hover:bg-gray-800 border border-gray-700'
                     }`}
                   >
                     {category === 'all' ? 'All Categories' : category}
@@ -839,39 +1081,95 @@ const StudentPortal = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredCourses.map((course) => (
-                <div key={course.id} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      course.level === 'beginner' ? 'bg-green-100 text-green-800' :
-                      course.level === 'intermediate' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {course.level}
-                    </span>
-                    <span className="text-gray-400 text-sm capitalize">{course.category}</span>
-                  </div>
-                  <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
-                    <span className="text-white font-bold text-lg">{course.title.charAt(0)}</span>
-                  </div>
-                  <h4 className="text-white text-lg font-semibold mb-2">{course.title}</h4>
-                  <p className="text-gray-400 text-sm mb-2">Instructor: {course.instructor}</p>
-                  <p className="text-gray-300 text-sm mb-3">{course.description}</p>
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-400">Duration: {course.duration}</p>
-                    <p className="text-sm text-gray-400">Projects: {course.projects}</p>
-                    <p className="text-sm text-gray-400">Students: {course.students.toLocaleString()}</p>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <span className="text-gray-400 text-sm line-through">₹{course.originalPrice.toLocaleString()}</span>
-                      <span className="text-white text-xl font-bold ml-2">₹{course.finalPrice.toLocaleString()}</span>
+              {filteredCourses.map((course, index) => (
+                <div 
+                  key={course.id} 
+                  className="bg-gray-900 rounded-lg overflow-hidden border border-gray-700 hover:border-blue-500 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/20"
+                >
+                  {/* Course Image */}
+                  <div className="relative h-48 overflow-hidden">
+                    <img
+                      src={course.image}
+                      alt={course.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-3 left-3">
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        course.level === 'beginner' 
+                          ? 'bg-green-500 text-white' 
+                          : course.level === 'intermediate' 
+                          ? 'bg-yellow-500 text-white' 
+                          : 'bg-red-500 text-white'
+                      }`}>
+                        {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
+                      </span>
                     </div>
-                    <button
+                  </div>
+
+                  {/* Course Content */}
+                  <div className="p-6">
+                    {/* Course Title */}
+                    <h3 className="text-white text-lg font-semibold mb-2 line-clamp-2">
+                      {course.title}
+                    </h3>
+                    
+                    {/* Instructor */}
+                    <p className="text-gray-400 text-sm mb-3">
+                      By {course.instructor}
+                    </p>
+
+                    {/* Rating and Students */}
+                    <div className="flex items-center gap-1 text-sm mb-3">
+                      <span className="text-yellow-500">★</span>
+                      <span className="font-medium text-white">{course.rating}</span>
+                      <span className="text-gray-400">({course.students.toLocaleString()} students)</span>
+                    </div>
+
+                    {/* Duration and Projects */}
+                    <div className="text-sm mb-4 text-gray-400">
+                      {course.duration} • {course.projects} projects
+                    </div>
+
+                    {/* Technologies */}
+                    <div className="flex flex-wrap gap-1 mb-4">
+                      {course.technologies.slice(0, 3).map((tech) => (
+                        <span
+                          key={tech}
+                          className="px-2 py-1 rounded text-xs font-medium bg-gray-700 text-gray-300"
+                        >
+                          {tech}
+                        </span>
+                      ))}
+                      {course.technologies.length > 3 && (
+                        <span className="text-xs text-gray-400">
+                          +{course.technologies.length - 3} more
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Referral Code Message */}
+                    <div className="mb-4 p-2 bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 rounded">
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-400 text-sm">🎯</span>
+                        <span className="text-xs font-medium text-green-400">
+                          Use referral code for 60% OFF!
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Pricing */}
+                    <div className="mb-4">
+                      <span className="text-2xl font-bold text-white">
+                        ₹{course.price.toLocaleString()}
+                      </span>
+                    </div>
+
+                    {/* Purchase Button */}
+                    <button 
                       onClick={() => handlePurchaseCourse(course.id)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200"
                     >
-                      Purchase
+                      Enroll Now
                     </button>
                   </div>
                 </div>
@@ -1026,7 +1324,7 @@ const StudentPortal = () => {
             <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
               <AcademicCapIcon className="w-5 h-5 text-white" />
             </div>
-            <span className="text-white text-lg font-semibold">vStudents.com</span>
+            <span className="text-white text-lg font-semibold">VStudents</span>
           </div>
         </div>
 
@@ -1205,6 +1503,88 @@ const StudentPortal = () => {
           )}
         </main>
       </div>
+
+      {/* Payment Modal */}
+      {showPaymentModal && paymentModalData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-900 rounded-lg p-6 max-w-md w-full mx-4 border border-gray-700">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-white">Complete Purchase</h3>
+              <button
+                onClick={() => {
+                  setShowPaymentModal(false);
+                  setPaymentModalData(null);
+                  setReferralCode('');
+                }}
+                className="text-gray-400 hover:text-white"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <img
+                src={paymentModalData.course.image}
+                alt={paymentModalData.course.title}
+                className="w-full h-32 object-cover rounded-lg mb-3"
+              />
+              <h4 className="text-lg font-semibold text-white mb-2">
+                {paymentModalData.course.title}
+              </h4>
+              <p className="text-gray-400 text-sm mb-3">
+                {paymentModalData.course.description}
+              </p>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Referral Code (Optional)
+              </label>
+              <input
+                type="text"
+                value={referralCode}
+                onChange={(e) => handleReferralCodeChange(e.target.value)}
+                placeholder="Enter SAVE60 for 60% off"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              {referralCode.toUpperCase() === 'SAVE60' && (
+                <p className="text-green-400 text-sm mt-1">
+                  ✓ 60% discount applied!
+                </p>
+              )}
+            </div>
+
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-gray-300">Original Price:</span>
+                <span className="text-gray-300">₹{paymentModalData.originalPrice.toLocaleString()}</span>
+              </div>
+              {paymentModalData.discount > 0 && (
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-green-400">Discount ({paymentModalData.discount}%):</span>
+                  <span className="text-green-400">-₹{(paymentModalData.originalPrice - paymentModalData.discountedPrice).toLocaleString()}</span>
+                </div>
+              )}
+              <div className="flex justify-between items-center text-lg font-bold border-t border-gray-600 pt-2">
+                <span className="text-white">Total:</span>
+                <span className="text-blue-400">₹{Math.round(paymentModalData.discountedPrice).toLocaleString()}</span>
+              </div>
+            </div>
+
+            <button
+              onClick={processPayment}
+              disabled={isProcessingPayment}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+            >
+              {isProcessingPayment ? 'Processing...' : 'Pay with Razorpay'}
+            </button>
+
+            <p className="text-xs text-gray-400 text-center mt-3">
+              Secure payment powered by Razorpay
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

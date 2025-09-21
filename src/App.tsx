@@ -19,6 +19,7 @@ import AdminPanel from './components/AdminPanel';
 import ProjectTracking from './components/ProjectTracking';
 import CourseLearning from './components/CourseLearning';
 import CourseLearningIntermediate from './components/CourseLearningIntermediate';
+import CourseEnrollment from './components/CourseEnrollment';
 
 
 function AppInner() {
@@ -51,7 +52,8 @@ function AppInner() {
           <Route path="/contact" element={<><Header /><Contact /></>} />
 
           <Route path="/courses" element={<><Header /><Courses /></>} />
-          <Route path="/student-registrations" element={<StudentRegistration />} />
+          <Route path="/course-enrollment/:courseId" element={<CourseEnrollment />} />
+          <Route path="/student-registration" element={<StudentRegistration />} />
           <Route path="/student-login" element={<><Header /><StudentLogin /></>} />
           <Route path="/student-portal" element={<StudentPortal />} />
           <Route path="/creator-portal" element={<><Header /><CreatorPortal /></>} />

@@ -81,6 +81,12 @@ const studentSchema = new mongoose.Schema({
       default: 'United States'
     }
   },
+  referralCode: {
+    type: String,
+    trim: true,
+    uppercase: true,
+    default: null
+  },
   enrolledCourses: [{
     courseId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -126,14 +132,6 @@ const studentSchema = new mongoose.Schema({
       type: Number,
       required: true,
       min: 0
-    },
-    discountCode: {
-      type: String,
-      default: null
-    },
-    discountAmount: {
-      type: Number,
-      default: 0
     },
     paymentMethod: {
       type: String,
