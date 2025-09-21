@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate, useSearchParams, useLocation, useParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Header from './Header';
 
 // Declare global objects
@@ -19,35 +19,18 @@ interface StudentDetails {
   dateOfBirth: string;
   education: string;
   experience: string;
-  userId: string;
+  username: string;
   password: string;
   confirmPassword: string;
 }
 
-interface Course {
-  id: string;
-  title: string;
-  originalPrice: number;
-  finalPrice: number;
-  discountCode: string;
-}
-
 const StudentRegistration = () => {
-  const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const { courseId } = useParams();
-  const courseName = searchParams.get('courseName');
-  const coursePrice = searchParams.get('price');
   const selectedCourse = location.state?.selectedCourse;
   
   const [step, setStep] = useState(1);
-  const [discountCodeInput, setDiscountCodeInput] = useState('');
-  const [isValidCode, setIsValidCode] = useState(false);
 
-  const [paymentProcessing, setPaymentProcessing] = useState(false);
-  const [registrationComplete, setRegistrationComplete] = useState(false);
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [studentDetails, setStudentDetails] = useState<StudentDetails>({
     firstName: '',
     lastName: '',
@@ -56,7 +39,7 @@ const StudentRegistration = () => {
     dateOfBirth: '',
     education: '',
     experience: '',
-    userId: '',
+    username: '',
     password: '',
     confirmPassword: ''
   });
@@ -99,10 +82,10 @@ const StudentRegistration = () => {
     const newErrors: Partial<StudentDetails> = {};
     
     if (!studentDetails.education.trim()) newErrors.education = 'Education is required';
-    if (!studentDetails.userId.trim()) {
-      newErrors.userId = 'User ID is required';
-    } else if (studentDetails.userId.length < 4) {
-      newErrors.userId = 'User ID must be at least 4 characters';
+    if (!studentDetails.username.trim()) {
+      newErrors.username = 'Username is required';
+    } else if (studentDetails.username.length < 4) {
+      newErrors.username = 'Username must be at least 4 characters';
     }
     if (!studentDetails.password.trim()) {
       newErrors.password = 'Password is required';
@@ -141,32 +124,27 @@ const StudentRegistration = () => {
     setIsLoading(true);
     
     try {
-      // Prepare registration data for backend
+      // Prepare registration data for backend (without mandatory course enrollment)
       const registrationData = {
         firstName: studentDetails.firstName,
         lastName: studentDetails.lastName,
         email: studentDetails.email,
         phone: studentDetails.phone,
+        username: studentDetails.username,
         password: studentDetails.password,
         dateOfBirth: studentDetails.dateOfBirth,
+        education: studentDetails.education,
+        experience: studentDetails.experience,
         address: {
           street: '123 Main St', // Default values - you can add form fields for these
           city: 'City',
           state: 'State',
           zipCode: '12345',
           country: 'United States'
-        },
-        selectedCourse: {
-          courseId: selectedCourse?.id || courseId || 'FRONTEND-BEGINNER'
-        },
-        paymentDetails: {
-          amount: selectedCourse?.finalPrice || parseFloat(coursePrice || '199'),
-          discountCode: selectedCourse?.discountCode || null,
-          discountAmount: selectedCourse ? (selectedCourse.originalPrice - selectedCourse.finalPrice) : 0,
-          method: 'pending', // Will be updated after payment
-          transactionId: 'pending' // Will be updated after payment
         }
       };
+
+      console.log(registrationData);
 
       // Call backend API to register student
       const response = await fetch('http://localhost:5000/api/students/register', {
@@ -190,8 +168,7 @@ const StudentRegistration = () => {
         };
         localStorage.setItem('currentUser', JSON.stringify(userData));
         
-        setRegistrationComplete(true);
-        setStep(4); // Move to payment step
+        setStep(3); // Move to final step (registration complete)
       } else {
         console.error('Registration failed:', result.message);
         setErrors({ email: result.message || 'Registration failed. Please try again.' });
@@ -203,121 +180,6 @@ const StudentRegistration = () => {
       setIsLoading(false);
     }
   };
-
-  const handlePayment = () => {
-    if (!selectedCourse) {
-      alert('No course selected for payment');
-      return;
-    }
-
-    setPaymentProcessing(true);
-    
-    // Get course price (remove ₹ symbol and convert to number)
-    const coursePrice = selectedCourse.finalPrice || selectedCourse.originalPrice;
-    const numericPrice = typeof coursePrice === 'string' 
-      ? parseInt(coursePrice.replace('₹', '').replace(',', ''))
-      : coursePrice;
-
-    const options = {
-      key: 'rzp_test_NyLZPzYHIYtxqW', // Razorpay test key
-      amount: numericPrice * 100, // Amount in paise
-      currency: 'INR',
-      name: 'Jasnav It Solutions',
-      description: selectedCourse.title,
-      handler: async function (response: any) {
-        try {
-          // Get current user data
-          const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-          
-          // Add to purchased courses
-          const existingPurchased = JSON.parse(localStorage.getItem('purchasedCourses') || '[]');
-          const updatedPurchased = [...existingPurchased, selectedCourse.id];
-          localStorage.setItem('purchasedCourses', JSON.stringify(updatedPurchased));
-          
-          // Prepare payment data for backend
-          const paymentData = {
-            paymentId: response.razorpay_payment_id,
-            studentId: currentUser.id || 'temp-student-id',
-            courseId: selectedCourse.id,
-            courseName: selectedCourse.title,
-            amount: numericPrice,
-            originalAmount: selectedCourse.originalPrice,
-            studentName: `${currentUser.firstName} ${currentUser.lastName}`,
-            studentEmail: currentUser.email,
-            discountCode: selectedCourse.discountCode || null,
-            discountAmount: (selectedCourse.originalPrice - numericPrice) || 0,
-            metadata: {
-              razorpayPaymentId: response.razorpay_payment_id,
-              purchaseSource: 'registration'
-            }
-          };
-          
-          // Send payment data to backend
-          try {
-            const backendResponse = await fetch('http://localhost:5000/api/payments', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(paymentData)
-            });
-            
-            const result = await backendResponse.json();
-            
-            if (result.success) {
-              console.log('Payment recorded in database successfully');
-            } else {
-              console.error('Failed to record payment in database:', result.message);
-            }
-          } catch (backendError) {
-            console.error('Error sending payment to backend:', backendError);
-          }
-          
-          // Store payment details in localStorage as backup
-          const localPaymentData = {
-            courseId: selectedCourse.id,
-            courseName: selectedCourse.title,
-            amount: numericPrice,
-            paymentId: response.razorpay_payment_id,
-            purchaseDate: new Date().toISOString()
-          };
-          
-          const existingPayments = JSON.parse(localStorage.getItem('coursePayments') || '[]');
-          localStorage.setItem('coursePayments', JSON.stringify([...existingPayments, localPaymentData]));
-          
-          // Set payment success state instead of direct redirect
-          setPaymentSuccess(true);
-          setStep(5); // Move to payment success step
-        } catch (error) {
-          console.error('Payment processing error:', error);
-          alert('Payment successful but there was an error processing your enrollment. Please contact support.');
-        }
-      },
-      prefill: {
-        name: `${studentDetails.firstName} ${studentDetails.lastName}`,
-        email: studentDetails.email,
-        contact: studentDetails.phone
-      },
-      theme: {
-        color: '#3B82F6'
-      },
-      modal: {
-        ondismiss: function() {
-          setPaymentProcessing(false);
-        }
-      }
-    };
-
-    if (window.Razorpay) {
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } else {
-      alert('Payment gateway not loaded. Please refresh and try again.');
-      setPaymentProcessing(false);
-    }
-  };
-
-
 
   const renderStep1 = () => (
     <motion.div
@@ -458,18 +320,18 @@ const StudentRegistration = () => {
 
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">
-          User ID *
+          Username *
         </label>
         <input
           type="text"
-          value={studentDetails.userId}
-          onChange={(e) => handleInputChange('userId', e.target.value)}
+          value={studentDetails.username}
+          onChange={(e) => handleInputChange('username', e.target.value)}
           className={`w-full px-4 py-3 bg-gray-800/50 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${
-            errors.userId ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-600 focus:border-blue-500 focus:ring-blue-500'
+            errors.username ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-600 focus:border-blue-500 focus:ring-blue-500'
           }`}
-          placeholder="Create a unique user ID"
+          placeholder="Create a unique username"
         />
-        {errors.userId && <p className="mt-1 text-sm text-red-400">{errors.userId}</p>}
+        {errors.username && <p className="mt-1 text-sm text-red-400">{errors.username}</p>}
       </div>
 
       <div>
@@ -521,87 +383,40 @@ const StudentRegistration = () => {
           Welcome to our learning platform! Your account has been created successfully.
         </p>
         
-        {selectedCourse && (
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6 mb-8">
-            <h4 className="text-lg font-semibold text-white mb-2">Selected Course</h4>
-            <p className="text-blue-400 font-medium">{selectedCourse.title}</p>
-            <p className="text-gray-300 text-sm mt-2">
-              Click "Proceed to Payment" to complete your course enrollment.
-            </p>
-          </div>
-        )}
-        
-        {!selectedCourse && (
-          <p className="text-gray-400 mb-8">
-            You can browse and purchase courses from your student portal.
+        <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6 mb-8">
+          <h4 className="text-lg font-semibold text-white mb-2">What's Next?</h4>
+          <p className="text-gray-300 text-sm mb-4">
+            You can now access your student portal to browse and purchase courses, track your progress, and start learning!
           </p>
-        )}
-      </div>
-    </motion.div>
-  );
-
-  const renderStep4 = () => (
-    <motion.div
-      className="space-y-6"
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      transition={{ duration: 0.3 }}
-    >
-      <div className="text-center">
-        <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-        </div>
-        
-        <h3 className="text-2xl font-bold text-white mb-4">Complete Your Purchase</h3>
-        
-        {selectedCourse ? (
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6 mb-8">
-            <h4 className="text-lg font-semibold text-white mb-4">Course Details</h4>
-            <div className="space-y-3 text-gray-300">
-              <p><span className="font-medium">Course:</span> {selectedCourse.title}</p>
-              {selectedCourse.originalPrice !== selectedCourse.finalPrice && (
-                <p><span className="font-medium">Original Price:</span> <span className="line-through text-gray-500">₹{selectedCourse.originalPrice}</span></p>
-              )}
-              <p><span className="font-medium">Final Price:</span> <span className="text-green-400 font-bold">₹{selectedCourse.finalPrice || selectedCourse.originalPrice}</span></p>
-              {selectedCourse.discountCode && (
-                <p><span className="font-medium">Discount Code:</span> <span className="text-blue-400">{selectedCourse.discountCode}</span></p>
-              )}
+          {selectedCourse && (
+            <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <p className="text-blue-400 font-medium mb-2">Course Available for Purchase:</p>
+              <p className="text-white">{selectedCourse.title}</p>
+              <p className="text-gray-300 text-sm mt-1">
+                You can purchase this course from your student portal.
+              </p>
             </div>
-          </div>
-        ) : (
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6 mb-8">
-            <p className="text-gray-300">No course selected for purchase.</p>
-          </div>
-        )}
-        
-        <p className="text-gray-300 mb-8">
-          Click the button below to proceed with secure payment via Razorpay.
-        </p>
+          )}
+        </div>
         
         <div className="flex gap-4 justify-center">
           <motion.button
             onClick={() => navigate('/student-portal')}
+            className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg shadow-blue-500/25"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            Go to Student Portal
+          </motion.button>
+          
+          <motion.button
+            onClick={() => navigate('/student-login')}
             className="px-6 py-3 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            Skip Payment
+            Login Now
           </motion.button>
-          
-          {selectedCourse && (
-            <motion.button
-              onClick={handlePayment}
-              disabled={paymentProcessing}
-              className="px-8 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg font-semibold hover:from-green-700 hover:to-blue-700 transition-all duration-300 shadow-lg shadow-green-500/25 disabled:opacity-50"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              {paymentProcessing ? 'Processing...' : `Pay ₹${selectedCourse.finalPrice || selectedCourse.originalPrice}`}
-            </motion.button>
-          )}
         </div>
       </div>
     </motion.div>
@@ -628,14 +443,14 @@ const StudentRegistration = () => {
 
           {/* Progress Steps */}
           <div className="flex items-center justify-center mb-8">
-            {[1, 2, 3, 4, 5].map((stepNumber) => (
+            {[1, 2, 3].map((stepNumber) => (
               <div key={stepNumber} className="flex items-center">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-colors ${
                   step >= stepNumber ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400'
                 }`}>
                   {stepNumber}
                 </div>
-                {stepNumber < 5 && (
+                {stepNumber < 3 && (
                   <div className={`w-16 h-1 mx-2 transition-colors ${
                     step > stepNumber ? 'bg-blue-600' : 'bg-gray-700'
                   }`}></div>
@@ -669,50 +484,7 @@ const StudentRegistration = () => {
             
             {step === 3 && renderStep3()}
             
-            {step === 4 && renderStep4()}
-            
-            {step === 5 && (
-              <motion.div
-                className="text-center space-y-6"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-              >
-                <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                
-                <h3 className="text-3xl font-bold text-white mb-4">Payment Successful!</h3>
-                
-                <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6 mb-8">
-                  <p className="text-gray-300 text-lg mb-4">
-                    Thank you for your purchase! Your payment has been processed successfully.
-                  </p>
-                  {selectedCourse && (
-                    <div className="text-gray-300">
-                      <p className="mb-2"><span className="font-medium">Course:</span> {selectedCourse.title}</p>
-                      <p><span className="font-medium">Amount Paid:</span> <span className="text-green-400 font-bold">₹{selectedCourse.finalPrice || selectedCourse.originalPrice}</span></p>
-                    </div>
-                  )}
-                </div>
-                
-                <p className="text-gray-300 mb-8">
-                  You can now login to your student portal to start learning!
-                </p>
-                
-                <motion.button
-                  onClick={() => navigate('/student-login')}
-                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg shadow-blue-500/25"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  Go to Student Login
-                </motion.button>
-              </motion.div>
-            )}
+            {/* Remove step 4 and 5 as they were for payment flow */}
 
             {/* Navigation Buttons */}
             {step < 3 && (
@@ -728,65 +500,18 @@ const StudentRegistration = () => {
                 </motion.button>
                 
                 <motion.button
-                  onClick={handleNext}
-                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg shadow-blue-500/25"
+                  onClick={step === 2 ? handleRegistrationSubmit : handleNext}
+                  disabled={isLoading}
+                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg shadow-blue-500/25 disabled:opacity-50"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  {step === 2 ? 'Complete Registration' : 'Next'}
+                  {isLoading ? 'Processing...' : (step === 2 ? 'Complete Registration' : 'Next')}
                 </motion.button>
               </div>
             )}
             
-            {/* Step 3 Navigation */}
-            {step === 3 && (
-              <div className="flex justify-between mt-8">
-                <motion.button
-                  onClick={handleBack}
-                  className="px-6 py-3 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  Back
-                </motion.button>
-                
-                <div className="flex gap-4">
-                  <motion.button
-                    onClick={() => navigate('/student-portal')}
-                    className="px-6 py-3 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    Go to Portal
-                  </motion.button>
-                  
-                  {selectedCourse && (
-                    <motion.button
-                      onClick={() => setStep(4)}
-                      className="px-8 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg font-semibold hover:from-green-700 hover:to-blue-700 transition-all duration-300 shadow-lg shadow-green-500/25"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      Proceed to Payment
-                    </motion.button>
-                  )}
-                </div>
-              </div>
-            )}
-            
-            {/* Step 4 Navigation */}
-             {step === 4 && (
-               <div className="flex justify-center mt-8">
-                 <motion.button
-                   onClick={() => setStep(3)}
-                   className="px-6 py-3 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors"
-                   whileHover={{ scale: 1.02 }}
-                   whileTap={{ scale: 0.98 }}
-                 >
-                   Back to Registration
-                 </motion.button>
-               </div>
-             )}
+            {/* Remove old step 3 and 4 navigation as they were for payment flow */}
 
             {/* Login Link */}
             <div className="mt-8 text-center">

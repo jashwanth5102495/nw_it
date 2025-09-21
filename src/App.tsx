@@ -19,12 +19,7 @@ import AdminPanel from './components/AdminPanel';
 import ProjectTracking from './components/ProjectTracking';
 import CourseLearning from './components/CourseLearning';
 import CourseLearningIntermediate from './components/CourseLearningIntermediate';
-import CourseLearningJavaScript from './components/CourseLearningJavaScript';
-import CourseLearningAdvanced from './components/CourseLearningAdvanced';
-import CourseLearningDevOpsBeginner from './components/CourseLearningDevOpsBeginner';
-import CourseLearningDevOpsAdvanced from './components/CourseLearningDevOpsAdvanced';
-import CourseLearningMobileAdvanced from './components/CourseLearningMobileAdvanced';
-import CourseLearningBrowserExtensions from './components/CourseLearningBrowserExtensions';
+
 
 function AppInner() {
   const location = useLocation();
@@ -56,7 +51,7 @@ function AppInner() {
           <Route path="/contact" element={<><Header /><Contact /></>} />
 
           <Route path="/courses" element={<><Header /><Courses /></>} />
-          <Route path="/student-registration/:courseId" element={<StudentRegistration />} />
+          <Route path="/student-registrations" element={<StudentRegistration />} />
           <Route path="/student-login" element={<><Header /><StudentLogin /></>} />
           <Route path="/student-portal" element={<StudentPortal />} />
           <Route path="/creator-portal" element={<><Header /><CreatorPortal /></>} />

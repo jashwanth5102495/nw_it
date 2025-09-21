@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import Header from './Header';
@@ -32,8 +32,12 @@ const StudentLogin = () => {
     setError('');
 
     try {
+      console.log(`Sending request:
+          username: ${loginData.username}
+          password: ${loginData.password}
+        `);
       // Call backend API for authentication
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch('http://localhost:5000/api/students/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -49,7 +53,7 @@ const StudentLogin = () => {
       if (result.success) {
         // Set authentication flag and store user data
         const userData = {
-          ...result.data.user,
+          ...result.data.student,
           isAuthenticated: true,
           token: result.data.token
         };
@@ -172,7 +176,7 @@ const StudentLogin = () => {
               <p className="text-gray-400">
                 Don't have an account?{' '}
                 <button
-                  onClick={() => navigate('/student-registration')}
+                  onClick={() => navigate('/student-registrations')}
                   className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"
                 >
                   Register here

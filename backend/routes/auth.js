@@ -36,8 +36,11 @@ router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
 
+    console.log("hit the server");
     // Validate input
-    if (!username || !password) {
+    console.log(username, password);
+
+    if (!username || !password) {``
       return res.status(400).json({
         success: false,
         message: 'Username and password are required'

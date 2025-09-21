@@ -1,7 +1,12 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
 
 const studentSchema = new mongoose.Schema({
+  user_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    unique: true
+  },
   studentId: {
     type: String,
     required: true,
@@ -34,17 +39,15 @@ const studentSchema = new mongoose.Schema({
     trim: true,
     maxlength: 20
   },
-  password: {
+  education: {
     type: String,
-    required: function() {
-      return this.loginMethod !== 'google';
-    },
-    minlength: 6
+    required: true,
+    enum: ['high-school', 'diploma', 'bachelors', 'masters', 'phd', 'other']
   },
-  loginMethod: {
+  experience: {
     type: String,
-    enum: ['email', 'google'],
-    default: 'email'
+    enum: ['beginner', 'intermediate', 'advanced'],
+    default: 'beginner'
   },
   dateOfBirth: {
     type: Date,
@@ -174,24 +177,6 @@ studentSchema.pre('save', function(next) {
   next();
 });
 
-// Hash password before saving
-studentSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Method to compare password
-studentSchema.methods.comparePassword = async function(candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
-};
-
 // Method to get full name
 studentSchema.methods.getFullName = function() {
   return `${this.firstName} ${this.lastName}`;
@@ -231,11 +216,6 @@ studentSchema.methods.updateCourseProgress = function(courseId, progress, comple
   }
   
   return this.save();
-};
-
-// Static method to find by email
-studentSchema.statics.findByEmail = function(email) {
-  return this.findOne({ email: email.toLowerCase() });
 };
 
 const Student = mongoose.model('Student', studentSchema);

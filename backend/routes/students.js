@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const Student = require('../models/Student');
 const Course = require('../models/Course');
+const User = require('../models/User'); // Add User model
 const { authenticateStudent, authorizeOwnProfile } = require('../middleware/auth');
 const router = express.Router();
 
@@ -22,16 +23,18 @@ router.post('/register', async (req, res) => {
       lastName,
       email,
       phone,
+      username,
       password,
       dateOfBirth,
-      address,
-      selectedCourse,
-      paymentDetails,
-      loginMethod
+      education,
+      experience,
+      address
     } = req.body;
 
-    // Check if student already exists
-    const existingStudent = await Student.findByEmail(email);
+    console.log(`Request Received: ${JSON.stringify(req.body)}`);
+    
+    // Check if student already exists by email
+    const existingStudent = await Student.findOne({ email });
     if (existingStudent) {
       return res.status(400).json({
         success: false,
@@ -39,50 +42,47 @@ router.post('/register', async (req, res) => {
       });
     }
 
+    // Check if username already exists
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username already taken'
+      });
+    }
+
     // Generate unique student ID
     const { v4: uuidv4 } = require('uuid');
     const studentId = `STU-${uuidv4().substring(0, 8).toUpperCase()}`;
 
-    // Find the selected course
-    const course = await Course.findOne({ courseId: selectedCourse.courseId });
-    if (!course) {
-      return res.status(404).json({
-        success: false,
-        message: 'Selected course not found'
-      });
-    }
+    // First, create the User record for authentication
+    const user = new User({
+      username,
+      password,
+      role: 'student'
+    });
 
-    // Create new student
+    await user.save();
+
+    // Then, create the Student record with reference to User
     const student = new Student({
+      user_id: user._id,
       studentId,
       firstName,
       lastName,
       email,
       phone,
-      password: loginMethod === 'google' ? undefined : password,
       dateOfBirth: new Date(dateOfBirth),
       address,
-      loginMethod: loginMethod || 'email'
+      // Add education and experience if needed in Student schema
+      education,
+      experience
     });
-
-    // Add payment history
-    student.paymentHistory.push({
-      courseId: course._id,
-      amount: paymentDetails.amount,
-      discountCode: paymentDetails.discountCode || null,
-      discountAmount: paymentDetails.discountAmount || 0,
-      paymentMethod: paymentDetails.method,
-      transactionId: paymentDetails.transactionId || `TXN-${Date.now()}`,
-      status: 'completed'
-    });
-
-    // Enroll in the selected course
-    await student.enrollInCourse(course._id);
 
     await student.save();
 
     // Generate token
-    const token = generateToken(student._id);
+    const token = generateToken(user._id);
 
     res.status(201).json({
       success: true,
@@ -90,10 +90,12 @@ router.post('/register', async (req, res) => {
       data: {
         student: {
           id: student._id,
+          user_id: user._id,
           studentId: student.studentId,
           firstName: student.firstName,
           lastName: student.lastName,
           email: student.email,
+          username: user.username,
           enrolledCourses: student.enrolledCourses
         },
         token
@@ -112,39 +114,44 @@ router.post('/register', async (req, res) => {
 // Student login
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
 
-    if (!email || !password) {
+    if (!username || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Email and password are required'
+        message: 'Username and password are required'
       });
     }
 
-    // Find student by email
-    const student = await Student.findByEmail(email).populate('enrolledCourses.courseId');
-    if (!student) {
+    // Find user by username
+    const user = await User.findOne({ username });
+    if (!user || user.role !== 'student') {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password'
+        message: 'Invalid username or password'
       });
     }
 
     // Check password
-    const isPasswordValid = await student.comparePassword(password);
+    const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password'
+        message: 'Invalid username or password'
       });
     }
 
-    // Update last login
-    student.lastLogin = new Date();
-    await student.save();
+    // Find associated student record
+    const student = await Student.findOne({ user_id: user._id }).populate('enrolledCourses.courseId');
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student profile not found'
+      });
+    }
 
     // Generate token
-    const token = generateToken(student._id);
+    const token = generateToken(user._id);
 
     res.json({
       success: true,
@@ -152,12 +159,14 @@ router.post('/login', async (req, res) => {
       data: {
         student: {
           id: student._id,
+          user_id: user._id,
           studentId: student.studentId,
           firstName: student.firstName,
           lastName: student.lastName,
           email: student.email,
+          username: user.username,
           enrolledCourses: student.enrolledCourses,
-          lastLogin: student.lastLogin
+          lastLogin: new Date()
         },
         token
       }
