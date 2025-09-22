@@ -18,8 +18,8 @@ import CreatorPortal from './components/CreatorPortal';
 import AdminPanel from './components/AdminPanel';
 import ProjectTracking from './components/ProjectTracking';
 import CourseLearning from './components/CourseLearning';
-import CourseLearningIntermediate from './components/CourseLearningIntermediate';
 import CourseEnrollment from './components/CourseEnrollment';
+import AssignmentPage from './components/AssignmentPage';
 
 
 function AppInner() {
@@ -61,8 +61,7 @@ function AppInner() {
           <Route path="/project-tracking" element={<><Header /><ProjectTracking /></>} />
           <Route path="/course-learning/:courseId/:moduleId/:lessonId" element={<CourseLearning />} />
           <Route path="/course-learning" element={<CourseLearning />} />
-          <Route path="/course-learning-intermediate/:courseId/:moduleId/:lessonId" element={<CourseLearningIntermediate />} />
-          <Route path="/course-learning-intermediate" element={<CourseLearningIntermediate />} />
+          <Route path="/assignment/:assignmentId" element={<AssignmentPage />} />
 
         </Routes>
       </div>

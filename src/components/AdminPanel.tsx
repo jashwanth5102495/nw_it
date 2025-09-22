@@ -121,6 +121,11 @@ const AdminPanel: React.FC = () => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showStudentModal, setShowStudentModal] = useState(false);
 
+  // Delete Student States
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const projectPhases = [
     'Planning & Analysis',
     'Design & Wireframing',
@@ -352,73 +357,150 @@ const AdminPanel: React.FC = () => {
     setSelectedStudent(null);
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
-      {/* Header */}
-      <div className="bg-black/50 backdrop-blur-lg border-b border-white/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
-              <p className="text-white/70 mt-1">Manage projects and track student progress</p>
-            </div>
-            <button
-              onClick={() => navigate('/')}
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors duration-200"
-            >
-              Back to Home
-            </button>
-          </div>
-        </div>
-      </div>
+  // Delete Student Handlers
+  const handleDeleteStudent = (student: Student) => {
+    setStudentToDelete(student);
+    setShowDeleteConfirm(true);
+  };
 
-      {/* Tab Navigation */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex space-x-1 bg-gray-900 rounded-lg p-1">
+  const handleConfirmDelete = async () => {
+    if (!studentToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`http://localhost:5000/api/students/${studentToDelete._id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        // Remove student from local state
+        setStudents(prevStudents => 
+          prevStudents.filter(student => student._id !== studentToDelete._id)
+        );
+        
+        // Close confirmation dialog
+        setShowDeleteConfirm(false);
+        setStudentToDelete(null);
+        
+        // Show success message (you can add a toast notification here)
+        console.log('Student deleted successfully');
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to delete student:', errorData.message);
+        alert('Failed to delete student: ' + errorData.message);
+      }
+    } catch (error) {
+      console.error('Error deleting student:', error);
+      alert('Error deleting student. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirm(false);
+    setStudentToDelete(null);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white flex">
+      {/* Side Navigation */}
+      <div className="w-64 bg-black/50 backdrop-blur-lg border-r border-white/20 flex flex-col">
+        {/* Header */}
+        <div className="p-6 border-b border-white/20">
+          <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
+          <p className="text-white/70 text-sm mt-1">Management Portal</p>
+        </div>
+
+        {/* Navigation Menu */}
+        <nav className="flex-1 p-4 space-y-2">
           <button
             onClick={() => setActiveTab('projects')}
-            className={`flex-1 py-3 px-6 rounded-md font-medium transition-all duration-200 ${
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
               activeTab === 'projects'
                 ? 'bg-blue-600 text-white shadow-lg'
-                : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                : 'text-gray-400 hover:text-white hover:bg-white/10'
             }`}
           >
-            📊 Projects
+            <span className="text-xl">📊</span>
+            <span>Projects</span>
           </button>
+          
           <button
             onClick={() => setActiveTab('courses')}
-            className={`flex-1 py-3 px-6 rounded-md font-medium transition-all duration-200 ${
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
               activeTab === 'courses'
                 ? 'bg-blue-600 text-white shadow-lg'
-                : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                : 'text-gray-400 hover:text-white hover:bg-white/10'
             }`}
           >
-            🎓 Student Courses
+            <span className="text-xl">🎓</span>
+            <span>Student Courses</span>
           </button>
+          
           <button
             onClick={() => setActiveTab('payments')}
-            className={`flex-1 py-3 px-6 rounded-md font-medium transition-all duration-200 ${
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
               activeTab === 'payments'
                 ? 'bg-blue-600 text-white shadow-lg'
-                : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                : 'text-gray-400 hover:text-white hover:bg-white/10'
             }`}
           >
-            💳 Payments
+            <span className="text-xl">💳</span>
+            <span>Payments</span>
           </button>
+          
           <button
             onClick={() => setActiveTab('referral')}
-            className={`flex-1 py-3 px-6 rounded-md font-medium transition-all duration-200 ${
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
               activeTab === 'referral'
                 ? 'bg-blue-600 text-white shadow-lg'
-                : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                : 'text-gray-400 hover:text-white hover:bg-white/10'
             }`}
           >
-            🤝 Faculty & Referral
+            <span className="text-xl">🤝</span>
+            <span>Faculty & Referral</span>
+          </button>
+        </nav>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-white/20">
+          <button
+            onClick={() => navigate('/')}
+            className="w-full px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors duration-200 text-sm"
+          >
+            Back to Home
           </button>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Top Header */}
+        <div className="bg-black/30 backdrop-blur-lg border-b border-white/20 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-white">
+                {activeTab === 'projects' && '📊 Projects Management'}
+                {activeTab === 'courses' && '🎓 Student Courses'}
+                {activeTab === 'payments' && '💳 Payment Records'}
+                {activeTab === 'referral' && '🤝 Faculty & Referral System'}
+              </h2>
+              <p className="text-white/70 mt-1">
+                {activeTab === 'projects' && 'Manage and track all client projects'}
+                {activeTab === 'courses' && 'Monitor student progress and assignments'}
+                {activeTab === 'payments' && 'View payment history and transactions'}
+                {activeTab === 'referral' && 'Track referral codes and commission earnings'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 p-6 overflow-auto">
         {activeTab === 'projects' && (
           <>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -659,6 +741,8 @@ const AdminPanel: React.FC = () => {
             </p>
           </div>
 
+
+
             {/* Projects List */}
           <div className="mt-8 bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10">
             <h2 className="text-2xl font-bold text-white mb-6">All Projects ({projects.length})</h2>
@@ -767,11 +851,21 @@ const AdminPanel: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-white/60 text-sm">Joined</div>
-                        <div className="text-white text-sm">
-                          {new Date(student.createdAt).toLocaleDateString()}
+                      <div className="flex items-center space-x-4">
+                        <div className="text-right">
+                          <div className="text-white/60 text-sm">Joined</div>
+                          <div className="text-white text-sm">
+                            {new Date(student.createdAt).toLocaleDateString()}
+                          </div>
                         </div>
+                        <button
+                          onClick={() => handleDeleteStudent(student)}
+                          className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
+                          title="Delete Student"
+                        >
+                          <span>🗑️</span>
+                          <span>Delete</span>
+                        </button>
                       </div>
                     </div>
 
@@ -779,10 +873,10 @@ const AdminPanel: React.FC = () => {
                     {student.enrolledCourses && student.enrolledCourses.length > 0 && (
                       <div className="mb-4">
                         <h4 className="text-white font-medium mb-3">Enrolled Courses ({student.enrolledCourses.length})</h4>
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                           {student.enrolledCourses.map((enrollment, index) => (
-                            <div key={index} className="bg-black/30 rounded-lg p-3 border border-white/10">
-                              <div className="flex items-center justify-between">
+                            <div key={index} className="bg-black/30 rounded-lg p-4 border border-white/10">
+                              <div className="flex items-center justify-between mb-3">
                                 <div>
                                   <div className="text-white font-medium">
                                     {enrollment.courseId?.title || 'Course Title N/A'}
@@ -806,6 +900,115 @@ const AdminPanel: React.FC = () => {
                                   </span>
                                 </div>
                               </div>
+
+                              {/* Assignments Section */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                <div className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-lg p-3 border border-blue-500/30">
+                                  <h5 className="text-white font-medium mb-2 flex items-center">
+                                    📝 Assignments
+                                    <span className="ml-2 px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
+                                      {enrollment.assignments?.completed || 0}/{enrollment.assignments?.total || 0}
+                                    </span>
+                                  </h5>
+                                  <div className="space-y-2">
+                                    {enrollment.assignments?.list?.map((assignment, idx) => (
+                                      <div key={idx} className="flex items-center justify-between text-sm">
+                                        <span className="text-white/80">{assignment.title}</span>
+                                        <div className="flex items-center gap-2">
+                                          <span className={`px-2 py-1 rounded-full text-xs ${
+                                            assignment.status === 'completed' ? 'bg-green-600 text-white' :
+                                            assignment.status === 'submitted' ? 'bg-yellow-600 text-white' :
+                                            'bg-gray-600 text-white'
+                                          }`}>
+                                            {assignment.status || 'pending'}
+                                          </span>
+                                          {assignment.score && (
+                                            <span className="text-green-400 font-medium">
+                                              {assignment.score}%
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )) || (
+                                      <p className="text-white/60 text-sm">No assignments available</p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-lg p-3 border border-purple-500/30">
+                                  <h5 className="text-white font-medium mb-2 flex items-center">
+                                    🧪 Test Results
+                                    <span className="ml-2 px-2 py-1 bg-purple-600 text-white text-xs rounded-full">
+                                      {enrollment.tests?.completed || 0}/{enrollment.tests?.total || 0}
+                                    </span>
+                                  </h5>
+                                  <div className="space-y-2">
+                                    {enrollment.tests?.list?.map((test, idx) => (
+                                      <div key={idx} className="flex items-center justify-between text-sm">
+                                        <span className="text-white/80">{test.title}</span>
+                                        <div className="flex items-center gap-2">
+                                          <span className={`px-2 py-1 rounded-full text-xs ${
+                                            test.score >= 80 ? 'bg-green-600 text-white' :
+                                            test.score >= 60 ? 'bg-yellow-600 text-white' :
+                                            test.score ? 'bg-red-600 text-white' :
+                                            'bg-gray-600 text-white'
+                                          }`}>
+                                            {test.score ? `${test.score}%` : 'pending'}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    )) || (
+                                      <p className="text-white/60 text-sm">No tests available</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Project Submissions */}
+                              {enrollment.projects && enrollment.projects.length > 0 && (
+                                <div className="mt-3 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-lg p-3 border border-green-500/30">
+                                  <h5 className="text-white font-medium mb-2 flex items-center">
+                                    🚀 Project Submissions
+                                    <span className="ml-2 px-2 py-1 bg-green-600 text-white text-xs rounded-full">
+                                      {enrollment.projects.length}
+                                    </span>
+                                  </h5>
+                                  <div className="space-y-2">
+                                    {enrollment.projects.map((project, idx) => (
+                                      <div key={idx} className="bg-black/30 rounded-lg p-2 border border-white/10">
+                                        <div className="flex items-center justify-between">
+                                          <div>
+                                            <span className="text-white/80 text-sm font-medium">{project.title}</span>
+                                            <div className="text-white/60 text-xs mt-1">
+                                              Submitted: {new Date(project.submittedAt).toLocaleDateString()}
+                                            </div>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            {project.gitUrl && (
+                                              <a
+                                                href={project.gitUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="px-2 py-1 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded-lg transition-colors duration-200"
+                                              >
+                                                🔗 GitHub
+                                              </a>
+                                            )}
+                                            <span className={`px-2 py-1 rounded-full text-xs ${
+                                              project.status === 'approved' ? 'bg-green-600 text-white' :
+                                              project.status === 'reviewed' ? 'bg-blue-600 text-white' :
+                                              project.status === 'rejected' ? 'bg-red-600 text-white' :
+                                              'bg-yellow-600 text-white'
+                                            }`}>
+                                              {project.status || 'pending'}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -914,17 +1117,20 @@ const AdminPanel: React.FC = () => {
                         value={newFaculty.referralCode}
                         onChange={(e) => setNewFaculty({...newFaculty, referralCode: e.target.value.toUpperCase()})}
                         className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="Enter referral code"
+                        placeholder="Enter referral code (e.g., JASH)"
                         required
                       />
                     </div>
                   </div>
                   <div className="mt-4">
                     <p className="text-sm text-white/60">
-                      📝 Enter a unique referral code for the faculty member
+                      📝 Enter a unique referral code for the faculty member (e.g., JASH, ROHAN, etc.)
                     </p>
                     <p className="text-sm text-white/60 mt-1">
-                      💰 Commission rate is set to 60% for all faculty members
+                      💰 Commission rate is set to 10% for all faculty members
+                    </p>
+                    <p className="text-sm text-yellow-400 mt-1">
+                      ⚠️ Students will use this code during course purchase to link their enrollment
                     </p>
                   </div>
                   <div className="flex gap-4 mt-6">
@@ -1127,6 +1333,7 @@ const AdminPanel: React.FC = () => {
             )}
           </div>
         )}
+        </div>
       </div>
 
       {/* Student Detail Modal */}
@@ -1135,6 +1342,64 @@ const AdminPanel: React.FC = () => {
         isOpen={showStudentModal}
         onClose={handleCloseStudentModal}
       />
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && studentToDelete && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-gray-900 border border-white/20 rounded-2xl p-6 max-w-md w-full mx-4">
+            <div className="text-center">
+              <div className="text-6xl mb-4">⚠️</div>
+              <h3 className="text-xl font-bold text-white mb-2">Delete Student</h3>
+              <p className="text-white/70 mb-6">
+                Are you sure you want to delete{' '}
+                <span className="font-semibold text-white">
+                  {studentToDelete.firstName} {studentToDelete.lastName}
+                </span>
+                ? This action cannot be undone.
+              </p>
+              
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 mb-6">
+                <p className="text-red-300 text-sm">
+                  This will permanently delete:
+                </p>
+                <ul className="text-red-300 text-sm mt-2 space-y-1">
+                  <li>• Student profile and account</li>
+                  <li>• All course enrollments</li>
+                  <li>• Payment history</li>
+                  <li>• Progress and assignments</li>
+                </ul>
+              </div>
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={handleCancelDelete}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors duration-200 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200 disabled:opacity-50 flex items-center justify-center space-x-2"
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span>Deleting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>🗑️</span>
+                      <span>Delete Student</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

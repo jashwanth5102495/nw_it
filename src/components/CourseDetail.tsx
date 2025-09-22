@@ -118,49 +118,6 @@ const CourseDetail = () => {
       ]
     },
     {
-      id: 'frontend-intermediate',
-      title: 'Frontend Development - Intermediate',
-      category: 'frontend',
-      level: 'intermediate',
-      description: 'Advance your frontend skills with modern CSS techniques, JavaScript, and MongoDB',
-      detailedDescription: 'Take your frontend skills to the next level with advanced CSS techniques, JavaScript fundamentals, MongoDB database integration, and modern development workflows.',
-      technologies: ['HTML', 'CSS', 'JavaScript', 'React', 'MongoDB'],
-      price: 1500,
-      duration: '10 weeks',
-      projects: 5,
-      modules: [
-        {
-          title: 'Advanced CSS Techniques',
-          duration: '2 weeks',
-          topics: ['CSS Grid Advanced', 'Flexbox Mastery', 'CSS Animations', 'Transitions']
-        },
-        {
-          title: 'Modern JavaScript',
-          duration: '3 weeks',
-          topics: ['ES6+ Features', 'Async/Await', 'Modules', 'Build Tools']
-        },
-        {
-          title: 'React Fundamentals',
-          duration: '3 weeks',
-          topics: ['Components', 'State Management', 'Hooks', 'Routing']
-        },
-        {
-          title: 'Project Development',
-          duration: '2 weeks',
-          topics: ['Full Application Build', 'Testing', 'Deployment']
-        }
-      ],
-      prerequisites: ['HTML, CSS, JavaScript basics', 'Completed Frontend Beginner or equivalent'],
-      whatYouWillLearn: [
-        'Build modern web applications with React',
-        'Master advanced CSS techniques and animations',
-        'Implement modern JavaScript patterns',
-        'Deploy production-ready applications',
-        'Work with APIs and databases',
-        'Create responsive user interfaces'
-      ]
-    },
-    {
       id: 'frontend-advanced',
       title: 'Frontend Development - Advanced',
       category: 'frontend',

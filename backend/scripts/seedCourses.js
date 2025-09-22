@@ -86,49 +86,6 @@ const coursesData = [
     }
   },
   {
-    courseId: 'FRONTEND-INTERMEDIATE',
-    title: 'Frontend Development - Intermediate',
-    description: 'Advance your frontend skills with modern frameworks, advanced CSS techniques, and JavaScript ES6+ features.',
-    category: 'Frontend Development',
-    level: 'Intermediate',
-    price: 1500,
-    duration: '10 weeks',
-    modules: [
-      {
-        title: 'Advanced CSS',
-        duration: '2 weeks',
-        topics: ['CSS Grid Advanced', 'Animations', 'Preprocessors', 'CSS-in-JS']
-      },
-      {
-        title: 'Modern JavaScript',
-        duration: '3 weeks',
-        topics: ['ES6+ Features', 'Async/Await', 'Modules', 'Build Tools']
-      },
-      {
-        title: 'React Fundamentals',
-        duration: '3 weeks',
-        topics: ['Components', 'State Management', 'Hooks', 'Routing']
-      },
-      {
-        title: 'Project Development',
-        duration: '2 weeks',
-        topics: ['Full Application Build', 'Testing', 'Deployment']
-      }
-    ],
-    prerequisites: ['HTML, CSS, JavaScript basics', 'Completed Frontend Beginner or equivalent'],
-    learningOutcomes: [
-      'Build modern web applications with React',
-      'Master advanced CSS techniques and animations',
-      'Implement modern JavaScript patterns',
-      'Deploy production-ready applications'
-    ],
-    instructor: {
-      name: 'Emily Rodriguez',
-      bio: 'React specialist and UI/UX expert with extensive experience in modern frontend development.',
-      experience: '6+ years in Frontend Development, Senior Developer at Airbnb'
-    }
-  },
-  {
     courseId: 'FRONTEND-ADVANCED',
     title: 'Frontend Development - Advanced',
     description: 'Master advanced frontend concepts including performance optimization, advanced state management, and modern development workflows.',

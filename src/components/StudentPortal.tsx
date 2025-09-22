@@ -35,6 +35,7 @@ interface Course {
   image: string;
   rating: number;
   students: number;
+  maxStudents: number;
   instructor: string;
 }
 
@@ -57,6 +58,28 @@ interface Assignment {
   status: 'pending' | 'submitted' | 'graded';
   description: string;
   grade?: number;
+  studyMaterials?: string[];
+  testQuestions?: {
+    question: string;
+    options: string[];
+    correctAnswer: number;
+  }[];
+}
+
+interface Project {
+  id: string;
+  title: string;
+  courseId: string;
+  courseName: string;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  description: string;
+  requirements: string[];
+  technologies: string[];
+  estimatedTime: string;
+  status: 'not_started' | 'in_progress' | 'completed';
+  dueDate?: string;
+  submissionUrl?: string;
+  grade?: number;
 }
 
 interface PurchaseHistory {
@@ -77,6 +100,9 @@ interface StudentProfile {
   location?: string;
   joinDate?: string;
   studentId?: string;
+  dateOfBirth?: string;
+  education?: string;
+  experience?: string;
 }
 
 interface PaymentModalData {
@@ -109,6 +135,45 @@ const StudentPortal = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Git functionality state
+  const [showGitTutorialModal, setShowGitTutorialModal] = useState(false);
+  const [showProjectSubmissionModal, setShowProjectSubmissionModal] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [projectGitUrl, setProjectGitUrl] = useState('');
+
+  // Assignment course selection state
+  const [selectedCourseForAssignments, setSelectedCourseForAssignments] = useState<string | null>(null);
+  
+  // Project course selection state
+  const [selectedCourseForProjects, setSelectedCourseForProjects] = useState<string | null>(null);
+  const [selectedStudyMaterials, setSelectedStudyMaterials] = useState<string[]>([]);
+  const [selectedTestQuestions, setSelectedTestQuestions] = useState<Assignment['testQuestions']>([]);
+  
+  // Course details state
+  const [selectedCourseForDetails, setSelectedCourseForDetails] = useState<Course | null>(null);
+  const [showCourseDetails, setShowCourseDetails] = useState(false);
+  const [showStudyMaterialsModal, setShowStudyMaterialsModal] = useState(false);
+  const [showTestQuestionsModal, setShowTestQuestionsModal] = useState(false);
+  const [currentTestAnswers, setCurrentTestAnswers] = useState<{ [questionIndex: number]: number }>({});
+  const [testResults, setTestResults] = useState<{ score: number; total: number } | null>(null);
+  
+  // Assignment tracking state
+  const [assignmentStatuses, setAssignmentStatuses] = useState<{ [assignmentId: string]: Assignment['status'] }>({});
+  const [assignmentSubmissions, setAssignmentSubmissions] = useState<{ [assignmentId: string]: { type: 'file' | 'git', content: string, submittedAt: string } }>({});
+
+  // Course ID mapping function to handle inconsistent courseId values
+  const getCourseIdMapping = (courseId: string): string[] => {
+    const mappings: { [key: string]: string[] } = {
+      'ai-tools-mastery': ['1', 'AI-TOOLS-MASTERY'],
+      'frontend-beginner': ['frontend-beginner'],
+      'frontend-advanced': ['3'],
+      'devops-beginner': ['DEVOPS-BEGINNER'],
+      'devops-intermediate': ['4'],
+      'mobile-core': ['5']
+    };
+    return mappings[courseId] || [courseId];
+  };
+
   // All available courses from the Courses page
   const allCourses: Course[] = [
     {
@@ -123,7 +188,8 @@ const StudentPortal = () => {
       projects: 8,
       image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=250&fit=crop&crop=center',
       rating: 4.8,
-      students: 12543,
+      students: 15000,
+      maxStudents: 12000,
       instructor: 'Sarah Johnson',
       modules: [
         {
@@ -161,6 +227,7 @@ const StudentPortal = () => {
       image: 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=250&fit=crop&crop=center',
       rating: 4.6,
       students: 15678,
+      maxStudents: 20000,
       instructor: 'Mike Chen',
       modules: [
         {
@@ -186,43 +253,6 @@ const StudentPortal = () => {
       ]
     },
     {
-      id: 'frontend-intermediate',
-      title: 'Frontend Development - Intermediate',
-      category: 'frontend',
-      level: 'intermediate',
-      description: 'Advance your frontend skills with React, TypeScript, and modern development tools',
-      technologies: ['React', 'TypeScript', 'Tailwind CSS', 'Vite', 'React Router'],
-      price: 1500,
-      duration: '10 weeks',
-      projects: 6,
-      image: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&h=250&fit=crop&crop=center',
-      rating: 4.7,
-      students: 9876,
-      instructor: 'Emily Rodriguez',
-      modules: [
-        {
-          title: 'React Fundamentals',
-          duration: '3 weeks',
-          topics: ['Components', 'Props and State', 'Event handling', 'Lifecycle methods']
-        },
-        {
-          title: 'TypeScript Integration',
-          duration: '2 weeks',
-          topics: ['Type definitions', 'Interfaces', 'Generics', 'React with TypeScript']
-        },
-        {
-          title: 'Advanced React',
-          duration: '3 weeks',
-          topics: ['Hooks', 'Context API', 'Performance optimization', 'Testing']
-        },
-        {
-          title: 'Modern Tooling',
-          duration: '2 weeks',
-          topics: ['Vite setup', 'Build optimization', 'Deployment strategies', 'CI/CD']
-        }
-      ]
-    },
-    {
       id: 'frontend-advanced',
       title: 'Frontend Development - Advanced',
       category: 'frontend',
@@ -234,7 +264,8 @@ const StudentPortal = () => {
       projects: 8,
       image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=250&fit=crop&crop=center',
       rating: 4.9,
-      students: 7654,
+      students: 15000,
+      maxStudents: 12000,
       instructor: 'David Kim',
       modules: [
         {
@@ -272,6 +303,7 @@ const StudentPortal = () => {
       image: 'https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?w=400&h=250&fit=crop&crop=center',
       rating: 4.5,
       students: 8765,
+      maxStudents: 20000,
       instructor: 'Alex Thompson',
       modules: [
         {
@@ -308,7 +340,8 @@ const StudentPortal = () => {
       projects: 6,
       image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=250&fit=crop&crop=center',
       rating: 4.6,
-      students: 6543,
+      students: 15000,
+      maxStudents: 12000,
       instructor: 'Maria Garcia',
       modules: [
         {
@@ -345,7 +378,8 @@ const StudentPortal = () => {
       projects: 10,
       image: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=250&fit=crop&crop=center',
       rating: 4.8,
-      students: 5432,
+      students: 15000,
+      maxStudents: 12000,
       instructor: 'James Wilson',
       modules: [
         {
@@ -382,7 +416,8 @@ const StudentPortal = () => {
       projects: 4,
       image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=250&fit=crop&crop=center',
       rating: 4.4,
-      students: 3210,
+      students: 15000,
+      maxStudents: 12000,
       instructor: 'Lisa Chen',
       modules: [
         {
@@ -414,67 +449,165 @@ const StudentPortal = () => {
     ? allCourses 
     : allCourses.filter(course => course.category === selectedCategory);
 
-  // Sample course data matching the screenshot
-  const courses: Course[] = [
-    {
-      id: 'frontend-beginner',
-      title: 'Frontend Development - Beginner',
-      instructor: 'Rohan Jashvantbhai',
-      progress: 75,
-      totalLessons: 24,
-      completedLessons: 18,
-      duration: '6 weeks',
-      nextLesson: 'JavaScript DOM Manipulation',
-      isStarted: true
-    },
-    {
-      id: 'frontend-intermediate',
-      title: 'Frontend Development - Intermediate',
-      instructor: 'Rohan Jashvantbhai',
-      progress: 45,
-      totalLessons: 32,
-      completedLessons: 14,
-      duration: '8 weeks',
-      nextLesson: 'React Components',
-      isStarted: true
-    }
-  ];
+  // Generate courses dynamically based on purchased courses
+  const courses: Course[] = purchasedCourses.map(courseId => {
+    const courseInfo = allCourses.find(course => course.id === courseId);
+    const progress = courseProgress[courseId];
+    
+    if (!courseInfo) return null;
+    
+    return {
+      id: courseId,
+      title: courseInfo.title,
+      instructor: courseInfo.instructor,
+      progress: progress?.progress || 0,
+      totalLessons: progress?.totalLessons || 20,
+      completedLessons: progress?.completedLessons || 0,
+      duration: courseInfo.duration,
+      nextLesson: progress?.nextLesson || 'Introduction to Course',
+      isStarted: progress?.isStarted || false
+    };
+  }).filter(Boolean) as Course[];
 
   // Available courses for browsing (using allCourses data)
   const availableCourses = allCourses.filter(course => 
     !courses.some(enrolledCourse => enrolledCourse.id === course.id)
   );
 
-  // Sample assignments
+  // Sample projects for Frontend Development - Beginner (8 progressive difficulty projects)
+  const projects: Project[] = [
+    {
+      id: 'project-1',
+      title: 'Personal Portfolio Website',
+      courseId: 'frontend-beginner',
+      courseName: 'Frontend Development - Beginner',
+      difficulty: 'beginner',
+      description: 'Create a simple personal portfolio website using HTML and CSS',
+      requirements: [
+        'Create an HTML structure with header, about, and contact sections',
+        'Style with CSS including colors, fonts, and layout',
+        'Make it responsive for mobile devices',
+        'Include a profile image and contact information'
+      ],
+      technologies: ['HTML5', 'CSS3'],
+      estimatedTime: '1 week',
+      status: 'not_started'
+    },
+    {
+      id: 'project-2',
+      title: 'Interactive To-Do List',
+      courseId: 'frontend-beginner',
+      courseName: 'Frontend Development - Beginner',
+      difficulty: 'beginner',
+      description: 'Build a functional to-do list application with JavaScript',
+      requirements: [
+        'Add new tasks with input field',
+        'Mark tasks as complete/incomplete',
+        'Delete tasks from the list',
+        'Store tasks in localStorage',
+        'Filter tasks by status (all, active, completed)'
+      ],
+      technologies: ['HTML5', 'CSS3', 'JavaScript'],
+      estimatedTime: '1.5 weeks',
+      status: 'in_progress'
+    },
+    {
+      id: 'project-3',
+      title: 'Weather Dashboard',
+      courseId: 'frontend-beginner',
+      courseName: 'Frontend Development - Beginner',
+      difficulty: 'beginner',
+      description: 'Create a weather dashboard that fetches data from a weather API',
+      requirements: [
+        'Search for weather by city name',
+        'Display current weather conditions',
+        'Show 5-day weather forecast',
+        'Use weather icons and animations',
+        'Handle API errors gracefully'
+      ],
+      technologies: ['HTML5', 'CSS3', 'JavaScript', 'Weather API'],
+      estimatedTime: '2 weeks',
+      status: 'not_started'
+    },
+    {
+      id: 'project-4',
+      title: 'E-commerce Product Catalog',
+      courseId: 'frontend-beginner',
+      courseName: 'Frontend Development - Beginner',
+      difficulty: 'intermediate',
+      description: 'Build a product catalog with filtering and shopping cart functionality',
+      requirements: [
+        'Display products in a grid layout',
+        'Filter products by category and price',
+        'Add products to shopping cart',
+        'Calculate total price with taxes',
+        'Responsive design for all devices'
+      ],
+      technologies: ['HTML5', 'CSS3', 'JavaScript', 'Local Storage'],
+      estimatedTime: '2.5 weeks',
+      status: 'not_started'
+    },
+
+
+  ];
+
+  // Comprehensive assignments data - 6 assignments per purchased course
   const assignments: Assignment[] = [
+    // Frontend Development - Beginner Course Assignments (Course ID: 'frontend-beginner')
     {
-      id: 'assignment-1',
-      title: 'Build a Responsive Landing Page',
+      id: 'frontend-beginner-1',
+      title: 'HTML Part 1',
       courseId: 'frontend-beginner',
       courseName: 'Frontend Development - Beginner',
-      dueDate: '2024-01-25',
+      dueDate: '2024-02-15',
       status: 'pending',
-      description: 'Create a responsive landing page using HTML, CSS, and JavaScript'
+      description: 'Learn HTML basics and document structure.'
     },
     {
-      id: 'assignment-2',
-      title: 'React Component Library',
-      courseId: 'frontend-intermediate',
-      courseName: 'Frontend Development - Intermediate',
-      dueDate: '2024-01-30',
-      status: 'submitted',
-      description: 'Build a reusable component library with React and TypeScript',
-      grade: 85
-    },
-    {
-      id: 'assignment-3',
-      title: 'JavaScript Algorithm Challenge',
+      id: 'frontend-beginner-2',
+      title: 'HTML Part 2',
       courseId: 'frontend-beginner',
       courseName: 'Frontend Development - Beginner',
-      dueDate: '2024-01-20',
-      status: 'graded',
-      description: 'Solve complex algorithms using JavaScript',
-      grade: 92
+      dueDate: '2024-02-20',
+      status: 'pending',
+      description: 'Master HTML forms and semantic elements.'
+    },
+
+    {
+      id: 'frontend-beginner-4',
+      title: 'CSS Part 1',
+      courseId: 'frontend-beginner',
+      courseName: 'Frontend Development - Beginner',
+      dueDate: '2024-03-01',
+      status: 'pending',
+      description: 'CSS fundamentals and styling basics.'
+    },
+    {
+      id: 'frontend-beginner-5',
+      title: 'CSS Part 2',
+      courseId: 'frontend-beginner',
+      courseName: 'Frontend Development - Beginner',
+      dueDate: '2024-03-06',
+      status: 'pending',
+      description: 'Advanced CSS layouts and responsive design.'
+    },
+    {
+      id: 'frontend-beginner-6',
+      title: 'JavaScript Part 1',
+      courseId: 'frontend-beginner',
+      courseName: 'Frontend Development - Beginner',
+      dueDate: '2024-03-11',
+      status: 'pending',
+      description: 'JavaScript basics and programming fundamentals.'
+    },
+    {
+      id: 'frontend-beginner-7',
+      title: 'JavaScript Part 2',
+      courseId: 'frontend-beginner',
+      courseName: 'Frontend Development - Beginner',
+      dueDate: '2024-03-16',
+      status: 'pending',
+      description: 'DOM manipulation and interactive web development.'
     }
   ];
 
@@ -494,15 +627,6 @@ const StudentPortal = () => {
       status: 'completed'
     },
     {
-      id: '2',
-      courseId: 'FRONTEND-INTERMEDIATE',
-      courseName: 'Advanced Frontend with React',
-      instructor: 'Rohan Sharma',
-      purchaseDate: '2024-02-20',
-      amount: 12999,
-      status: 'completed'
-    },
-    {
       id: '3',
       courseId: 'DEVOPS-BEGINNER',
       courseName: 'DevOps Fundamentals',
@@ -519,7 +643,6 @@ const StudentPortal = () => {
     { id: 'projects', label: 'Projects', icon: ClipboardDocumentListIcon },
     { id: 'assignments', label: 'Assignments', icon: ClipboardDocumentListIcon },
     { id: 'browse-courses', label: 'Browse Courses', icon: GlobeAltIcon },
-    { id: 'profile', label: 'My Profile', icon: UserIcon },
     { id: 'settings', label: 'Settings', icon: Cog6ToothIcon },
     { id: 'history', label: 'History', icon: ClipboardDocumentListIcon },
     { id: 'support', label: 'Support', icon: QuestionMarkCircleIcon },
@@ -551,12 +674,22 @@ const StudentPortal = () => {
             const result = await response.json();
             if (result.success) {
               const backendCourseIds = result.data.map((course: any) => course.id);
-              // Combine backend and localStorage courses
-              const allPurchasedCourses = [...new Set([...localPurchasedCourses, ...backendCourseIds])];
-              setPurchasedCourses(allPurchasedCourses);
+              
+              // If backend has no courses, clear localStorage and use backend data
+              let finalPurchasedCourses = [];
+              if (backendCourseIds.length === 0) {
+                localStorage.removeItem('purchasedCourses');
+                setPurchasedCourses([]);
+                finalPurchasedCourses = [];
+              } else {
+                // Combine backend and localStorage courses only if backend has courses
+                const allPurchasedCourses = [...new Set([...localPurchasedCourses, ...backendCourseIds])];
+                setPurchasedCourses(allPurchasedCourses);
+                finalPurchasedCourses = allPurchasedCourses;
+              }
               
               // Fetch progress for each purchased course
-              const progressPromises = allPurchasedCourses.map(async (courseId: string) => {
+              const progressPromises = finalPurchasedCourses.map(async (courseId: string) => {
                 try {
                   const progressResponse = await fetch(`http://localhost:5000/api/courses/progress/${userData.email}/${courseId}`);
                   if (progressResponse.ok) {
@@ -604,14 +737,36 @@ const StudentPortal = () => {
           setPurchasedCourses(localPurchasedCourses);
         }
 
+        // Try to fetch additional student data from backend
+        let studentData = userData;
+        try {
+          const response = await fetch(`http://localhost:5000/api/students/${userData.id}`, {
+            headers: {
+              'Authorization': `Bearer ${userData.token}`
+            }
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+              studentData = { ...userData, ...result.data };
+            }
+          }
+        } catch (error) {
+          console.log('Could not fetch additional student data from backend, using localStorage data');
+        }
+
         setStudentProfile({
-          name: `${userData.firstName} ${userData.lastName}` || 'undefined undefined',
-          email: userData.email || 'student@example.com',
+          name: `${studentData.firstName} ${studentData.lastName}` || 'Student Name',
+          email: studentData.email || 'student@example.com',
           enrolledCourses: purchasedCourses.length,
-          phone: '+1 (555) 123-4567',
-          location: 'San Francisco, CA',
-          joinDate: '2023-12-01',
-          studentId: 'STU-2023-001'
+          phone: studentData.phone || 'Not provided',
+          location: studentData.address ? `${studentData.address.city}, ${studentData.address.state}` : 'Not provided',
+          joinDate: studentData.createdAt || new Date().toISOString(),
+          studentId: studentData.studentId || 'Not assigned',
+          dateOfBirth: studentData.dateOfBirth,
+          education: studentData.education,
+          experience: studentData.experience
         });
       } catch (error) {
         console.error('Error loading student data:', error);
@@ -635,7 +790,6 @@ const StudentPortal = () => {
     // Map course IDs to their respective learning routes
     const courseRoutes: { [key: string]: string } = {
       'frontend-beginner': '/course-learning/frontend-beginner/html-fundamentals/html-structure',
-      'frontend-intermediate': '/course-learning-intermediate/frontend-intermediate/advanced-html/semantic-html',
       'frontend-advanced': '/course-learning-advanced/frontend-advanced/advanced-react/performance-optimization',
       'devops-beginner': '/course-learning-devops-beginner/devops-beginner/docker-basics/containerization',
       'devops-advanced': '/course-learning-devops-advanced/devops-advanced/kubernetes/cluster-management',
@@ -665,6 +819,11 @@ const StudentPortal = () => {
 
     // Navigate to the enrollment page
     navigate(`/course-enrollment/${courseId}`);
+  };
+
+  const handleCourseDetails = (course: Course) => {
+    setSelectedCourseForDetails(course);
+    setShowCourseDetails(true);
   };
 
   const handleReferralCodeChange = async (code: string) => {
@@ -837,6 +996,24 @@ const StudentPortal = () => {
       // Simulate upload process
       await new Promise(resolve => setTimeout(resolve, 2000));
       
+      const submissionData = {
+        type: uploadType,
+        content: uploadType === 'file' ? selectedFile?.name || '' : gitUrl,
+        submittedAt: new Date().toISOString()
+      };
+      
+      // Update assignment status to submitted
+      setAssignmentStatuses(prev => ({
+        ...prev,
+        [assignmentId]: 'submitted'
+      }));
+      
+      // Store submission details
+      setAssignmentSubmissions(prev => ({
+        ...prev,
+        [assignmentId]: submissionData
+      }));
+      
       if (uploadType === 'file' && selectedFile) {
         console.log('Uploading file:', selectedFile.name, 'for assignment:', assignmentId);
         alert(`File "${selectedFile.name}" uploaded successfully for assignment!`);
@@ -944,118 +1121,163 @@ const StudentPortal = () => {
         return (
           <div className="space-y-6">
             <h2 className="text-white text-2xl font-bold">Assignments</h2>
-            <div className="space-y-4">
-              {assignments.map((assignment) => (
-                <div key={assignment.id} className="bg-gray-800 rounded-lg p-6">
-                  <div className="flex items-center justify-between mb-4">
+            
+            {/* Course Selection */}
+            <div className="bg-gray-800 rounded-lg p-6">
+              <h3 className="text-white text-lg font-semibold mb-4">Select Course</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {allCourses
+                  .filter(course => purchasedCourses.includes(course.id))
+                  .map(course => (
+                    <div
+                      key={course.id}
+                      onClick={() => setSelectedCourseForAssignments(course.id)}
+                      className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                        selectedCourseForAssignments === course.id
+                          ? 'border-blue-500 bg-blue-900/30'
+                          : 'border-gray-600 hover:border-gray-500 bg-gray-700'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                          <BookOpenIcon className="w-6 h-6 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-white">{course.title}</h4>
+                          <p className="text-sm text-gray-400">{course.instructor}</p>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <span className="text-xs bg-gray-600 text-gray-300 px-2 py-1 rounded">
+                              {course.level}
+                            </span>
+                            <span className="text-xs text-gray-400">{course.duration}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+              
+              {purchasedCourses.length === 0 && (
+                <div className="text-center py-8">
+                  <BookOpenIcon className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+                  <p className="text-gray-400">No enrolled courses found. Please enroll in a course to view assignments.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Assignment Progress Summary */}
+            {selectedCourseForAssignments && (
+              <div className="bg-gray-800 rounded-lg p-6 mb-6">
+                <h3 className="text-white text-lg font-semibold mb-4">Assignment Progress</h3>
+                {(() => {
+                  const mappedIds = getCourseIdMapping(selectedCourseForAssignments);
+                  const courseAssignments = assignments.filter(assignment => 
+                    mappedIds.includes(assignment.courseId)
+                  );
+                  const totalAssignments = courseAssignments.length;
+                  const completedAssignments = courseAssignments.filter(a => (assignmentStatuses[a.id] || a.status) === 'graded').length;
+                  const submittedAssignments = courseAssignments.filter(a => (assignmentStatuses[a.id] || a.status) === 'submitted').length;
+                  const pendingAssignments = courseAssignments.filter(a => (assignmentStatuses[a.id] || a.status) === 'pending').length;
+                  const progressPercentage = totalAssignments > 0 ? (completedAssignments / totalAssignments) * 100 : 0;
+                  
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="bg-gray-700 rounded-lg p-4 text-center">
+                        <div className="text-2xl font-bold text-white">{totalAssignments}</div>
+                        <div className="text-gray-400 text-sm">Total Assignments</div>
+                      </div>
+                      <div className="bg-green-600/20 border border-green-600/30 rounded-lg p-4 text-center">
+                        <div className="text-2xl font-bold text-green-400">{completedAssignments}</div>
+                        <div className="text-gray-400 text-sm">Completed</div>
+                      </div>
+                      <div className="bg-blue-600/20 border border-blue-600/30 rounded-lg p-4 text-center">
+                        <div className="text-2xl font-bold text-blue-400">{submittedAssignments}</div>
+                        <div className="text-gray-400 text-sm">Submitted</div>
+                      </div>
+                      <div className="bg-yellow-600/20 border border-yellow-600/30 rounded-lg p-4 text-center">
+                        <div className="text-2xl font-bold text-yellow-400">{pendingAssignments}</div>
+                        <div className="text-gray-400 text-sm">Pending</div>
+                      </div>
+                    </div>
+                  );
+                })()}
+                
+                {/* Progress Bar */}
+                {(() => {
+                  const mappedIds = getCourseIdMapping(selectedCourseForAssignments);
+                  const courseAssignments = assignments.filter(assignment => 
+                    mappedIds.includes(assignment.courseId)
+                  );
+                  const totalAssignments = courseAssignments.length;
+                  const completedAssignments = courseAssignments.filter(a => (assignmentStatuses[a.id] || a.status) === 'graded').length;
+                  const progressPercentage = totalAssignments > 0 ? (completedAssignments / totalAssignments) * 100 : 0;
+                  
+                  return (
+                    <div className="mt-4">
+                      <div className="flex justify-between text-sm text-gray-400 mb-2">
+                        <span>Overall Progress</span>
+                        <span>{Math.round(progressPercentage)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-700 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${progressPercentage}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* Assignments List */}
+            {selectedCourseForAssignments && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {assignments
+                .filter(assignment => {
+                  const mappedIds = getCourseIdMapping(selectedCourseForAssignments);
+                  return mappedIds.includes(assignment.courseId);
+                })
+                .map((assignment) => (
+                <button
+                  key={assignment.id}
+                  onClick={() => navigate(`/assignment/${assignment.id}`)}
+                  className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-blue-500 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/20 text-left"
+                >
+                  <div className="flex justify-between items-start mb-4">
                     <div>
                       <h4 className="text-white text-lg font-semibold">{assignment.title}</h4>
                       <p className="text-gray-400 text-sm">{assignment.courseName}</p>
                       <p className="text-gray-300 text-sm mt-2">{assignment.description}</p>
                       <p className="text-gray-400 text-sm mt-1">Due: {new Date(assignment.dueDate).toLocaleDateString()}</p>
                     </div>
-                    <div className="text-right">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        assignment.status === 'pending' ? 'bg-yellow-600 text-yellow-100' :
-                        assignment.status === 'submitted' ? 'bg-blue-600 text-blue-100' :
-                        'bg-green-600 text-green-100'
-                      }`}>
-                        {assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1)}
-                      </span>
-                      {assignment.grade && (
-                        <p className="text-white text-lg font-bold mt-2">Grade: {assignment.grade}%</p>
-                      )}
-                    </div>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      (assignmentStatuses[assignment.id] || assignment.status) === 'pending' ? 'bg-yellow-600 text-yellow-100' :
+                      (assignmentStatuses[assignment.id] || assignment.status) === 'submitted' ? 'bg-blue-600 text-blue-100' :
+                      'bg-green-600 text-green-100'
+                    }`}>
+                      {((assignmentStatuses[assignment.id] || assignment.status).charAt(0).toUpperCase() + (assignmentStatuses[assignment.id] || assignment.status).slice(1))}
+                    </span>
                   </div>
                   
-                  {/* Upload Section - Only show for pending assignments */}
-                  {assignment.status === 'pending' && (
-                    <div className="border-t border-gray-700 pt-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h5 className="text-white text-md font-medium">Submit Assignment</h5>
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => setUploadType('file')}
-                            className={`px-3 py-1 rounded text-sm ${
-                              uploadType === 'file' 
-                                ? 'bg-blue-600 text-white' 
-                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                            }`}
-                          >
-                            ZIP File
-                          </button>
-                          <button
-                            onClick={() => setUploadType('git')}
-                            className={`px-3 py-1 rounded text-sm ${
-                              uploadType === 'git' 
-                                ? 'bg-blue-600 text-white' 
-                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                            }`}
-                          >
-                            Git URL
-                          </button>
-                        </div>
-                      </div>
-                      
-                      {uploadType === 'file' ? (
-                        <div className="space-y-3">
-                          <div className="flex items-center space-x-3">
-                            <CloudArrowUpIcon className="w-5 h-5 text-gray-400" />
-                            <label htmlFor="file-upload" className="text-gray-300 text-sm">
-                              Upload ZIP file (max 50MB)
-                            </label>
-                          </div>
-                          <input
-                            id="file-upload"
-                            type="file"
-                            accept=".zip"
-                            onChange={handleFileUpload}
-                            className="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-700 file:cursor-pointer"
-                          />
-                          {selectedFile && (
-                            <p className="text-green-400 text-sm">Selected: {selectedFile.name}</p>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          <div className="flex items-center space-x-3">
-                            <LinkIcon className="w-5 h-5 text-gray-400" />
-                            <label className="text-gray-300 text-sm">
-                              Git Repository URL
-                            </label>
-                          </div>
-                          <input
-                            type="url"
-                            value={gitUrl}
-                            onChange={(e) => setGitUrl(e.target.value)}
-                            placeholder="https://github.com/username/repository"
-                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </div>
-                      )}
-                      
-                      <button
-                        onClick={() => handleSubmitAssignment(assignment.id)}
-                        disabled={isUploading || (!selectedFile && !gitUrl.trim())}
-                        className="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center space-x-2"
-                      >
-                        {isUploading ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            <span>Uploading...</span>
-                          </>
-                        ) : (
-                          <>
-                            <CloudArrowUpIcon className="w-4 h-4" />
-                            <span>Submit Assignment</span>
-                          </>
-                        )}
-                      </button>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2 text-sm text-gray-400">
+                      <BookOpenIcon className="w-4 h-4" />
+                      <span>Study & Test</span>
                     </div>
-                  )}
-                </div>
+                    <div className="text-blue-400 text-sm">Click to start →</div>
+                  </div>
+                </button>
               ))}
+              </div>
+            )}
+          
+          {!selectedCourseForAssignments && (
+            <div className="text-center text-gray-400 py-8">
+              <ClipboardDocumentListIcon className="w-16 h-16 mx-auto mb-4 opacity-50" />
+              <p>Select a course to view its assignments</p>
             </div>
+          )}
           </div>
         );
       case 'browse-courses':
@@ -1084,7 +1306,8 @@ const StudentPortal = () => {
               {filteredCourses.map((course, index) => (
                 <div 
                   key={course.id} 
-                  className="bg-gray-900 rounded-lg overflow-hidden border border-gray-700 hover:border-blue-500 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/20"
+                  className="bg-gray-900 rounded-lg overflow-hidden border border-gray-700 hover:border-blue-500 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/20 cursor-pointer"
+                  onClick={() => handleCourseDetails(course)}
                 >
                   {/* Course Image */}
                   <div className="relative h-48 overflow-hidden">
@@ -1165,67 +1388,31 @@ const StudentPortal = () => {
                     </div>
 
                     {/* Purchase Button */}
-                    <button 
-                      onClick={() => handlePurchaseCourse(course.id)}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200"
-                    >
-                      Enroll Now
-                    </button>
+                    {course.students >= course.maxStudents ? (
+                       <button 
+                         disabled
+                         className="w-full bg-gray-600 text-gray-300 py-3 px-4 rounded-lg font-medium cursor-not-allowed"
+                       >
+                         Slots Closed
+                       </button>
+                    ) : (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePurchaseCourse(course.id);
+                        }}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200"
+                      >
+                        Enroll Now
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           </div>
         );
-      case 'profile':
-        return (
-          <div className="space-y-6">
-            <h2 className="text-white text-2xl font-bold">My Profile</h2>
-            <div className="bg-gray-800 rounded-lg p-6">
-              <div className="flex items-center space-x-6 mb-6">
-                <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-2xl">{studentProfile?.name?.charAt(0) || 'U'}</span>
-                </div>
-                <div>
-                  <h3 className="text-white text-xl font-semibold">{studentProfile?.name}</h3>
-                  <p className="text-gray-400">{studentProfile?.email}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="text-white font-semibold mb-3">Personal Information</h4>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-gray-400 text-sm">Student ID</label>
-                      <p className="text-white">{studentProfile?.studentId}</p>
-                    </div>
-                    <div>
-                      <label className="text-gray-400 text-sm">Phone</label>
-                      <p className="text-white">{studentProfile?.phone}</p>
-                    </div>
-                    <div>
-                      <label className="text-gray-400 text-sm">Location</label>
-                      <p className="text-white">{studentProfile?.location}</p>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <h4 className="text-white font-semibold mb-3">Academic Information</h4>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-gray-400 text-sm">Join Date</label>
-                      <p className="text-white">{studentProfile?.joinDate ? new Date(studentProfile.joinDate).toLocaleDateString() : 'N/A'}</p>
-                    </div>
-                    <div>
-                      <label className="text-gray-400 text-sm">Enrolled Courses</label>
-                      <p className="text-white">{studentProfile?.enrolledCourses}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
+
       case 'settings':
         return (
           <div className="space-y-6">
@@ -1289,6 +1476,255 @@ const StudentPortal = () => {
             </div>
           </div>
         );
+      
+      case 'projects':
+        return (
+          <div className="space-y-6">
+            <h2 className="text-white text-2xl font-bold">Projects</h2>
+            
+            {/* Course Selection */}
+            <div className="bg-gray-800 rounded-lg p-6">
+              <h3 className="text-white text-lg font-semibold mb-4">Select Course</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {allCourses
+                  .filter(course => purchasedCourses.includes(course.id))
+                  .map(course => (
+                    <div
+                      key={course.id}
+                      onClick={() => setSelectedCourseForProjects(course.id)}
+                      className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                        selectedCourseForProjects === course.id
+                          ? 'border-blue-500 bg-blue-900/30'
+                          : 'border-gray-600 hover:border-gray-500 bg-gray-700'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
+                          <GlobeAltIcon className="w-6 h-6 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-white">{course.title}</h4>
+                          <p className="text-sm text-gray-400">{course.instructor}</p>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <span className="text-xs bg-gray-600 text-gray-300 px-2 py-1 rounded">
+                              {course.level}
+                            </span>
+                            <span className="text-xs text-gray-400">{course.duration}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+              
+              {purchasedCourses.length === 0 && (
+                <div className="text-center py-8">
+                  <GlobeAltIcon className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+                  <p className="text-gray-400">No enrolled courses found. Please enroll in a course to view projects.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Project Progress Summary */}
+            {selectedCourseForProjects && (
+              <div className="bg-gray-800 rounded-lg p-6 mb-6">
+                <h3 className="text-white text-lg font-semibold mb-4">Project Progress</h3>
+                {(() => {
+                  const mappedIds = getCourseIdMapping(selectedCourseForProjects);
+                  const courseProjects = projects.filter(project => 
+                    mappedIds.includes(project.courseId)
+                  );
+                  const totalProjects = courseProjects.length;
+                  const completedProjects = courseProjects.filter(p => p.status === 'completed').length;
+                  const inProgressProjects = courseProjects.filter(p => p.status === 'in_progress').length;
+                  const notStartedProjects = courseProjects.filter(p => p.status === 'not_started').length;
+                  const progressPercentage = totalProjects > 0 ? (completedProjects / totalProjects) * 100 : 0;
+                  
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="bg-gray-700 rounded-lg p-4 text-center">
+                        <p className="text-2xl font-bold text-white">{totalProjects}</p>
+                        <p className="text-gray-400 text-sm">Total Projects</p>
+                      </div>
+                      <div className="bg-green-600/20 rounded-lg p-4 text-center">
+                        <p className="text-2xl font-bold text-green-400">{completedProjects}</p>
+                        <p className="text-gray-400 text-sm">Completed</p>
+                      </div>
+                      <div className="bg-blue-600/20 rounded-lg p-4 text-center">
+                        <p className="text-2xl font-bold text-blue-400">{inProgressProjects}</p>
+                        <p className="text-gray-400 text-sm">In Progress</p>
+                      </div>
+                      <div className="bg-gray-600/20 rounded-lg p-4 text-center">
+                        <p className="text-2xl font-bold text-gray-400">{notStartedProjects}</p>
+                        <p className="text-gray-400 text-sm">Not Started</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* Projects List */}
+            {selectedCourseForProjects && (
+              <div className="space-y-4">
+              {projects
+                .filter(project => {
+                  const mappedIds = getCourseIdMapping(selectedCourseForProjects);
+                  return mappedIds.includes(project.courseId);
+                })
+                .map((project) => (
+                <div key={project.id} className="bg-gray-800 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-4">
+                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                        project.difficulty === 'beginner' ? 'bg-green-600' :
+                        project.difficulty === 'intermediate' ? 'bg-yellow-600' : 'bg-red-600'
+                      }`}>
+                        <span className="text-white font-bold text-lg">{project.title.charAt(0)}</span>
+                      </div>
+                      <div>
+                        <h4 className="text-white text-lg font-semibold">{project.title}</h4>
+                        <p className="text-gray-400 text-sm">{project.courseName}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            project.difficulty === 'beginner' ? 'bg-green-500/20 text-green-400' :
+                            project.difficulty === 'intermediate' ? 'bg-yellow-500/20 text-yellow-400' : 
+                            'bg-red-500/20 text-red-400'
+                          }`}>
+                            {project.difficulty.charAt(0).toUpperCase() + project.difficulty.slice(1)}
+                          </span>
+                          <span className="text-gray-400 text-xs">• {project.estimatedTime}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        project.status === 'completed' ? 'bg-green-600 text-green-100' :
+                        project.status === 'in_progress' ? 'bg-blue-600 text-blue-100' :
+                        'bg-gray-600 text-gray-100'
+                      }`}>
+                        {project.status === 'not_started' ? 'Not Started' :
+                         project.status === 'in_progress' ? 'In Progress' : 'Completed'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <p className="text-gray-300 text-sm mb-4">{project.description}</p>
+                  
+                  <div className="mb-4">
+                    <h5 className="text-white font-medium mb-2">Requirements:</h5>
+                    <ul className="text-gray-300 text-sm space-y-1">
+                      {project.requirements.map((req, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <span className="text-blue-400 mt-1">•</span>
+                          {req}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <h5 className="text-white font-medium mb-2">Technologies:</h5>
+                    <div className="flex flex-wrap gap-2">
+                      {project.technologies.map((tech) => (
+                        <span key={tech} className="px-2 py-1 rounded text-xs font-medium bg-blue-600/20 text-blue-400">
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {project.status !== 'completed' && (
+                    <div className="space-y-3">
+                      {/* Git URL Upload Field */}
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Git Repository URL
+                          </label>
+                          <input
+                            type="url"
+                            value={projectGitUrl}
+                            onChange={(e) => setProjectGitUrl(e.target.value)}
+                            placeholder="https://github.com/username/project-name"
+                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                          <p className="text-gray-400 text-xs mt-1">
+                            Enter your GitHub repository URL to submit your project
+                          </p>
+                        </div>
+                        
+                        <div className="flex gap-3">
+                          <button 
+                            onClick={() => {
+                              if (projectGitUrl.trim()) {
+                                console.log('Starting project with Git URL:', projectGitUrl, 'for project:', project.id);
+                                alert(`Project started with repository: ${projectGitUrl}`);
+                                setProjectGitUrl('');
+                              } else {
+                                alert('Please enter a valid Git repository URL');
+                              }
+                            }}
+                            disabled={!projectGitUrl.trim()}
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-colors"
+                          >
+                            {project.status === 'not_started' ? 'Start Project' : 'Update Repository'}
+                          </button>
+                          {project.status === 'in_progress' && (
+                            <button 
+                              onClick={() => {
+                                setSelectedProjectId(project.id);
+                                setShowProjectSubmissionModal(true);
+                              }}
+                              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+                            >
+                              Submit Project
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Git Learning Section */}
+                      <div className="bg-gray-700/50 rounded-lg p-3 border border-gray-600">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-white text-sm font-medium">Need help with Git?</p>
+                            <p className="text-gray-400 text-xs">Learn how to create repositories and submit your projects</p>
+                          </div>
+                          <button
+                            onClick={() => setShowGitTutorialModal(true)}
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                          >
+                            Learn Git
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {project.status === 'completed' && project.grade && (
+                    <div className="bg-green-600/20 border border-green-600/30 rounded-lg p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-green-400 font-medium">Project Completed</span>
+                        <span className="text-green-400 font-bold">Grade: {project.grade}%</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            )}
+
+            {!selectedCourseForProjects && (
+              <div className="text-center py-12">
+                <GlobeAltIcon className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+                <h3 className="text-white text-lg font-medium mb-2">Select a Course</h3>
+                <p className="text-gray-400">Choose a course above to view and work on its projects.</p>
+              </div>
+            )}
+          </div>
+        );
+
       case 'support':
         return (
           <div className="space-y-6">
@@ -1388,7 +1824,36 @@ const StudentPortal = () => {
                       </span>
                     </div>
                     <p className="text-gray-400 mb-2">Frontend Development Student</p>
-                    <p className="text-gray-500 text-sm mb-4">📍 Location not specified</p>
+                    <p className="text-gray-500 text-sm mb-4">📍 {studentProfile?.location || 'Location not specified'}</p>
+                    
+                    {/* Detailed Profile Information */}
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <p className="text-gray-400 text-sm">Email</p>
+                        <p className="text-white">{studentProfile?.email || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm">Student ID</p>
+                        <p className="text-white">{studentProfile?.studentId || 'STU001'}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm">Phone</p>
+                        <p className="text-white">{studentProfile?.phone || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm">Join Date</p>
+                        <p className="text-white">{studentProfile?.joinDate || 'January 2024'}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm">Education Level</p>
+                        <p className="text-white">{studentProfile?.education || 'Bachelor\'s Degree'}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm">Experience Level</p>
+                        <p className="text-white">{studentProfile?.experience || 'Beginner'}</p>
+                      </div>
+                    </div>
+                    
                     <div className="flex space-x-2">
                       <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm">
                         Online Learning
@@ -1582,6 +2047,664 @@ const StudentPortal = () => {
             <p className="text-xs text-gray-400 text-center mt-3">
               Secure payment powered by Razorpay
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Project Submission Modal */}
+      {showProjectSubmissionModal && selectedProjectId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Submit Project</h3>
+              <button
+                onClick={() => {
+                  setShowProjectSubmissionModal(false);
+                  setSelectedProjectId(null);
+                  setProjectGitUrl('');
+                }}
+                className="text-gray-400 hover:text-white"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-gray-300 text-sm mb-4">
+                Submit your project by providing the Git repository URL. Make sure your repository is public so instructors can review your code.
+              </p>
+              
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Git Repository URL *
+              </label>
+              <input
+                type="url"
+                value={projectGitUrl}
+                onChange={(e) => setProjectGitUrl(e.target.value)}
+                placeholder="https://github.com/username/project-name"
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                required
+              />
+              <p className="text-gray-400 text-xs mt-1">
+                Example: https://github.com/yourusername/your-project
+              </p>
+            </div>
+
+            <div className="bg-blue-600/20 border border-blue-600/30 rounded-lg p-3 mb-4">
+              <p className="text-blue-400 text-sm">
+                💡 <strong>Tip:</strong> Don't know how to use Git? Click the "Learn Git" button in your project to get started with step-by-step instructions!
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowProjectSubmissionModal(false);
+                  setSelectedProjectId(null);
+                  setProjectGitUrl('');
+                }}
+                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (projectGitUrl.trim()) {
+                    // Here you would typically send the submission to your backend
+                    console.log('Submitting project:', selectedProjectId, 'with Git URL:', projectGitUrl);
+                    alert('Project submitted successfully! Your instructor will review it soon.');
+                    setShowProjectSubmissionModal(false);
+                    setSelectedProjectId(null);
+                    setProjectGitUrl('');
+                  }
+                }}
+                disabled={!projectGitUrl.trim()}
+                className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Submit Project
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Git Tutorial Modal */}
+      {showGitTutorialModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-white">Learn Git - Complete Guide</h3>
+              <button
+                onClick={() => setShowGitTutorialModal(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Introduction */}
+              <div className="bg-gray-700/50 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-2">What is Git?</h4>
+                <p className="text-gray-300 text-sm">
+                  Git is a version control system that helps you track changes in your code and collaborate with others. 
+                  GitHub is a platform that hosts Git repositories online.
+                </p>
+              </div>
+
+              {/* Step 1: Install Git */}
+              <div className="bg-gray-700/50 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-3">Step 1: Install Git</h4>
+                <p className="text-gray-300 text-sm mb-2">Download and install Git from:</p>
+                <div className="bg-gray-800 rounded p-2 mb-2">
+                  <code className="text-green-400">https://git-scm.com/downloads</code>
+                </div>
+                <p className="text-gray-300 text-sm">Verify installation by running:</p>
+                <div className="bg-gray-800 rounded p-2">
+                  <code className="text-green-400">git --version</code>
+                </div>
+              </div>
+
+              {/* Step 2: Configure Git */}
+              <div className="bg-gray-700/50 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-3">Step 2: Configure Git (First Time Setup)</h4>
+                <p className="text-gray-300 text-sm mb-2">Set your name and email:</p>
+                <div className="space-y-2">
+                  <div className="bg-gray-800 rounded p-2">
+                    <code className="text-green-400">git config --global user.name "Your Name"</code>
+                  </div>
+                  <div className="bg-gray-800 rounded p-2">
+                    <code className="text-green-400">git config --global user.email "your.email@example.com"</code>
+                  </div>
+                </div>
+                <p className="text-gray-300 text-sm mt-2">Check your configuration:</p>
+                <div className="bg-gray-800 rounded p-2">
+                  <code className="text-green-400">git config --list</code>
+                </div>
+              </div>
+
+              {/* Step 3: Create Repository */}
+              <div className="bg-gray-700/50 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-3">Step 3: Create a Repository</h4>
+                
+                <div className="mb-4">
+                  <h5 className="text-white font-medium mb-2">Option A: Create on GitHub first (Recommended)</h5>
+                  <ol className="text-gray-300 text-sm space-y-1 list-decimal list-inside">
+                    <li>Go to <span className="text-blue-400">github.com</span> and sign in</li>
+                    <li>Click "New repository" or the "+" icon</li>
+                    <li>Enter repository name (e.g., "my-project")</li>
+                    <li>Make it <strong>Public</strong> so instructors can see it</li>
+                    <li>Check "Add a README file"</li>
+                    <li>Click "Create repository"</li>
+                  </ol>
+                </div>
+
+                <div>
+                  <h5 className="text-white font-medium mb-2">Option B: Create locally first</h5>
+                  <div className="space-y-2">
+                    <div className="bg-gray-800 rounded p-2">
+                      <code className="text-green-400">mkdir my-project</code>
+                    </div>
+                    <div className="bg-gray-800 rounded p-2">
+                      <code className="text-green-400">cd my-project</code>
+                    </div>
+                    <div className="bg-gray-800 rounded p-2">
+                      <code className="text-green-400">git init</code>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 4: Clone Repository */}
+              <div className="bg-gray-700/50 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-3">Step 4: Clone Repository (If created on GitHub)</h4>
+                <p className="text-gray-300 text-sm mb-2">Copy the repository to your computer:</p>
+                <div className="bg-gray-800 rounded p-2 mb-2">
+                  <code className="text-green-400">git clone https://github.com/username/repository-name.git</code>
+                </div>
+                <div className="bg-gray-800 rounded p-2">
+                  <code className="text-green-400">cd repository-name</code>
+                </div>
+              </div>
+
+              {/* Step 5: Basic Git Workflow */}
+              <div className="bg-gray-700/50 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-3">Step 5: Basic Git Workflow</h4>
+                
+                <div className="space-y-4">
+                  <div>
+                    <h5 className="text-white font-medium mb-2">1. Check status of your files:</h5>
+                    <div className="bg-gray-800 rounded p-2">
+                      <code className="text-green-400">git status</code>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h5 className="text-white font-medium mb-2">2. Add files to staging area:</h5>
+                    <div className="space-y-2">
+                      <div className="bg-gray-800 rounded p-2">
+                        <code className="text-green-400">git add filename.txt</code>
+                        <span className="text-gray-400 ml-2"># Add specific file</span>
+                      </div>
+                      <div className="bg-gray-800 rounded p-2">
+                        <code className="text-green-400">git add .</code>
+                        <span className="text-gray-400 ml-2"># Add all files</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h5 className="text-white font-medium mb-2">3. Commit your changes:</h5>
+                    <div className="bg-gray-800 rounded p-2">
+                      <code className="text-green-400">git commit -m "Your commit message"</code>
+                    </div>
+                    <p className="text-gray-300 text-xs mt-1">Example: "Add project files" or "Fix login bug"</p>
+                  </div>
+
+                  <div>
+                    <h5 className="text-white font-medium mb-2">4. Push to GitHub:</h5>
+                    <div className="bg-gray-800 rounded p-2">
+                      <code className="text-green-400">git push origin main</code>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 6: Connect Local to Remote */}
+              <div className="bg-gray-700/50 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-3">Step 6: Connect Local Repository to GitHub</h4>
+                <p className="text-gray-300 text-sm mb-2">If you created the repository locally first:</p>
+                <div className="space-y-2">
+                  <div className="bg-gray-800 rounded p-2">
+                    <code className="text-green-400">git remote add origin https://github.com/username/repository-name.git</code>
+                  </div>
+                  <div className="bg-gray-800 rounded p-2">
+                    <code className="text-green-400">git branch -M main</code>
+                  </div>
+                  <div className="bg-gray-800 rounded p-2">
+                    <code className="text-green-400">git push -u origin main</code>
+                  </div>
+                </div>
+              </div>
+
+              {/* Common Commands */}
+              <div className="bg-gray-700/50 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-3">Common Git Commands</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h5 className="text-white font-medium mb-2">View Information:</h5>
+                    <div className="space-y-1 text-sm">
+                      <div className="bg-gray-800 rounded p-2">
+                        <code className="text-green-400">git status</code>
+                        <span className="text-gray-400 block text-xs">Check file status</span>
+                      </div>
+                      <div className="bg-gray-800 rounded p-2">
+                        <code className="text-green-400">git log</code>
+                        <span className="text-gray-400 block text-xs">View commit history</span>
+                      </div>
+                      <div className="bg-gray-800 rounded p-2">
+                        <code className="text-green-400">git diff</code>
+                        <span className="text-gray-400 block text-xs">See changes</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h5 className="text-white font-medium mb-2">Undo Changes:</h5>
+                    <div className="space-y-1 text-sm">
+                      <div className="bg-gray-800 rounded p-2">
+                        <code className="text-green-400">git reset filename</code>
+                        <span className="text-gray-400 block text-xs">Unstage file</span>
+                      </div>
+                      <div className="bg-gray-800 rounded p-2">
+                        <code className="text-green-400">git checkout -- filename</code>
+                        <span className="text-gray-400 block text-xs">Discard changes</span>
+                      </div>
+                      <div className="bg-gray-800 rounded p-2">
+                        <code className="text-green-400">git pull</code>
+                        <span className="text-gray-400 block text-xs">Get latest changes</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Start Guide */}
+              <div className="bg-blue-600/20 border border-blue-600/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-blue-400 mb-3">🚀 Quick Start for Your Project</h4>
+                <ol className="text-gray-300 text-sm space-y-2 list-decimal list-inside">
+                  <li>Create a new repository on GitHub (make it <strong>public</strong>)</li>
+                  <li>Clone it: <code className="bg-gray-800 px-1 rounded text-green-400">git clone [your-repo-url]</code></li>
+                  <li>Add your project files to the folder</li>
+                  <li>Stage files: <code className="bg-gray-800 px-1 rounded text-green-400">git add .</code></li>
+                  <li>Commit: <code className="bg-gray-800 px-1 rounded text-green-400">git commit -m "Initial project submission"</code></li>
+                  <li>Push: <code className="bg-gray-800 px-1 rounded text-green-400">git push origin main</code></li>
+                  <li>Copy the repository URL and submit it in your project!</li>
+                </ol>
+              </div>
+
+              {/* Tips */}
+              <div className="bg-yellow-600/20 border border-yellow-600/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-yellow-400 mb-3">💡 Important Tips</h4>
+                <ul className="text-gray-300 text-sm space-y-1 list-disc list-inside">
+                  <li>Always make your repository <strong>public</strong> so instructors can access it</li>
+                  <li>Write clear commit messages describing what you changed</li>
+                  <li>Include a README.md file explaining your project</li>
+                  <li>Don't commit sensitive information (passwords, API keys)</li>
+                  <li>Commit frequently with small, logical changes</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => setShowGitTutorialModal(false)}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors"
+              >
+                Got it! Close Tutorial
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Study Materials Modal */}
+      {showStudyMaterialsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold text-white">Study Materials</h3>
+                <button
+                  onClick={() => setShowStudyMaterialsModal(false)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <XMarkIcon className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                {selectedStudyMaterials.map((material, index) => (
+                  <div key={index} className="bg-gray-800 rounded-lg p-4">
+                    <div className="flex items-center space-x-3">
+                      <BookOpenIcon className="w-5 h-5 text-green-400" />
+                      <span className="text-white font-medium">Study Material {index + 1}</span>
+                    </div>
+                    <p className="text-gray-300 mt-2">{material}</p>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="mt-6 text-center">
+                <button
+                  onClick={() => setShowStudyMaterialsModal(false)}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Test Questions Modal */}
+      {showTestQuestionsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold text-white">Practice Test</h3>
+                <button
+                  onClick={() => setShowTestQuestionsModal(false)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <XMarkIcon className="w-6 h-6" />
+                </button>
+              </div>
+              
+              {!testResults ? (
+                <div className="space-y-6">
+                  {selectedTestQuestions?.map((question, questionIndex) => (
+                    <div key={questionIndex} className="bg-gray-800 rounded-lg p-6">
+                      <h4 className="text-white text-lg font-semibold mb-4">
+                        Question {questionIndex + 1}: {question.question}
+                      </h4>
+                      <div className="space-y-3">
+                        {question.options.map((option, optionIndex) => (
+                          <label key={optionIndex} className="flex items-center space-x-3 cursor-pointer">
+                            <input
+                              type="radio"
+                              name={`question-${questionIndex}`}
+                              value={optionIndex}
+                              checked={currentTestAnswers[questionIndex] === optionIndex}
+                              onChange={() => setCurrentTestAnswers(prev => ({
+                                ...prev,
+                                [questionIndex]: optionIndex
+                              }))}
+                              className="text-purple-600"
+                            />
+                            <span className="text-gray-300">{option}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <div className="text-center">
+                    <button
+                      onClick={() => {
+                        const score = selectedTestQuestions?.reduce((acc, question, index) => {
+                          return acc + (currentTestAnswers[index] === question.correctAnswer ? 1 : 0);
+                        }, 0) || 0;
+                        setTestResults({ score, total: selectedTestQuestions?.length || 0 });
+                      }}
+                      disabled={Object.keys(currentTestAnswers).length !== selectedTestQuestions?.length}
+                      className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-8 py-3 rounded-lg transition-colors"
+                    >
+                      Submit Test
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <div className="bg-gray-800 rounded-lg p-8 mb-6">
+                    <h4 className="text-2xl font-bold text-white mb-4">Test Results</h4>
+                    <div className="text-6xl font-bold mb-4">
+                      <span className={testResults.score >= testResults.total * 0.7 ? 'text-green-400' : 'text-red-400'}>
+                        {Math.round((testResults.score / testResults.total) * 100)}%
+                      </span>
+                    </div>
+                    <p className="text-gray-300 text-lg">
+                      You scored {testResults.score} out of {testResults.total} questions correctly
+                    </p>
+                    {testResults.score >= testResults.total * 0.7 ? (
+                      <p className="text-green-400 mt-2">Great job! You passed the test!</p>
+                    ) : (
+                      <p className="text-red-400 mt-2">Keep studying and try again!</p>
+                    )}
+                  </div>
+                  
+                  <div className="space-x-4">
+                    <button
+                      onClick={() => {
+                        setCurrentTestAnswers({});
+                        setTestResults(null);
+                      }}
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors"
+                    >
+                      Retake Test
+                    </button>
+                    <button
+                      onClick={() => setShowTestQuestionsModal(false)}
+                      className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Course Details Modal */}
+      {showCourseDetails && selectedCourseForDetails && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-gray-700">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-white">{selectedCourseForDetails.title}</h3>
+              <button
+                onClick={() => setShowCourseDetails(false)}
+                className="text-gray-400 hover:text-white transition-colors text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Main Content */}
+              <div className="lg:col-span-2">
+                {/* Course Header */}
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium">
+                      {selectedCourseForDetails.level.charAt(0).toUpperCase() + selectedCourseForDetails.level.slice(1)}
+                    </span>
+                    <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium">
+                      {selectedCourseForDetails.category.charAt(0).toUpperCase() + selectedCourseForDetails.category.slice(1)}
+                    </span>
+                  </div>
+                  
+                  <p className="text-gray-300 mb-4">
+                    {selectedCourseForDetails.description}
+                  </p>
+                  
+                  <div className="flex flex-wrap gap-4 text-sm text-gray-400">
+                    <div className="flex items-center gap-2">
+                      <span>⏱️</span>
+                      <span>{selectedCourseForDetails.duration}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span>📚</span>
+                      <span>{selectedCourseForDetails.modules?.length || 0} Modules</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span>🚀</span>
+                      <span>{selectedCourseForDetails.projects} Projects</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span>⭐</span>
+                      <span>{selectedCourseForDetails.rating} ({selectedCourseForDetails.students.toLocaleString()} students)</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Technologies */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-white mb-3">Technologies You'll Learn</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedCourseForDetails.technologies.map((tech, index) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1 bg-gray-700 text-gray-300 rounded-full text-sm"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Course Modules */}
+                {selectedCourseForDetails.modules && selectedCourseForDetails.modules.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold text-white mb-3">Course Curriculum</h3>
+                    <div className="space-y-3">
+                      {selectedCourseForDetails.modules.map((module, index) => (
+                        <div key={index} className="border border-gray-700 rounded-lg p-4">
+                          <div className="flex justify-between items-center mb-2">
+                            <h4 className="text-blue-400 font-medium">
+                              Module {index + 1}: {module.title}
+                            </h4>
+                            <span className="text-sm text-gray-400">{module.duration}</span>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {module.topics.map((topic, topicIndex) => (
+                              <div key={topicIndex} className="flex items-center gap-2 text-gray-300 text-sm">
+                                <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                                <span>{topic}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Enrollment Card */}
+              <div className="lg:col-span-1">
+                <div className="sticky top-6 bg-gray-800 border border-gray-700 rounded-lg p-6">
+                  {/* Course Image */}
+                  <div className="mb-4">
+                    <img
+                      src={selectedCourseForDetails.image}
+                      alt={selectedCourseForDetails.title}
+                      className="w-full h-32 object-cover rounded-lg"
+                    />
+                  </div>
+
+                  {/* Pricing */}
+                  <div className="mb-4">
+                    <div className="text-2xl font-bold text-green-400 mb-1">
+                      ₹{selectedCourseForDetails.price.toLocaleString()}
+                    </div>
+                    <div className="text-sm text-gray-400">
+                      One-time payment • Lifetime access
+                    </div>
+                  </div>
+
+                  {/* Course Info */}
+                  <div className="mb-4 space-y-2">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-400">Instructor</span>
+                      <span className="text-white">{selectedCourseForDetails.instructor}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-400">Duration</span>
+                      <span className="text-white">{selectedCourseForDetails.duration}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-400">Level</span>
+                      <span className="text-white capitalize">{selectedCourseForDetails.level}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-400">Projects</span>
+                      <span className="text-white">{selectedCourseForDetails.projects}</span>
+                    </div>
+                  </div>
+
+                  {/* Referral Code Message */}
+                  <div className="mb-4 p-3 bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 rounded">
+                    <div className="flex items-center gap-2">
+                      <span className="text-green-400 text-sm">🎯</span>
+                      <span className="text-xs font-medium text-green-400">
+                        Use referral code for 60% OFF!
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Enroll Button */}
+                  {selectedCourseForDetails.students >= selectedCourseForDetails.maxStudents ? (
+                    <button 
+                      disabled
+                      className="w-full bg-gray-600 text-gray-300 py-3 px-4 rounded-lg font-medium cursor-not-allowed mb-4"
+                    >
+                      Slots Closed
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => {
+                        setShowCourseDetails(false);
+                        handlePurchaseCourse(selectedCourseForDetails.id);
+                      }}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200 mb-4"
+                    >
+                      Enroll Now
+                    </button>
+                  )}
+
+                  {/* Features */}
+                  <div className="pt-4 border-t border-gray-700">
+                    <h4 className="font-medium text-white mb-3">What's Included:</h4>
+                    <ul className="space-y-2 text-sm text-gray-300">
+                      <li className="flex items-center gap-2">
+                        <span className="text-green-400">✓</span>
+                        Lifetime access to course content
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="text-green-400">✓</span>
+                        {selectedCourseForDetails.projects} hands-on projects
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="text-green-400">✓</span>
+                        Certificate of completion
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="text-green-400">✓</span>
+                        24/7 community support
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="text-green-400">✓</span>
+                        Regular content updates
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

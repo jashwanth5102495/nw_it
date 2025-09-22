@@ -238,6 +238,21 @@ router.post('/purchase', async (req, res) => {
       });
     }
     
+    // Handle email to studentId conversion
+    const Student = require('../models/Student');
+    let actualStudentId = studentId;
+    
+    if (studentId && studentId.includes('@')) {
+      const student = await Student.findOne({ email: studentId });
+      if (!student) {
+        return res.status(404).json({
+          success: false,
+          message: 'Student not found with this email'
+        });
+      }
+      actualStudentId = student.studentId;
+    }
+    
     // Calculate price with referral discount
     let finalPrice = course.price;
     let discount = 0;
@@ -250,7 +265,7 @@ router.post('/purchase', async (req, res) => {
     // Create purchase record
     const Purchase = require('../models/Purchase');
     const purchase = new Purchase({
-      studentId,
+      studentId: actualStudentId,
       courseId,
       originalPrice: course.price,
       finalPrice,
@@ -287,13 +302,32 @@ router.post('/purchase', async (req, res) => {
 router.get('/purchased/:studentId', async (req, res) => {
   try {
     const Purchase = require('../models/Purchase');
+    const Student = require('../models/Student');
+    
+    let studentIdentifier = req.params.studentId;
+    
+    // If the parameter looks like an email, find the student by email first
+    if (studentIdentifier.includes('@')) {
+      const student = await Student.findOne({ email: studentIdentifier });
+      if (!student) {
+        return res.json({
+          success: true,
+          data: [],
+          count: 0,
+          message: 'No student found with this email'
+        });
+      }
+      studentIdentifier = student.studentId;
+    }
+    
     const purchases = await Purchase.find({ 
-      studentId: req.params.studentId,
+      studentId: studentIdentifier,
       status: 'completed'
     }).populate('courseId');
     
     const purchasedCourses = purchases.map(purchase => ({
       ...purchase.courseId.toObject(),
+      id: purchase.courseId._id.toString(), // Add explicit id field for frontend
       purchaseDate: purchase.purchaseDate,
       finalPrice: purchase.finalPrice,
       discount: purchase.discount

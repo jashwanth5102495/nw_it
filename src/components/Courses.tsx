@@ -24,6 +24,7 @@ interface Course {
   image: string;
   rating: number;
   students: number;
+  maxStudents: number;
   instructor: string;
 }
 
@@ -49,7 +50,8 @@ const Courses = () => {
       projects: 8,
       image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=250&fit=crop&crop=center',
       rating: 4.9,
-      students: 2847,
+      students: 15000,
+      maxStudents: 12000,
       instructor: 'Dr. Sarah Chen',
       modules: [
         {
@@ -87,6 +89,7 @@ const Courses = () => {
       image: 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=250&fit=crop&crop=center',
       rating: 4.6,
       students: 12543,
+      maxStudents: 20000,
       instructor: 'John Smith',
       modules: [
         {
@@ -107,43 +110,6 @@ const Courses = () => {
       ]
     },
     {
-      id: 'frontend-intermediate',
-      title: 'Frontend Development - Intermediate',
-      category: 'frontend',
-      level: 'intermediate',
-      description: 'Advance your frontend skills with modern CSS techniques, JavaScript, and MongoDB',
-      technologies: ['HTML', 'CSS', 'JavaScript', 'MongoDB'],
-      price: 1500,
-      duration: '10 weeks',
-      projects: 5,
-      image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=250&fit=crop&crop=center',
-      rating: 4.7,
-      students: 8934,
-      instructor: 'Emily Johnson',
-      modules: [
-        {
-          title: 'Advanced CSS Techniques',
-          duration: '2 weeks',
-          topics: ['CSS Grid Advanced', 'Flexbox Mastery', 'CSS Animations', 'Transitions']
-        },
-        {
-          title: 'Modern JavaScript',
-          duration: '3 weeks',
-          topics: ['ES6+ Features', 'Async/Await', 'Modules', 'Build Tools']
-        },
-        {
-          title: 'React Fundamentals',
-          duration: '3 weeks',
-          topics: ['Components', 'State Management', 'Hooks', 'Routing']
-        },
-        {
-          title: 'Project Development',
-          duration: '2 weeks',
-          topics: ['Full Application Build', 'Testing', 'Deployment']
-        }
-      ]
-    },
-    {
       id: 'frontend-advanced',
       title: 'Frontend Development - Advanced',
       category: 'frontend',
@@ -155,7 +121,8 @@ const Courses = () => {
       projects: 6,
       image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=250&fit=crop&crop=center',
       rating: 4.8,
-      students: 5672,
+      students: 15000,
+      maxStudents: 12000,
       instructor: 'Michael Brown',
       modules: [
         {
@@ -193,6 +160,7 @@ const Courses = () => {
       image: 'https://images.unsplash.com/photo-1618477388954-7852f32655ec?w=400&h=250&fit=crop&crop=center',
       rating: 4.5,
       students: 6789,
+      maxStudents: 20000,
       instructor: 'David Wilson',
       modules: [
         {
@@ -230,6 +198,7 @@ const Courses = () => {
       image: 'https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?w=400&h=250&fit=crop&crop=center',
       rating: 4.9,
       students: 3456,
+      maxStudents: 20000,
       instructor: 'Lisa Garcia',
       modules: [
         {
@@ -619,18 +588,30 @@ const Courses = () => {
                             ₹{course.price.toLocaleString()}
                           </span>
                         </div>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/course-enrollment/${course.id}`);
-                          }}
-                          className={`px-4 py-2 rounded font-medium text-sm transition-colors ${
-                          theme === 'dark'
-                            ? 'bg-blue-600 text-white hover:bg-blue-700'
-                            : 'bg-blue-600 text-white hover:bg-blue-700'
-                        }`}>
-                          Enroll Now
-                        </button>
+                        {course.students >= course.maxStudents ? (
+                          <button 
+                            disabled
+                            className={`px-4 py-2 rounded font-medium text-sm transition-colors cursor-not-allowed ${
+                              theme === 'dark'
+                                ? 'bg-gray-600 text-gray-400'
+                                : 'bg-gray-400 text-gray-600'
+                            }`}>
+                            Slots Closed
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate('/student-registration');
+                            }}
+                            className={`px-4 py-2 rounded font-medium text-sm transition-colors ${
+                            theme === 'dark'
+                              ? 'bg-blue-600 text-white hover:bg-blue-700'
+                              : 'bg-blue-600 text-white hover:bg-blue-700'
+                          }`}>
+                            Enroll Now
+                          </button>
+                        )}
                       </div>
                     </div>
                   </motion.div>

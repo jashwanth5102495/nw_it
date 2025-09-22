@@ -205,6 +205,8 @@ router.get('/profile/:id', authenticateStudent, authorizeOwnProfile, async (req,
         email: student.email,
         phone: student.phone,
         dateOfBirth: student.dateOfBirth,
+        education: student.education,
+        experience: student.experience,
         address: student.address,
         enrolledCourses: student.enrolledCourses,
         paymentHistory: student.paymentHistory,
@@ -399,6 +401,7 @@ router.get('/', async (req, res) => {
 
     const students = await Student.find(query)
       .populate('enrolledCourses.courseId', 'title courseId')
+      .populate('paymentHistory.courseId', 'title courseId')
       .select('-password')
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -420,6 +423,54 @@ router.get('/', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching students',
+      error: error.message
+    });
+  }
+});
+
+// Delete student (Admin only)
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find and delete the student
+    const student = await Student.findById(id);
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    // Store student info for response
+    const deletedStudentInfo = {
+      id: student._id,
+      studentId: student.studentId,
+      firstName: student.firstName,
+      lastName: student.lastName,
+      email: student.email
+    };
+
+    // Delete the student record
+    await Student.findByIdAndDelete(id);
+
+    // Also delete the associated user record if it exists
+    const User = require('../models/User');
+    if (student.user_id) {
+      await User.findByIdAndDelete(student.user_id);
+    }
+
+    res.json({
+      success: true,
+      message: 'Student deleted successfully',
+      deletedStudent: deletedStudentInfo
+    });
+
+  } catch (error) {
+    console.error('Error deleting student:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting student',
       error: error.message
     });
   }
