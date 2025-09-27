@@ -7,17 +7,17 @@ router.get('/', async (req, res) => {
   try {
     const { category, level } = req.query;
     let query = { isActive: true };
-    
+
     if (category) {
       query.category = category;
     }
-    
+
     if (level) {
       query.level = level;
     }
-    
+
     const courses = await Course.find(query).sort({ createdAt: -1 });
-    
+
     res.json({
       success: true,
       data: courses,
@@ -37,14 +37,14 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
-    
+
     if (!course) {
       return res.status(404).json({
         success: false,
         message: 'Course not found'
       });
     }
-    
+
     res.json({
       success: true,
       data: course
@@ -63,14 +63,14 @@ router.get('/:id', async (req, res) => {
 router.get('/code/:courseId', async (req, res) => {
   try {
     const course = await Course.findOne({ courseId: req.params.courseId });
-    
+
     if (!course) {
       return res.status(404).json({
         success: false,
         message: 'Course not found'
       });
     }
-    
+
     res.json({
       success: true,
       data: course
@@ -90,16 +90,16 @@ router.get('/code/:courseId', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const courseData = req.body;
-    
+
     // Generate unique courseId if not provided
     if (!courseData.courseId) {
       const { v4: uuidv4 } = require('uuid');
       courseData.courseId = `COURSE-${uuidv4().substring(0, 8).toUpperCase()}`;
     }
-    
+
     const course = new Course(courseData);
     await course.save();
-    
+
     res.status(201).json({
       success: true,
       message: 'Course created successfully',
@@ -107,14 +107,14 @@ router.post('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating course:', error);
-    
+
     if (error.code === 11000) {
       return res.status(400).json({
         success: false,
         message: 'Course with this ID already exists'
       });
     }
-    
+
     res.status(500).json({
       success: false,
       message: 'Error creating course',
@@ -131,14 +131,14 @@ router.put('/:id', async (req, res) => {
       req.body,
       { new: true, runValidators: true }
     );
-    
+
     if (!course) {
       return res.status(404).json({
         success: false,
         message: 'Course not found'
       });
     }
-    
+
     res.json({
       success: true,
       message: 'Course updated successfully',
@@ -162,14 +162,14 @@ router.delete('/:id', async (req, res) => {
       { isActive: false },
       { new: true }
     );
-    
+
     if (!course) {
       return res.status(404).json({
         success: false,
         message: 'Course not found'
       });
     }
-    
+
     res.json({
       success: true,
       message: 'Course deactivated successfully'
@@ -188,7 +188,7 @@ router.delete('/:id', async (req, res) => {
 router.get('/category/:category', async (req, res) => {
   try {
     const courses = await Course.getByCategory(req.params.category);
-    
+
     res.json({
       success: true,
       data: courses,
@@ -208,7 +208,7 @@ router.get('/category/:category', async (req, res) => {
 router.get('/level/:level', async (req, res) => {
   try {
     const courses = await Course.find({ level: req.params.level, isActive: true });
-    
+
     res.json({
       success: true,
       data: courses,
@@ -228,20 +228,27 @@ router.get('/level/:level', async (req, res) => {
 router.post('/purchase', async (req, res) => {
   try {
     const { courseId, studentId, paymentId, referralCode } = req.body;
+
+    // Verify course exists - try to find by courseId string first, then by ObjectId
+    let course = await Course.findOne({ courseId: courseId });
+    if (!course) {
+      // Try to find by ObjectId if the courseId looks like a valid ObjectId
+      if (courseId && courseId.match(/^[0-9a-fA-F]{24}$/)) {
+        course = await Course.findById(courseId);
+      }
+    }
     
-    // Verify course exists
-    const course = await Course.findById(courseId);
     if (!course) {
       return res.status(404).json({
         success: false,
         message: 'Course not found'
       });
     }
-    
+
     // Handle email to studentId conversion
     const Student = require('../models/Student');
     let actualStudentId = studentId;
-    
+
     if (studentId && studentId.includes('@')) {
       const student = await Student.findOne({ email: studentId });
       if (!student) {
@@ -252,21 +259,21 @@ router.post('/purchase', async (req, res) => {
       }
       actualStudentId = student.studentId;
     }
-    
+
     // Calculate price with referral discount
     let finalPrice = course.price;
     let discount = 0;
-    
+
     if (referralCode === 'REFER60') {
       discount = 60;
       finalPrice = course.price * 0.4; // 60% discount
     }
-    
+
     // Create purchase record
     const Purchase = require('../models/Purchase');
     const purchase = new Purchase({
       studentId: actualStudentId,
-      courseId,
+      courseId: course._id, // Use the course's ObjectId, not the string
       originalPrice: course.price,
       finalPrice,
       discount,
@@ -275,15 +282,15 @@ router.post('/purchase', async (req, res) => {
       status: 'completed',
       purchaseDate: new Date()
     });
-    
+
     await purchase.save();
-    
+
     res.json({
       success: true,
       message: 'Course purchased successfully',
       data: {
         purchaseId: purchase._id,
-        courseId,
+        courseId: course.courseId || course._id, // Return the string courseId if available
         finalPrice,
         discount
       }
@@ -303,36 +310,48 @@ router.get('/purchased/:studentId', async (req, res) => {
   try {
     const Purchase = require('../models/Purchase');
     const Student = require('../models/Student');
-    
+
     let studentIdentifier = req.params.studentId;
-    
+    console.log(studentIdentifier);
+
     // If the parameter looks like an email, find the student by email first
-    if (studentIdentifier.includes('@')) {
-      const student = await Student.findOne({ email: studentIdentifier });
-      if (!student) {
-        return res.json({
-          success: true,
-          data: [],
-          count: 0,
-          message: 'No student found with this email'
-        });
-      }
-      studentIdentifier = student.studentId;
+    const student = await Student.findOne({ email: studentIdentifier }).populate({
+      path: 'enrolledCourses.courseId',
+      model: 'Course'
+    });
+    if (!student) {
+      return res.json({
+        success: true,
+        data: [],
+        count: 0,
+        message: 'No student found with this email'
+      });
     }
     
-    const purchases = await Purchase.find({ 
-      studentId: studentIdentifier,
-      status: 'completed'
-    }).populate('courseId');
+    // Transform enrolled courses to include full course details
+    const purchasedCourses = student.enrolledCourses.map(enrollment => {
+      const course = enrollment.courseId;
+      return {
+        id: course._id.toString(),
+        courseId: course.courseId || course._id.toString(),
+        title: course.title,
+        category: course.category,
+        level: course.level,
+        description: course.description,
+        technologies: course.technologies,
+        price: course.price,
+        duration: course.duration,
+        projects: course.projects || 0,
+        modules: course.modules || [],
+        instructor: course.instructor,
+        enrollmentDate: enrollment.enrollmentDate,
+        progress: enrollment.progress || 0,
+        status: enrollment.status || 'active'
+      };
+    });
     
-    const purchasedCourses = purchases.map(purchase => ({
-      ...purchase.courseId.toObject(),
-      id: purchase.courseId._id.toString(), // Add explicit id field for frontend
-      purchaseDate: purchase.purchaseDate,
-      finalPrice: purchase.finalPrice,
-      discount: purchase.discount
-    }));
-    
+    console.log("Purchased Courses: ", purchasedCourses);
+
     res.json({
       success: true,
       data: purchasedCourses,
@@ -352,12 +371,12 @@ router.get('/purchased/:studentId', async (req, res) => {
 router.post('/verify-referral', async (req, res) => {
   try {
     const { referralCode } = req.body;
-    
+
     // Simple referral code validation
     const validCodes = {
       'REFER60': { discount: 60, description: '60% off on all courses' }
     };
-    
+
     if (validCodes[referralCode]) {
       res.json({
         success: true,
@@ -386,33 +405,52 @@ router.post('/verify-referral', async (req, res) => {
 router.post('/progress/update', async (req, res) => {
   try {
     const { studentId, courseId, lessonId, progress } = req.body;
-    
+
+    console.log('Updating progress for:', { studentId, courseId, progress });
+
+    // Validate parameters
+    if (!studentId || !courseId || courseId === 'undefined') {
+      return res.status(400).json({
+        success: false,
+        message: 'Student ID and Course ID are required'
+      });
+    }
+
+    // First find the course by courseId string to get the ObjectId
+    const course = await Course.findOne({ courseId: courseId });
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found'
+      });
+    }
+
     const Purchase = require('../models/Purchase');
-    
-    // Find the purchase record
-    const purchase = await Purchase.findOne({ 
-      studentId, 
-      courseId,
+
+    // Find the purchase record using the course's ObjectId
+    const purchase = await Purchase.findOne({
+      studentId,
+      courseId: course._id, // Use the ObjectId, not the string
       status: 'completed'
     });
-    
+
     if (!purchase) {
       return res.status(404).json({
         success: false,
         message: 'Course not purchased or purchase not found'
       });
     }
-    
+
     // Update progress
     purchase.progress = Math.max(purchase.progress, progress);
     purchase.lastAccessedAt = new Date();
-    
+
     // Add completed lesson if provided
     if (lessonId) {
       const existingLesson = purchase.completedLessons.find(
         lesson => lesson.lessonId === lessonId
       );
-      
+
       if (!existingLesson) {
         purchase.completedLessons.push({
           lessonId,
@@ -420,9 +458,9 @@ router.post('/progress/update', async (req, res) => {
         });
       }
     }
-    
+
     await purchase.save();
-    
+
     res.json({
       success: true,
       message: 'Progress updated successfully',
@@ -445,22 +483,44 @@ router.post('/progress/update', async (req, res) => {
 router.get('/progress/:studentId/:courseId', async (req, res) => {
   try {
     const { studentId, courseId } = req.params;
-    
+
+    console.log('Getting progress for:', { studentId, courseId });
+
+    // Validate parameters
+    if (!studentId || !courseId || courseId === 'undefined') {
+      return res.status(400).json({
+        success: false,
+        message: 'Student ID and Course ID are required'
+      });
+    }
+
+    // First find the course by courseId string to get the ObjectId
+    const course = await Course.findOne({ courseId: courseId });
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found'
+      });
+    }
+
+    console.log('Found course:', course.title, 'ObjectId:', course._id);
+
     const Purchase = require('../models/Purchase');
-    
-    const purchase = await Purchase.findOne({ 
-      studentId, 
-      courseId,
+
+    // Use the course's ObjectId to find the purchase
+    const purchase = await Purchase.findOne({
+      studentId,
+      courseId: course._id, // Use the ObjectId, not the string
       status: 'completed'
     });
-    
+
     if (!purchase) {
       return res.status(404).json({
         success: false,
         message: 'Course not purchased or purchase not found'
       });
     }
-    
+
     res.json({
       success: true,
       data: {

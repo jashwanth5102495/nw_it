@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Header from './Header';
-import { ArrowLeft, Clock, Users, Award, CheckCircle, Star, BookOpen, Code, Target, Zap } from 'lucide-react';
+import { ArrowLeft, Clock, Award, CheckCircle, BookOpen, Target, Zap } from 'lucide-react';
 
 interface CourseModule {
   title: string;
@@ -26,11 +26,14 @@ interface Course {
   whatYouWillLearn: string[];
 }
 
+// RAZORPAY DECLARATION COMMENTED OUT FOR TESTING
+/*
 declare global {
   interface Window {
     Razorpay: any;
   }
 }
+*/
 
 const CourseEnrollment: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -339,12 +342,15 @@ const CourseEnrollment: React.FC = () => {
     setIsProcessingPayment(true);
 
     try {
+      // RAZORPAY TEMPORARILY COMMENTED OUT FOR TESTING
+      /*
       // Check if Razorpay is loaded
       if (!window.Razorpay) {
         alert('Payment system is not available. Please refresh the page and try again.');
         setIsProcessingPayment(false);
         return;
       }
+      */
 
       // Get current user from localStorage
       const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
@@ -363,7 +369,7 @@ const CourseEnrollment: React.FC = () => {
         return;
       }
 
-      console.log('Initiating payment for:', {
+      console.log('Initiating direct enrollment for testing:', {
         course: course.title,
         originalPrice: course.price,
         finalPrice: finalPrice,
@@ -373,6 +379,78 @@ const CourseEnrollment: React.FC = () => {
         user: currentUser.email
       });
 
+      // DIRECT BACKEND ENROLLMENT FOR TESTING - NO PAYMENT PROCESSING
+      try {
+        // Prepare enrollment data for backend
+        const enrollmentData = {
+          courseId: course.id,
+          paymentDetails: {
+            amount: finalPrice,
+            method: 'testing',
+            transactionId: `TEST_${Date.now()}` // Mock payment ID for testing
+          },
+          referralCode: referralCode || null
+        };
+        console.log(course);
+        console.log('Sending enrollment to backend:', enrollmentData);
+
+        // Send enrollment to backend
+        const token = JSON.parse(localStorage.getItem('currentUser') || '{}').token;
+
+        const enrollResponse = await fetch(`http://localhost:5000/api/students/${currentUser.id}/enroll`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(enrollmentData)
+        });
+
+        const enrollResult = await enrollResponse.json();
+        console.log('Backend enrollment response:', enrollResult);
+
+        if (enrollResult.success) {
+          // Also update localStorage for immediate UI feedback
+          const existingEnrollments = JSON.parse(localStorage.getItem('enrollments') || '[]');
+          const localEnrollmentData = {
+            studentId: currentUser.id,
+            studentName: `${currentUser.firstName} ${currentUser.lastName}`,
+            studentEmail: currentUser.email,
+            courseId: course.id,
+            courseName: course.title,
+            amount: finalPrice,
+            originalPrice: course.price,
+            discountApplied: discountApplied,
+            discountAmount: discountAmount,
+            referralCode: referralCode || null,
+            paymentId: `TEST_${Date.now()}`,
+            enrollmentDate: new Date().toISOString(),
+            status: 'enrolled'
+          };
+          existingEnrollments.push(localEnrollmentData);
+          localStorage.setItem('enrollments', JSON.stringify(existingEnrollments));
+
+          // Add course to purchased courses for StudentPortal
+          const existingPurchasedCourses = JSON.parse(localStorage.getItem('purchasedCourses') || '[]');
+          if (!existingPurchasedCourses.includes(course.id)) {
+            existingPurchasedCourses.push(course.id);
+            localStorage.setItem('purchasedCourses', JSON.stringify(existingPurchasedCourses));
+          }
+
+          setIsProcessingPayment(false);
+          alert('Enrollment successful! You have been enrolled in the course. You can now access it in My Courses.');
+          navigate('/student-portal');
+        } else {
+          throw new Error(enrollResult.message || 'Failed to enroll in course');
+        }
+      } catch (error) {
+        console.error('Error recording enrollment:', error);
+        setIsProcessingPayment(false);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        alert(`There was an error processing your enrollment: ${errorMessage}. Please try again.`);
+      }
+
+      /* RAZORPAY CODE COMMENTED OUT FOR TESTING
       const options = {
         key: 'rzp_test_NyLZPzYHIYtxqW', // Your actual Razorpay test key
         amount: finalPrice * 100, // Amount in paise
@@ -458,9 +536,10 @@ const CourseEnrollment: React.FC = () => {
       });
 
       rzp.open();
+      */
     } catch (error) {
-      console.error('Payment error:', error);
-      alert('Payment failed. Please try again.');
+      console.error('Enrollment error:', error);
+      alert('Enrollment failed. Please try again.');
       setIsProcessingPayment(false);
     }
   };
@@ -670,17 +749,18 @@ const CourseEnrollment: React.FC = () => {
                 {isProcessingPayment ? (
                   <>
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    Processing Payment...
+                    Enrolling...
                   </>
                 ) : (
                   <>
                     <Zap size={20} />
-                    Pay ₹{finalPrice.toLocaleString()} & Enroll
+                    Enroll Now (Testing Mode)
                   </>
                 )}
               </button>
 
               <div className="mt-4 text-center text-sm text-gray-400">
+                <p className="mb-2 text-yellow-400 font-medium">🧪 Testing Mode - No payment required</p>
                 <p>✓ Lifetime access to course content</p>
                 <p>✓ Certificate of completion</p>
                 <p>✓ 24/7 community support</p>

@@ -130,6 +130,7 @@ const StudentPortal = () => {
   const [paymentModalData, setPaymentModalData] = useState<PaymentModalData | null>(null);
   const [referralCode, setReferralCode] = useState('');
   const [purchasedCourses, setPurchasedCourses] = useState<string[]>([]);
+  const [enrolledCoursesData, setEnrolledCoursesData] = useState<Course[]>([]);
   const [courseProgress, setCourseProgress] = useState<{ [courseId: string]: CourseProgress }>({});
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -449,29 +450,42 @@ const StudentPortal = () => {
     ? allCourses 
     : allCourses.filter(course => course.category === selectedCategory);
 
-  // Generate courses dynamically based on purchased courses
-  const courses: Course[] = purchasedCourses.map(courseId => {
-    const courseInfo = allCourses.find(course => course.id === courseId);
-    const progress = courseProgress[courseId];
-    
-    if (!courseInfo) return null;
+  // Define a summary type for enrolled courses
+  interface EnrolledCourseSummary {
+    id: string;
+    title: string;
+    instructor: string;
+    progress: number;
+    totalLessons: number;
+    completedLessons: number;
+    duration: string;
+    nextLesson: string;
+    isStarted: boolean;
+  }
+
+  // Generate enrolled courses summary from backend data
+  console.log('enrolledCoursesData:', enrolledCoursesData);
+  const enrolledCourses: EnrolledCourseSummary[] = enrolledCoursesData.map((course: any) => {
+    const progress = courseProgress[course.courseId] || courseProgress[course.id];
+    console.log('Processing course:', course);
     
     return {
-      id: courseId,
-      title: courseInfo.title,
-      instructor: courseInfo.instructor,
+      id: course.courseId || course.id,
+      title: course.title,
+      instructor: course.instructor?.name || course.instructor || 'Unknown Instructor',
       progress: progress?.progress || 0,
       totalLessons: progress?.totalLessons || 20,
       completedLessons: progress?.completedLessons || 0,
-      duration: courseInfo.duration,
+      duration: course.duration,
       nextLesson: progress?.nextLesson || 'Introduction to Course',
       isStarted: progress?.isStarted || false
     };
-  }).filter(Boolean) as Course[];
+  });
+  console.log('Final enrolledCourses:', enrolledCourses);
 
   // Available courses for browsing (using allCourses data)
   const availableCourses = allCourses.filter(course => 
-    !courses.some(enrolledCourse => enrolledCourse.id === course.id)
+    !enrolledCourses.some(enrolledCourse => enrolledCourse.id === course.id)
   );
 
   // Sample projects for Frontend Development - Beginner (8 progressive difficulty projects)
@@ -611,10 +625,8 @@ const StudentPortal = () => {
     }
   ];
 
-  // Purchase history - only show courses that have been actually purchased
-  const enrolledCourses = allCourses.filter(course => 
-    purchasedCourses.includes(course.id)
-  );
+  // Purchase history - use enrolledCourses for enrolled courses summary
+  // const enrolledCourses = courses; // Now courses contains only enrolled courses from backend
 
   const purchaseHistory: PurchaseHistory[] = [
     {
@@ -664,77 +676,59 @@ const StudentPortal = () => {
           return;
         }
 
-        // Load purchased courses from localStorage first
-        const localPurchasedCourses = JSON.parse(localStorage.getItem('purchasedCourses') || '[]');
-        
         // Fetch purchased courses from backend
         try {
+          console.log('Fetching courses from backend for:', userData.email);
           const response = await fetch(`http://localhost:5000/api/courses/purchased/${userData.email}`);
           if (response.ok) {
             const result = await response.json();
-            if (result.success) {
-              const backendCourseIds = result.data.map((course: any) => course.id);
+            console.log('Backend response:', result);
+            if (result.success && result.data) {
+              // Backend now returns full course details with enrollment info
+              const enrolledCoursesData = result.data || [];
+              console.log('Enrolled courses data:', enrolledCoursesData);
               
-              // If backend has no courses, clear localStorage and use backend data
-              let finalPurchasedCourses = [];
-              if (backendCourseIds.length === 0) {
-                localStorage.removeItem('purchasedCourses');
-                setPurchasedCourses([]);
-                finalPurchasedCourses = [];
-              } else {
-                // Combine backend and localStorage courses only if backend has courses
-                const allPurchasedCourses = [...new Set([...localPurchasedCourses, ...backendCourseIds])];
-                setPurchasedCourses(allPurchasedCourses);
-                finalPurchasedCourses = allPurchasedCourses;
-              }
+              // Set purchased courses (just the IDs for compatibility)
+              const courseIds = enrolledCoursesData.map((course: any) => course.courseId || course.id);
+              setPurchasedCourses(courseIds);
               
-              // Fetch progress for each purchased course
-              const progressPromises = finalPurchasedCourses.map(async (courseId: string) => {
-                try {
-                  const progressResponse = await fetch(`http://localhost:5000/api/courses/progress/${userData.email}/${courseId}`);
-                  if (progressResponse.ok) {
-                    const progressResult = await progressResponse.json();
-                    if (progressResult.success) {
-                      return {
-                        courseId,
-                        progress: progressResult.data.progress || 0,
-                        completedLessons: progressResult.data.completedLessons?.length || 0,
-                        totalLessons: 20, // Default total lessons
-                        lastAccessedAt: progressResult.data.lastAccessedAt || new Date().toISOString(),
-                        nextLesson: 'Introduction to Course',
-                        isStarted: progressResult.data.progress > 0
-                      };
-                    }
-                  }
-                } catch (error) {
-                  console.error(`Error fetching progress for course ${courseId}:`, error);
-                }
-                
-                // Return default progress if fetch fails
-                return {
-                  courseId,
-                  progress: 0,
-                  completedLessons: 0,
-                  totalLessons: 20,
-                  lastAccessedAt: new Date().toISOString(),
-                  nextLesson: 'Introduction to Course',
-                  isStarted: false
+              // Set the full course data for display
+              setEnrolledCoursesData(enrolledCoursesData);
+              
+              // Create course progress from enrollment data
+              const progressData = enrolledCoursesData.reduce((acc: any, course: any) => {
+                const courseId = course.courseId || course.id;
+                acc[courseId] = {
+                  courseId: courseId,
+                  progress: course.progress || 0,
+                  completedLessons: 0, // This should come from enrollment data
+                  totalLessons: course.modules?.length * 5 || 20, // Estimate based on modules
+                  lastAccessedAt: course.enrollmentDate || new Date().toISOString(),
+                  nextLesson: course.progress > 0 ? 'Continue Learning' : 'Start Course',
+                  isStarted: course.progress > 0 || course.status === 'active'
                 };
-              });
-              
-              const progressData = await Promise.all(progressPromises);
-              const progressMap = progressData.reduce((acc, progress) => {
-                acc[progress.courseId] = progress;
                 return acc;
-              }, {} as { [courseId: string]: CourseProgress });
+              }, {});
               
-              setCourseProgress(progressMap);
+              setCourseProgress(progressData);
+              console.log('Set course progress:', progressData);
+            } else {
+              console.log('No courses found in backend response');
+              setPurchasedCourses([]);
+              setCourses([]);
+              setCourseProgress({});
             }
+          } else {
+            console.error('Backend request failed:', response.status);
+            setPurchasedCourses([]);
+            setCourses([]);
           }
         } catch (error) {
           console.error('Error fetching purchased courses:', error);
-          // Fallback to localStorage courses if backend fails
-          setPurchasedCourses(localPurchasedCourses);
+          // Set empty data if backend fails
+          setPurchasedCourses([]);
+          setCourses([]);
+          setCourseProgress({});
         }
 
         // Try to fetch additional student data from backend
@@ -1925,7 +1919,7 @@ const StudentPortal = () => {
               <div>
                 <h3 className="text-white text-2xl font-bold mb-6">My Enrolled Courses</h3>
                 <div className="space-y-4">
-                  {courses.map((course) => (
+                  {enrolledCourses.map((course) => (
                     <div key={course.id} className="bg-gray-800 rounded-lg p-6">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
@@ -2713,3 +2707,20 @@ const StudentPortal = () => {
 };
 
 export default StudentPortal;
+
+// Sets the enrolled courses data (used for compatibility with legacy code)
+function setCourses(courses: Course[]) {
+  setEnrolledCoursesData(courses);
+}
+
+function setEnrolledCoursesData(courses: Course[]) {
+  // This function updates the enrolled courses state.
+  // In the component, setEnrolledCoursesData is a useState setter, so just call the setter.
+  // If you want to keep compatibility with legacy code, you can update the state here.
+  // But since setEnrolledCoursesData is already a useState setter, this is a no-op.
+  // You can remove this function and use setEnrolledCoursesData directly, or keep it for compatibility.
+  // For now, just call the setter.
+  // @ts-ignore
+  setEnrolledCoursesData(courses);
+}
+

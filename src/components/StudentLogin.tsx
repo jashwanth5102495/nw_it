@@ -49,7 +49,7 @@ const StudentLogin = () => {
       });
 
       const result = await response.json();
-
+      console.log(result);
       if (result.success) {
         // Set authentication flag and store user data
         const userData = {
@@ -59,7 +59,7 @@ const StudentLogin = () => {
         };
         
         localStorage.setItem('currentUser', JSON.stringify(userData));
-        
+        console.log(localStorage.getItem('currentUser'));
         // Redirect to student portal
         navigate('/student-portal');
       } else {
@@ -72,10 +72,6 @@ const StudentLogin = () => {
       setIsLoading(false);
     }
   };
-
-
-
-
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -176,7 +172,7 @@ const StudentLogin = () => {
               <p className="text-gray-400">
                 Don't have an account?{' '}
                 <button
-                  onClick={() => navigate('/student-registrations')}
+                  onClick={() => navigate('/student-registration')}
                   className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"
                 >
                   Register here

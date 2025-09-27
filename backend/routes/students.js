@@ -285,11 +285,17 @@ router.post('/:id/enroll', authenticateStudent, authorizeOwnProfile, async (req,
       });
     }
 
-    const course = await Course.findOne({ courseId });
+    // Find course by courseId field (not by MongoDB _id)
+    const courses = await Course.find();
+    const course = await Course.findOne({ courseId: courseId.toUpperCase() });
+    
+    console.log('Found course:', course ? course.title : 'Not found');
+    console.log('Searching for courseId:', courseId);
+
     if (!course) {
       return res.status(404).json({
         success: false,
-        message: 'Course not found'
+        message: `Course not found with courseId: ${courseId}`
       });
     }
 
@@ -326,7 +332,7 @@ router.post('/:id/enroll', authenticateStudent, authorizeOwnProfile, async (req,
       success: true,
       message: 'Successfully enrolled in course',
       data: {
-        courseId: course.courseId,
+        courseId: course.courseId || course._id,
         courseTitle: course.title,
         enrollmentDate: new Date()
       }
