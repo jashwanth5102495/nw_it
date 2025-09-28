@@ -6975,6 +6975,7 @@ process.on('SIGINT', async () => {
                title: 'Build a Blog API',
                description: 'Create a complete blog API with MongoDB, including posts, comments, and user management.',
                startingCode: `// Blog API Exercise
+              
 // Create the following:
 
 // 1. User Schema (name, email, password, role)
@@ -7676,7 +7677,7 @@ app.listen(PORT, () => {
       
       {/* Top Navigation Bar */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 pt-4 flex-shrink-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between py-4 gap-4">
              <div className="flex items-center space-x-2 lg:space-x-4">
                <button
@@ -7721,7 +7722,7 @@ app.listen(PORT, () => {
         </div>
       </div>
       
-      <div className="flex max-w-7xl mx-auto flex-1 overflow-hidden relative">
+      <div className="flex flex-1 overflow-hidden relative w-full">
         {/* Mobile Sidebar Overlay */}
         {sidebarOpen && (
           <div 
@@ -8246,3 +8247,10 @@ app.listen(PORT, () => {
 };
 
 export default CourseLearning;
+function setHtmlCode(initialCode: string) {
+  setCode(initialCode);
+}
+function setCode(initialCode: string) {
+  throw new Error('Function not implemented.');
+}
+
