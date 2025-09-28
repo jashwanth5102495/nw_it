@@ -1,5 +1,6 @@
 const express = require('express');
 const Course = require('../models/Course');
+const Payment = require('../models/Payment');
 const router = express.Router();
 
 // Get all active courses
@@ -269,6 +270,15 @@ router.post('/purchase', async (req, res) => {
       finalPrice = course.price * 0.4; // 60% discount
     }
 
+    // Get student details for payment record
+    const student = await Student.findOne({ studentId: actualStudentId });
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
     // Create purchase record
     const Purchase = require('../models/Purchase');
     const purchase = new Purchase({
@@ -285,11 +295,33 @@ router.post('/purchase', async (req, res) => {
 
     await purchase.save();
 
+    // Create payment record for admin confirmation
+    const generatedPaymentId = paymentId || `PAY_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const payment = new Payment({
+      paymentId: generatedPaymentId,
+      studentId: actualStudentId,
+      courseId: course._id,
+      courseName: course.title,
+      amount: finalPrice,
+      originalAmount: course.price,
+      transactionId: generatedPaymentId,
+      studentName: student.name,
+      studentEmail: student.email,
+      status: 'completed',
+      confirmationStatus: 'waiting_for_confirmation',
+      paymentMethod: 'online',
+      referralCode: referralCode || null,
+      discountAmount: discount > 0 ? (course.price - finalPrice) : 0
+    });
+
+    await payment.save();
+
     res.json({
       success: true,
       message: 'Course purchased successfully',
       data: {
         purchaseId: purchase._id,
+        paymentId: payment.paymentId,
         courseId: course.courseId || course._id, // Return the string courseId if available
         finalPrice,
         discount
@@ -310,6 +342,7 @@ router.get('/purchased/:studentId', async (req, res) => {
   try {
     const Purchase = require('../models/Purchase');
     const Student = require('../models/Student');
+    const Payment = require('../models/Payment');
 
     let studentIdentifier = req.params.studentId;
     console.log(studentIdentifier);
@@ -328,9 +361,16 @@ router.get('/purchased/:studentId', async (req, res) => {
       });
     }
     
-    // Transform enrolled courses to include full course details
-    const purchasedCourses = student.enrolledCourses.map(enrollment => {
+    // Transform enrolled courses to include full course details and payment status
+    const purchasedCourses = await Promise.all(student.enrolledCourses.map(async (enrollment) => {
       const course = enrollment.courseId;
+      
+      // Find the payment record for this course and student
+      const payment = await Payment.findOne({
+        studentId: student._id,
+        courseId: course._id
+      }).sort({ createdAt: -1 }); // Get the latest payment record
+      
       return {
         id: course._id.toString(),
         courseId: course.courseId || course._id.toString(),
@@ -346,11 +386,18 @@ router.get('/purchased/:studentId', async (req, res) => {
         instructor: course.instructor,
         enrollmentDate: enrollment.enrollmentDate,
         progress: enrollment.progress || 0,
-        status: enrollment.status || 'active'
+        status: enrollment.status || 'active',
+        // Payment confirmation status
+        paymentStatus: payment ? payment.status : 'unknown',
+        confirmationStatus: payment ? payment.confirmationStatus : 'unknown',
+        transactionId: payment ? payment.transactionId : null,
+        paymentMethod: payment ? payment.paymentMethod : null,
+        adminConfirmedBy: payment ? payment.adminConfirmedBy : null,
+        adminConfirmedAt: payment ? payment.adminConfirmedAt : null
       };
-    });
+    }));
     
-    console.log("Purchased Courses: ", purchasedCourses);
+    console.log("Purchased Courses with Payment Status: ", purchasedCourses);
 
     res.json({
       success: true,

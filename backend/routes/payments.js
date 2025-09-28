@@ -5,11 +5,14 @@ const Student = require('../models/Student');
 const Course = require('../models/Course');
 const Faculty = require('../models/Faculty');
 
-// Create a new payment record
+// Create a new payment record for manual QR payment
 router.post('/', async (req, res) => {
   try {
+    console.log('=== BACKEND PAYMENT DEBUG ===');
+    console.log('Received payment data:', req.body);
+    
     const {
-      paymentId,
+      transactionId,
       studentId,
       courseId,
       courseName,
@@ -17,26 +20,35 @@ router.post('/', async (req, res) => {
       originalAmount,
       studentName,
       studentEmail,
-      razorpayOrderId,
-      razorpaySignature,
       metadata,
       referralCode
     } = req.body;
 
+    console.log('Extracted fields:');
+    console.log('- transactionId:', transactionId);
+    console.log('- studentId:', studentId);
+    console.log('- courseId:', courseId);
+    console.log('- courseName:', courseName);
+    console.log('- amount:', amount);
+    console.log('- studentName:', studentName);
+    console.log('- studentEmail:', studentEmail);
+    console.log('============================');
+
     // Validate required fields
-    if (!paymentId || !studentId || !courseId || !courseName || !amount || !studentName || !studentEmail) {
+    if (!transactionId || !studentId || !courseId || !courseName || !amount || !studentName || !studentEmail) {
+      console.log('Validation failed - missing required fields');
       return res.status(400).json({
         success: false,
         message: 'Missing required payment information'
       });
     }
 
-    // Check if payment already exists
-    const existingPayment = await Payment.findOne({ paymentId });
+    // Check if payment already exists with this transaction ID
+    const existingPayment = await Payment.findOne({ transactionId });
     if (existingPayment) {
       return res.status(400).json({
         success: false,
-        message: 'Payment already recorded'
+        message: 'Payment with this transaction ID already recorded'
       });
     }
 
@@ -78,6 +90,9 @@ router.post('/', async (req, res) => {
       }
     }
 
+    // Generate unique payment ID
+    const paymentId = `PAY_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
     // Create payment record
     const payment = new Payment({
       paymentId,
@@ -86,13 +101,13 @@ router.post('/', async (req, res) => {
       courseName,
       amount,
       originalAmount: originalAmount || amount,
-      transactionId: paymentId, // Using paymentId as transactionId for Razorpay
+      transactionId,
       studentName,
       studentEmail,
-      razorpayOrderId,
-      razorpaySignature,
       metadata: metadata || {},
-      status: 'completed',
+      status: 'pending',
+      confirmationStatus: 'waiting_for_confirmation',
+      paymentMethod: 'manual_qr',
       // Referral code fields
       referralCode: referralCode || null,
       facultyId: faculty ? faculty._id : null,
@@ -321,6 +336,96 @@ router.put('/:paymentId/status', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error updating payment status',
+      error: error.message
+    });
+  }
+});
+
+// Confirm payment by admin (for manual QR payments)
+router.put('/:paymentId/confirm', async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+    const { confirmationStatus, adminEmail } = req.body;
+
+    // Allow pending, confirmed, rejected, and error statuses
+    if (!['pending', 'confirmed', 'rejected', 'error', 'waiting_for_confirmation'].includes(confirmationStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid confirmation status. Must be "pending", "confirmed", "rejected", "error", or "waiting_for_confirmation"'
+      });
+    }
+
+    const updateData = {
+      confirmationStatus,
+      adminConfirmedBy: adminEmail || 'admin',
+      adminConfirmedAt: new Date()
+    };
+
+    // Update payment status based on confirmation status
+    if (confirmationStatus === 'confirmed') {
+      updateData.status = 'completed';
+    } else if (confirmationStatus === 'rejected') {
+      updateData.status = 'failed';
+    } else if (confirmationStatus === 'error') {
+      updateData.status = 'failed';
+    } else if (confirmationStatus === 'pending' || confirmationStatus === 'waiting_for_confirmation') {
+      updateData.status = 'pending';
+    }
+
+    const payment = await Payment.findOneAndUpdate(
+      { paymentId },
+      updateData,
+      { new: true }
+    ).populate('studentId', 'name email')
+     .populate('courseId', 'title');
+
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Payment not found'
+      });
+    }
+
+    // If payment is confirmed, enroll the student in the course
+    if (confirmationStatus === 'confirmed') {
+      try {
+        const student = await Student.findById(payment.studentId);
+        const course = await Course.findById(payment.courseId);
+
+        if (student && course) {
+          // Check if already enrolled
+          const existingEnrollment = student.enrolledCourses.find(
+            enrollment => enrollment.courseId.toString() === course._id.toString()
+          );
+
+          if (!existingEnrollment) {
+            // Enroll student in course
+            student.enrolledCourses.push({
+              courseId: course._id,
+              enrollmentDate: new Date(),
+              progress: 0,
+              status: 'active'
+            });
+            await student.save();
+            console.log(`Student ${student.email} enrolled in course ${course.title}`);
+          }
+        }
+      } catch (enrollmentError) {
+        console.error('Error enrolling student in course:', enrollmentError);
+        // Don't fail the payment confirmation if enrollment fails
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Payment ${confirmationStatus} successfully`,
+      data: payment
+    });
+  } catch (error) {
+    console.error('Error confirming payment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error confirming payment',
       error: error.message
     });
   }

@@ -406,8 +406,8 @@ router.get('/', async (req, res) => {
     }
 
     const students = await Student.find(query)
-      .populate('enrolledCourses.courseId', 'title courseId')
-      .populate('paymentHistory.courseId', 'title courseId')
+      .populate('enrolledCourses.courseId', 'title courseId price')
+      .populate('paymentHistory.courseId', 'title courseId price')
       .select('-password')
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -477,6 +477,58 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error deleting student',
+      error: error.message
+    });
+  }
+});
+
+// Get students by referral code with course information
+router.get('/by-referral/:referralCode', async (req, res) => {
+  try {
+    const { referralCode } = req.params;
+    
+    // Find all payments with the specified referral code
+    const Payment = require('../models/Payment');
+    const payments = await Payment.find({ 
+      referralCode: referralCode.toUpperCase() 
+    })
+    .populate('studentId', 'firstName lastName email phone studentId')
+    .populate('courseId', 'title courseId')
+    .sort({ createdAt: -1 });
+
+    // Filter out payments where population failed
+    const validPayments = payments.filter(payment => 
+      payment.studentId && typeof payment.studentId === 'object'
+    );
+
+    // Transform the data to match the expected format
+    const studentsWithReferral = validPayments.map(payment => ({
+      _id: payment.studentId._id,
+      name: `${payment.studentId.firstName} ${payment.studentId.lastName}`,
+      email: payment.studentId.email,
+      phone: payment.studentId.phone,
+      studentId: payment.studentId.studentId,
+      selectedCourse: payment.courseName || payment.courseId?.title || 'Unknown Course',
+      courseId: payment.courseId?._id,
+      amountPaid: payment.amount,
+      paymentStatus: payment.status,
+      confirmationStatus: payment.confirmationStatus,
+      referralCode: payment.referralCode,
+      transactionId: payment.transactionId,
+      createdAt: payment.createdAt
+    }));
+
+    res.json({
+      success: true,
+      data: studentsWithReferral,
+      count: studentsWithReferral.length
+    });
+
+  } catch (error) {
+    console.error('Error fetching students by referral code:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching students by referral code',
       error: error.message
     });
   }

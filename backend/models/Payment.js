@@ -30,16 +30,29 @@ const paymentSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    default: 'razorpay'
+    default: 'manual_qr'
   },
   status: {
     type: String,
     enum: ['pending', 'completed', 'failed', 'refunded'],
-    default: 'completed'
+    default: 'pending'
+  },
+  confirmationStatus: {
+    type: String,
+    enum: ['waiting_for_confirmation', 'confirmed', 'rejected'],
+    default: 'waiting_for_confirmation'
   },
   transactionId: {
     type: String,
     required: true
+  },
+  adminConfirmedBy: {
+    type: String,
+    default: null
+  },
+  adminConfirmedAt: {
+    type: Date,
+    default: null
   },
   studentName: {
     type: String,
@@ -84,11 +97,7 @@ const paymentSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  razorpayOrderId: {
-    type: String,
-    default: null
-  },
-  razorpaySignature: {
+  qrPaymentProof: {
     type: String,
     default: null
   },
