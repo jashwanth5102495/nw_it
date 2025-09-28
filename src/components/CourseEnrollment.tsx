@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Header from './Header';
+import StarBorder from './StarBorder';
+import PaymentStatusModal from './PaymentStatusModal';
 import { ArrowLeft, Clock, Award, CheckCircle, BookOpen, Target, Zap } from 'lucide-react';
 
 interface CourseModule {
@@ -44,49 +46,78 @@ const CourseEnrollment: React.FC = () => {
   const [discountAmount, setDiscountAmount] = useState(0);
   const [finalPrice, setFinalPrice] = useState(0);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showQRPayment, setShowQRPayment] = useState(false);
+  const [transactionId, setTransactionId] = useState('');
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'waiting_for_confirmation' | 'confirmed' | 'rejected' | 'unknown'>('waiting_for_confirmation');
 
   const courses: Course[] = [
     {
       id: 'ai-tools-mastery',
-      title: 'A.I Tools Mastery',
+      title: 'A.I Tools Mastery - Professional Certification Program',
       category: 'ai',
-      level: 'intermediate',
-      description: 'Master the latest AI tools and technologies to boost productivity and automate workflows',
-      detailedDescription: 'This comprehensive course will teach you how to leverage cutting-edge AI tools like ChatGPT, Midjourney, and other AI platforms to enhance your productivity and create innovative solutions.',
-      technologies: ['ChatGPT', 'Midjourney', 'AI APIs', 'Automation Tools'],
+      level: 'professional',
+      description: '🏆 INDUSTRY-LEADING AI MASTERY PROGRAM | Master 50+ cutting-edge AI tools with hands-on industry projects. From DALL-E 3 & Midjourney to Claude API & enterprise automation. Includes 1-on-1 mentorship, portfolio development, job placement assistance, and lifetime access to updates.',
+      detailedDescription: 'This premium 24-week professional certification program is designed for serious AI practitioners and business professionals. Master 50+ cutting-edge AI tools through hands-on industry projects, build a professional portfolio, and receive personalized mentorship from former OpenAI research scientists. Includes enterprise-grade training, job placement assistance, and lifetime access to course updates.',
+      technologies: ['DALL-E 3', 'Midjourney', 'Runway ML', 'Claude API', 'n8n', 'Promptly AI', 'JSON Prompts', 'Stable Diffusion', 'Synthesia', 'Luma AI', 'Pika Labs', 'Make.com', 'Zapier'],
       price: 12000,
-      duration: '12 weeks',
-      projects: 8,
+      originalPrice: 25000,
+      duration: '24 weeks + Lifetime Access',
+      projects: 12,
+      certification: 'Industry-Recognized AI Tools Professional Certificate',
+      premiumFeatures: [
+        '🎯 1-on-1 Weekly Mentorship Sessions',
+        '💼 Professional Portfolio Development',
+        '🚀 Job Placement Assistance Program',
+        '🔄 Lifetime Access & Course Updates',
+        '🏢 Enterprise Project Simulations',
+        '📊 Performance Analytics & Tracking'
+      ],
       modules: [
         {
-          title: 'AI Fundamentals',
-          duration: '3 weeks',
-          topics: ['Introduction to AI', 'Machine Learning Basics', 'AI Ethics', 'AI Applications']
+          title: 'Module 1: Professional Image Creation & Brand Design',
+          duration: '4 weeks',
+          topics: ['DALL-E 3 Enterprise Techniques', 'Midjourney Professional Brand Workflows', 'Stable Diffusion Custom Model Training', 'Promptly AI Advanced Optimization', 'Commercial Image Enhancement', 'Brand Identity Creation', 'Copyright & Licensing Mastery', 'Client Presentation Techniques']
         },
         {
-          title: 'ChatGPT & Language Models',
-          duration: '3 weeks',
-          topics: ['Prompt Engineering', 'Advanced ChatGPT Techniques', 'API Integration', 'Custom GPT Creation']
+          title: 'Module 2: Cinematic Video Production & AI Storytelling',
+          duration: '4 weeks',
+          topics: ['Runway ML Professional Video Generation', 'Synthesia Enterprise AI Avatars', 'Luma AI Cinematic Sequences', 'Pika Labs Advanced Animation', 'AI-Powered Video Editing', 'Professional Storytelling Techniques', 'Client Video Production', 'Video Marketing Strategies']
         },
         {
-          title: 'AI Image & Video Tools',
-          duration: '3 weeks',
-          topics: ['Midjourney Mastery', 'DALL-E', 'Stable Diffusion', 'AI Video Generation']
+          title: 'Module 3: Advanced Animation & Motion Graphics',
+          duration: '4 weeks',
+          topics: ['Runway Gen-2 Professional Animation', 'Stable Video Diffusion Mastery', 'Pika Labs Motion Control', 'Advanced Motion Brush Techniques', 'Cinematic Camera Movements', 'Professional Animation Workflows', 'Client Animation Projects', 'Motion Graphics for Business']
         },
         {
-          title: 'AI Automation & Workflows',
-          duration: '3 weeks',
-          topics: ['AI-Powered Automation', 'Workflow Integration', 'Business Applications', 'Future of AI']
+          title: 'Module 4: Enterprise Data Solutions & API Mastery',
+          duration: '4 weeks',
+          topics: ['Advanced JSON Prompt Engineering', 'Enterprise Data Generation', 'Professional API Integration', 'Custom Schema Architecture', 'Automated Business Workflows', 'Data Quality & Validation', 'Enterprise Security Practices', 'Scalable Data Solutions']
+        },
+        {
+          title: 'Module 5: Business Automation & AI Agent Development',
+          duration: '4 weeks',
+          topics: ['n8n Enterprise Automation', 'Zapier Professional Integrations', 'Make.com Advanced Business Scenarios', 'Custom AI Agent Architecture', 'Multi-Platform Enterprise Integration', 'Business Process Optimization', 'ROI-Driven Automation', 'Client Automation Solutions']
+        },
+        {
+          title: 'Module 6: Claude AI Enterprise Implementation',
+          duration: '4 weeks',
+          topics: ['Claude API Enterprise Integration', 'Advanced Prompt Engineering Mastery', 'Claude Projects & Custom Artifacts', 'Enterprise Application Development', 'Scalable Claude Implementation', 'API Optimization & Cost Management', 'Security & Compliance', 'Client Solution Development']
         }
       ],
-      prerequisites: ['Basic computer skills', 'Interest in AI technology'],
+      prerequisites: ['Professional work experience', 'Basic understanding of APIs', 'Commitment to 15+ hours/week study', 'Access to high-speed internet'],
       whatYouWillLearn: [
-        'Master popular AI tools and platforms',
-        'Create efficient AI-powered workflows',
-        'Understand AI ethics and best practices',
-        'Build AI-integrated business solutions',
-        'Automate repetitive tasks with AI',
-        'Generate content using AI tools'
+        '🎯 Master 50+ Enterprise-Grade AI Tools & Platforms',
+        '💼 Build Professional AI-Powered Business Solutions',
+        '🚀 Create Scalable Enterprise Automation Workflows',
+        '📊 Develop Data-Driven AI Applications with APIs',
+        '🎨 Generate Professional Visual Content for Clients',
+        '🤖 Design Custom AI Agents for Business Processes',
+        '💰 Monetize AI Skills with Freelance & Consulting Opportunities',
+        '🏆 Earn Industry-Recognized Professional Certification',
+        '📈 Implement ROI-Driven AI Solutions for Enterprises',
+        '🔒 Apply Enterprise Security & Compliance Best Practices'
       ]
     },
     {
@@ -339,63 +370,61 @@ const CourseEnrollment: React.FC = () => {
   const handlePayment = async () => {
     if (!course) return;
 
-    setIsProcessingPayment(true);
+    // Get current user from localStorage
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    
+    if (!currentUser.email) {
+      alert('Please login to enroll in the course');
+      navigate('/student-login');
+      return;
+    }
+
+    // Validate payment amount
+    if (finalPrice <= 0) {
+      alert('Invalid payment amount. Please refresh the page and try again.');
+      return;
+    }
+
+    // Show QR payment interface
+    setShowQRPayment(true);
+  };
+
+  const handleSubmitPayment = async () => {
+    if (!course || !transactionId.trim()) {
+      alert('Please enter a valid transaction ID');
+      return;
+    }
+
+    setIsSubmittingPayment(true);
 
     try {
-      // RAZORPAY TEMPORARILY COMMENTED OUT FOR TESTING
-      /*
-      // Check if Razorpay is loaded
-      if (!window.Razorpay) {
-        alert('Payment system is not available. Please refresh the page and try again.');
-        setIsProcessingPayment(false);
-        return;
-      }
-      */
-
       // Get current user from localStorage
       const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-      
-      if (!currentUser.email) {
-        alert('Please login to enroll in the course');
-        navigate('/student-login');
-        setIsProcessingPayment(false);
-        return;
-      }
 
-      // Validate payment amount
-      if (finalPrice <= 0) {
-        alert('Invalid payment amount. Please refresh the page and try again.');
-        setIsProcessingPayment(false);
-        return;
-      }
-
-      console.log('Initiating direct enrollment for testing:', {
+      console.log('Submitting payment with transaction ID:', {
         course: course.title,
         originalPrice: course.price,
         finalPrice: finalPrice,
         discountApplied: discountApplied,
         discountAmount: discountAmount,
         referralCode: referralCode,
+        transactionId: transactionId,
         user: currentUser.email
       });
 
-      // DIRECT BACKEND ENROLLMENT FOR TESTING - NO PAYMENT PROCESSING
-      try {
-        // Prepare enrollment data for backend
-        const enrollmentData = {
-          courseId: course.id,
-          paymentDetails: {
-            amount: finalPrice,
-            method: 'testing',
-            transactionId: `TEST_${Date.now()}` // Mock payment ID for testing
-          },
-          referralCode: referralCode || null
-        };
-        console.log(course);
-        console.log('Sending enrollment to backend:', enrollmentData);
+      // Prepare enrollment data for backend
+      const enrollmentData = {
+        courseId: course.id,
+        paymentDetails: {
+          amount: finalPrice,
+          method: 'upi',
+          transactionId: transactionId
+        },
+        referralCode: referralCode || null
+      };
 
-        // Send enrollment to backend
-        const token = JSON.parse(localStorage.getItem('currentUser') || '{}').token;
+      // Send enrollment to backend
+      const token = JSON.parse(localStorage.getItem('currentUser') || '{}').token;
 
         const enrollResponse = await fetch(`http://localhost:5000/api/students/${currentUser.id}/enroll`, {
           method: 'POST',
@@ -410,140 +439,20 @@ const CourseEnrollment: React.FC = () => {
         console.log('Backend enrollment response:', enrollResult);
 
         if (enrollResult.success) {
-          // Also update localStorage for immediate UI feedback
-          const existingEnrollments = JSON.parse(localStorage.getItem('enrollments') || '[]');
-          const localEnrollmentData = {
-            studentId: currentUser.id,
-            studentName: `${currentUser.firstName} ${currentUser.lastName}`,
-            studentEmail: currentUser.email,
-            courseId: course.id,
-            courseName: course.title,
-            amount: finalPrice,
-            originalPrice: course.price,
-            discountApplied: discountApplied,
-            discountAmount: discountAmount,
-            referralCode: referralCode || null,
-            paymentId: `TEST_${Date.now()}`,
-            enrollmentDate: new Date().toISOString(),
-            status: 'enrolled'
-          };
-          existingEnrollments.push(localEnrollmentData);
-          localStorage.setItem('enrollments', JSON.stringify(existingEnrollments));
-
-          // Add course to purchased courses for StudentPortal
-          const existingPurchasedCourses = JSON.parse(localStorage.getItem('purchasedCourses') || '[]');
-          if (!existingPurchasedCourses.includes(course.id)) {
-            existingPurchasedCourses.push(course.id);
-            localStorage.setItem('purchasedCourses', JSON.stringify(existingPurchasedCourses));
-          }
-
-          setIsProcessingPayment(false);
-          alert('Enrollment successful! You have been enrolled in the course. You can now access it in My Courses.');
-          navigate('/student-portal');
+          setIsSubmittingPayment(false);
+          setShowQRPayment(false);
+          setPaymentStatus('waiting_for_confirmation');
+          setShowStatusModal(true);
         } else {
-          throw new Error(enrollResult.message || 'Failed to enroll in course');
+          throw new Error(enrollResult.message || 'Failed to submit payment details');
         }
-      } catch (error) {
-        console.error('Error recording enrollment:', error);
-        setIsProcessingPayment(false);
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-        alert(`There was an error processing your enrollment: ${errorMessage}. Please try again.`);
-      }
-
-      /* RAZORPAY CODE COMMENTED OUT FOR TESTING
-      const options = {
-        key: 'rzp_test_NyLZPzYHIYtxqW', // Your actual Razorpay test key
-        amount: finalPrice * 100, // Amount in paise
-        currency: 'INR',
-        name: 'NW IT Solutions',
-        description: `Enrollment for ${course.title}`,
-        image: '/logo.png',
-        handler: async function (response: any) {
-          try {
-            console.log('Payment successful:', response);
-            console.log('Payment ID:', response.razorpay_payment_id);
-            console.log('Final amount paid:', finalPrice);
-            
-            // Record the enrollment in backend
-            const enrollmentData = {
-              studentId: currentUser.id,
-              studentName: `${currentUser.firstName} ${currentUser.lastName}`,
-              studentEmail: currentUser.email,
-              courseId: course.id,
-              courseName: course.title,
-              amount: finalPrice,
-              originalPrice: course.price,
-              discountApplied: discountApplied,
-              discountAmount: discountAmount,
-              referralCode: referralCode || null,
-              paymentId: response.razorpay_payment_id,
-              enrollmentDate: new Date().toISOString(),
-              status: 'enrolled'
-            };
-
-            // Store enrollment data in localStorage (in a real app, this would be sent to your backend)
-            const existingEnrollments = JSON.parse(localStorage.getItem('enrollments') || '[]');
-            existingEnrollments.push(enrollmentData);
-            localStorage.setItem('enrollments', JSON.stringify(existingEnrollments));
-
-            // Add course to purchased courses for StudentPortal
-            const existingPurchasedCourses = JSON.parse(localStorage.getItem('purchasedCourses') || '[]');
-            if (!existingPurchasedCourses.includes(course.id)) {
-              existingPurchasedCourses.push(course.id);
-              localStorage.setItem('purchasedCourses', JSON.stringify(existingPurchasedCourses));
-            }
-
-            alert('Payment successful! You have been enrolled in the course. You can now access it in My Courses.');
-            navigate('/student-portal');
-          } catch (error) {
-            console.error('Error recording enrollment:', error);
-            alert('Payment successful but there was an error recording your enrollment. Please contact support.');
-          }
-        },
-        modal: {
-          ondismiss: function() {
-            console.log('Payment modal dismissed');
-            setIsProcessingPayment(false);
-          }
-        },
-        prefill: {
-          name: `${currentUser.firstName} ${currentUser.lastName}`,
-          email: currentUser.email,
-          contact: currentUser.phone || ''
-        },
-        theme: {
-          color: '#3B82F6'
-        }
-      };
-
-      const rzp = new window.Razorpay(options);
-      
-      rzp.on('payment.failed', function (response: any) {
-        console.error('Payment failed:', response.error);
-        console.error('Full error response:', response);
-        
-        let errorMessage = 'Payment failed. Please try again.';
-        if (response.error) {
-          if (response.error.description) {
-            errorMessage = `Payment failed: ${response.error.description}`;
-          } else if (response.error.reason) {
-            errorMessage = `Payment failed: ${response.error.reason}`;
-          }
-        }
-        
-        alert(errorMessage);
-        setIsProcessingPayment(false);
-      });
-
-      rzp.open();
-      */
     } catch (error) {
-      console.error('Enrollment error:', error);
-      alert('Enrollment failed. Please try again.');
-      setIsProcessingPayment(false);
+      console.error('Error submitting payment:', error);
+      setIsSubmittingPayment(false);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`There was an error submitting your payment details: ${errorMessage}. Please try again.`);
     }
   };
-
 
   if (!course) {
     return (
@@ -741,34 +650,158 @@ const CourseEnrollment: React.FC = () => {
               </div>
 
               {/* Payment Button */}
-              <button
+              <StarBorder
+                as="button"
                 onClick={handlePayment}
                 disabled={isProcessingPayment}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
+                className="w-full"
+                color="cyan"
+                speed="5s"
+                style={{
+                  opacity: isProcessingPayment ? 0.7 : 1,
+                  cursor: isProcessingPayment ? 'not-allowed' : 'pointer'
+                }}
               >
                 {isProcessingPayment ? (
-                  <>
+                  <div className="flex items-center justify-center gap-2">
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                     Enrolling...
-                  </>
+                  </div>
                 ) : (
-                  <>
+                  <div className="flex items-center justify-center gap-2">
                     <Zap size={20} />
-                    Enroll Now (Testing Mode)
-                  </>
+                    Enroll Now
+                  </div>
                 )}
-              </button>
+              </StarBorder>
 
-              <div className="mt-4 text-center text-sm text-gray-400">
-                <p className="mb-2 text-yellow-400 font-medium">🧪 Testing Mode - No payment required</p>
-                <p>✓ Lifetime access to course content</p>
-                <p>✓ Certificate of completion</p>
-                <p>✓ 24/7 community support</p>
-              </div>
+              {/* QR Payment Interface */}
+              {showQRPayment && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-6 p-6 bg-gray-800 rounded-lg border border-gray-700"
+                >
+                  <h4 className="text-lg font-semibold text-white mb-4 text-center">Complete Your Payment</h4>
+                  
+                  {/* QR Code */}
+                  <div className="mb-6 text-center">
+                    <div className="bg-white p-4 rounded-lg inline-block mb-4">
+                      <img 
+                        src="/img/qr.png" 
+                        alt="Payment QR Code" 
+                        className="w-48 h-48 mx-auto"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-gray-300 text-sm">
+                        Scan the QR code above with your UPI app to pay{' '}
+                        <span className="text-green-400 font-semibold text-lg">
+                          ₹{finalPrice.toLocaleString()}
+                        </span>
+                      </p>
+                      {discountApplied && referralCode && (
+                        <div className="bg-green-600/20 border border-green-600/30 rounded-lg p-3 text-green-300 text-sm">
+                          🎉 <strong>Referral Code Applied:</strong> {referralCode}
+                          <br />
+                          💰 <strong>You're saving:</strong> ₹{(course.price - finalPrice).toLocaleString()}
+                          <br />
+                          ⚡ <strong>Offer Price:</strong> ₹{finalPrice.toLocaleString()} (instead of ₹{course.price.toLocaleString()})
+                        </div>
+                      )}
+                      <div className="bg-blue-600/20 border border-blue-600/30 rounded-lg p-3 text-blue-300 text-sm">
+                        📱 <strong>Payment Instructions:</strong>
+                        <br />
+                        1. Open any UPI app (PhonePe, Google Pay, Paytm, etc.)
+                        <br />
+                        2. Scan the QR code above
+                        <br />
+                        3. Enter the exact amount: ₹{finalPrice.toLocaleString()}
+                        <br />
+                        4. Complete the payment and copy the transaction ID
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Transaction ID Input */}
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Transaction ID *
+                    </label>
+                    <input
+                      type="text"
+                      value={transactionId}
+                      onChange={(e) => setTransactionId(e.target.value)}
+                      placeholder="Enter your transaction ID after payment (e.g., 123456789012)"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                    <div className="mt-2 space-y-1">
+                      <p className="text-gray-400 text-xs">
+                        📋 Enter the transaction ID you received after making the payment
+                      </p>
+                      <div className="bg-yellow-600/20 border border-yellow-600/30 rounded-lg p-2 text-yellow-300 text-xs">
+                        ⚠️ <strong>Important:</strong> {referralCode ? 'Your referral code will be validated during payment verification.' : 'Make sure to enter the correct transaction ID.'}
+                        <br />
+                        🕒 Course access will be granted within 24 hours after payment confirmation.
+                        <br />
+                        📚 Once confirmed, the course will appear in your "My Courses" tab.
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Submit Payment Button */}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowQRPayment(false)}
+                      className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSubmitPayment}
+                      disabled={!transactionId.trim() || isSubmittingPayment}
+                      className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                    >
+                      {isSubmittingPayment ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Submitting...
+                        </div>
+                      ) : (
+                        'Submit Payment'
+                      )}
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {!showQRPayment && (
+                <div className="mt-4 text-center text-sm text-gray-400">
+                  <p>✓ Lifetime access to course content</p>
+                  <p>✓ Certificate of completion</p>
+                  <p>✓ 24/7 community support</p>
+                </div>
+              )}
             </motion.div>
           </div>
         </div>
       </div>
+
+      {/* Payment Status Modal */}
+      <PaymentStatusModal
+        isOpen={showStatusModal}
+        onClose={() => {
+          setShowStatusModal(false);
+          if (paymentStatus === 'waiting_for_confirmation') {
+            navigate('/student-portal');
+          }
+        }}
+        status={paymentStatus}
+        transactionId={transactionId}
+        courseName={course?.title}
+        amount={finalPrice}
+      />
     </div>
   );
 };

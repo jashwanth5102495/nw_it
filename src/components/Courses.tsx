@@ -40,39 +40,61 @@ const Courses = () => {
   const courses: Course[] = [
     {
       id: 'ai-tools',
-      title: 'A.I Tools Mastery',
+      title: 'A.I Tools Mastery - Professional Certification Program',
       category: 'ai',
-      level: 'intermediate',
-      description: 'Master the latest AI tools including ChatGPT, Claude, Midjourney, and more. Learn to leverage AI for productivity, creativity, and business growth.',
-      technologies: ['ChatGPT', 'Claude', 'Midjourney', 'GitHub Copilot', 'Notion AI'],
+      level: 'professional',
+      description: '🏆 INDUSTRY-LEADING AI MASTERY PROGRAM | Master 50+ cutting-edge AI tools with hands-on industry projects. From DALL-E 3 & Midjourney to Claude API & enterprise automation. Includes 1-on-1 mentorship, portfolio development, job placement assistance, and lifetime access to updates. Certified by leading AI companies.',
+      technologies: ['DALL-E 3', 'Midjourney', 'Runway ML', 'Claude API', 'n8n', 'Promptly AI', 'JSON Prompts', 'Stable Diffusion', 'Synthesia', 'Luma AI'],
       price: 12000,
-      duration: '12 weeks',
-      projects: 8,
+      originalPrice: 25000,
+      duration: '24 weeks + Lifetime Access',
+      projects: 12,
       image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=250&fit=crop&crop=center',
       rating: 4.9,
       students: 15000,
-      maxStudents: 12000,
-      instructor: 'Dr. Sarah Chen',
+      maxStudents: 20000,
+      instructor: 'Dr. Sarah Chen - Former OpenAI Research Scientist',
+      certification: 'Industry-Recognized AI Tools Professional Certificate',
+      premiumFeatures: [
+        '🎯 1-on-1 Weekly Mentorship Sessions',
+        '💼 Professional Portfolio Development',
+        '🚀 Job Placement Assistance & Career Support',
+        '🔄 Lifetime Access to Course Updates',
+        '🏢 Real Enterprise Project Experience',
+        '📜 Industry-Recognized Certification',
+        '💬 24/7 Expert Support Community',
+        '🎥 Exclusive Masterclasses with Industry Leaders'
+      ],
       modules: [
         {
-          title: 'AI Fundamentals',
-          duration: '3 weeks',
-          topics: ['Understanding AI', 'AI Ethics', 'Tool Selection', 'Best Practices']
+          title: 'Module 1: Professional Image Creation & Brand Design',
+          duration: '4 weeks',
+          topics: ['DALL-E 3 Enterprise Techniques', 'Midjourney Professional Brand Workflows', 'Stable Diffusion Custom Model Training', 'Promptly AI Advanced Optimization', 'Commercial Image Enhancement', 'Brand Identity Creation', 'Copyright & Licensing Mastery', 'Client Presentation Techniques']
         },
         {
-          title: 'Text Generation AI',
-          duration: '3 weeks',
-          topics: ['ChatGPT Mastery', 'Claude Advanced', 'Prompt Engineering', 'Content Creation']
+          title: 'Module 2: Cinematic Video Production & AI Storytelling',
+          duration: '4 weeks',
+          topics: ['Runway ML Professional Video Generation', 'Synthesia Enterprise AI Avatars', 'Luma AI Cinematic Sequences', 'Pika Labs Advanced Animation', 'AI-Powered Video Editing', 'Professional Storytelling Techniques', 'Client Video Production', 'Video Marketing Strategies']
         },
         {
-          title: 'Visual AI Tools',
-          duration: '3 weeks',
-          topics: ['Midjourney', 'DALL-E', 'Stable Diffusion', 'Image Enhancement']
+          title: 'Module 3: Advanced Animation & Motion Graphics',
+          duration: '4 weeks',
+          topics: ['Runway Gen-2 Professional Animation', 'Stable Video Diffusion Mastery', 'Pika Labs Motion Control', 'Advanced Motion Brush Techniques', 'Cinematic Camera Movements', 'Professional Animation Workflows', 'Client Animation Projects', 'Motion Graphics for Business']
         },
         {
-          title: 'AI for Business',
-          duration: '3 weeks',
-          topics: ['Workflow Automation', 'AI Integration', 'ROI Measurement', 'Future Trends']
+          title: 'Module 4: Enterprise Data Solutions & API Mastery',
+          duration: '4 weeks',
+          topics: ['Advanced JSON Prompt Engineering', 'Enterprise Data Generation', 'Professional API Integration', 'Custom Schema Architecture', 'Automated Business Workflows', 'Data Quality & Validation', 'Enterprise Security Practices', 'Scalable Data Solutions']
+        },
+        {
+          title: 'Module 5: Business Automation & AI Agent Development',
+          duration: '4 weeks',
+          topics: ['n8n Enterprise Automation', 'Zapier Professional Integrations', 'Make.com Advanced Business Scenarios', 'Custom AI Agent Architecture', 'Multi-Platform Enterprise Integration', 'Business Process Optimization', 'ROI-Driven Automation', 'Client Automation Solutions']
+        },
+        {
+          title: 'Module 6: Claude AI Enterprise Implementation',
+          duration: '4 weeks',
+          topics: ['Claude API Enterprise Integration', 'Advanced Prompt Engineering Mastery', 'Claude Projects & Custom Artifacts', 'Enterprise Application Development', 'Scalable Claude Implementation', 'API Optimization & Cost Management', 'Security & Compliance', 'Client Solution Development']
         }
       ]
     },

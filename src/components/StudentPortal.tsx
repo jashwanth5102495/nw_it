@@ -14,6 +14,7 @@ import {
   LinkIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
+import { PaymentStatusBadge, PaymentStatusType } from './PaymentStatus';
 
 interface CourseModule {
   title: string;
@@ -129,6 +130,7 @@ const StudentPortal = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentModalData, setPaymentModalData] = useState<PaymentModalData | null>(null);
   const [referralCode, setReferralCode] = useState('');
+  const [transactionId, setTransactionId] = useState('');
   const [purchasedCourses, setPurchasedCourses] = useState<string[]>([]);
   const [enrolledCoursesData, setEnrolledCoursesData] = useState<Course[]>([]);
   const [courseProgress, setCourseProgress] = useState<{ [courseId: string]: CourseProgress }>({});
@@ -179,39 +181,59 @@ const StudentPortal = () => {
   const allCourses: Course[] = [
     {
       id: 'ai-tools-mastery',
-      title: 'A.I Tools Mastery',
+      title: 'A.I Tools Mastery - Professional Certification Program',
       category: 'ai',
-      level: 'beginner',
-      description: 'Master the most powerful AI tools for productivity, creativity, and business automation',
-      technologies: ['ChatGPT', 'Claude', 'Midjourney', 'Notion AI', 'GitHub Copilot'],
+      level: 'professional',
+      description: '🏆 INDUSTRY-LEADING AI MASTERY PROGRAM | Master 50+ cutting-edge AI tools with hands-on industry projects. From DALL-E 3 & Midjourney to Claude API & enterprise automation. Includes 1-on-1 mentorship, portfolio development, job placement assistance, and lifetime access to updates.',
+      technologies: ['DALL-E 3', 'Midjourney', 'Runway ML', 'Claude API', 'n8n', 'Promptly AI', 'JSON Prompts', 'Stable Diffusion', 'Synthesia', 'Luma AI', 'Pika Labs', 'Make.com', 'Zapier'],
       price: 12000,
-      duration: '6 weeks',
-      projects: 8,
+      originalPrice: 25000,
+      duration: '24 weeks + Lifetime Access',
+      projects: 12,
       image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=250&fit=crop&crop=center',
-      rating: 4.8,
+      rating: 4.9,
       students: 15000,
-      maxStudents: 12000,
-      instructor: 'Sarah Johnson',
+      maxStudents: 20000,
+      instructor: 'Dr. Sarah Chen - Former OpenAI Research Scientist',
+      certification: 'Industry-Recognized AI Tools Professional Certificate',
+      premiumFeatures: [
+        '🎯 1-on-1 Weekly Mentorship Sessions',
+        '💼 Professional Portfolio Development',
+        '🚀 Job Placement Assistance Program',
+        '🔄 Lifetime Access & Course Updates',
+        '🏢 Enterprise Project Simulations',
+        '📊 Performance Analytics & Tracking'
+      ],
       modules: [
         {
-          title: 'AI Fundamentals',
-          duration: '3 weeks',
-          topics: ['Understanding AI', 'AI Ethics', 'Tool Selection', 'Best Practices']
+          title: 'Module 1: Professional Image Creation & Brand Design',
+          duration: '4 weeks',
+          topics: ['DALL-E 3 Enterprise Techniques', 'Midjourney Professional Brand Workflows', 'Stable Diffusion Custom Model Training', 'Promptly AI Advanced Optimization', 'Commercial Image Enhancement', 'Brand Identity Creation', 'Copyright & Licensing Mastery', 'Client Presentation Techniques']
         },
         {
-          title: 'Text Generation AI',
-          duration: '3 weeks',
-          topics: ['ChatGPT Mastery', 'Claude Advanced', 'Prompt Engineering', 'Content Creation']
+          title: 'Module 2: Cinematic Video Production & AI Storytelling',
+          duration: '4 weeks',
+          topics: ['Runway ML Professional Video Generation', 'Synthesia Enterprise AI Avatars', 'Luma AI Cinematic Sequences', 'Pika Labs Advanced Animation', 'AI-Powered Video Editing', 'Professional Storytelling Techniques', 'Client Video Production', 'Video Marketing Strategies']
         },
         {
-          title: 'Visual AI Tools',
-          duration: '3 weeks',
-          topics: ['Midjourney', 'DALL-E', 'Stable Diffusion', 'Image Enhancement']
+          title: 'Module 3: Advanced Animation & Motion Graphics',
+          duration: '4 weeks',
+          topics: ['Runway Gen-2 Professional Animation', 'Stable Video Diffusion Mastery', 'Pika Labs Motion Control', 'Advanced Motion Brush Techniques', 'Cinematic Camera Movements', 'Professional Animation Workflows', 'Client Animation Projects', 'Motion Graphics for Business']
         },
         {
-          title: 'AI for Business',
-          duration: '3 weeks',
-          topics: ['Workflow Automation', 'AI Integration', 'ROI Measurement', 'Future Trends']
+          title: 'Module 4: Enterprise Data Solutions & API Mastery',
+          duration: '4 weeks',
+          topics: ['Advanced JSON Prompt Engineering', 'Enterprise Data Generation', 'Professional API Integration', 'Custom Schema Architecture', 'Automated Business Workflows', 'Data Quality & Validation', 'Enterprise Security Practices', 'Scalable Data Solutions']
+        },
+        {
+          title: 'Module 5: Business Automation & AI Agent Development',
+          duration: '4 weeks',
+          topics: ['n8n Enterprise Automation', 'Zapier Professional Integrations', 'Make.com Advanced Business Scenarios', 'Custom AI Agent Architecture', 'Multi-Platform Enterprise Integration', 'Business Process Optimization', 'ROI-Driven Automation', 'Client Automation Solutions']
+        },
+        {
+          title: 'Module 6: Claude AI Enterprise Implementation',
+          duration: '4 weeks',
+          topics: ['Claude API Enterprise Integration', 'Advanced Prompt Engineering Mastery', 'Claude Projects & Custom Artifacts', 'Enterprise Application Development', 'Scalable Claude Implementation', 'API Optimization & Cost Management', 'Security & Compliance', 'Client Solution Development']
         }
       ]
     },
@@ -490,6 +512,117 @@ const StudentPortal = () => {
 
   // Sample projects for Frontend Development - Beginner (8 progressive difficulty projects)
   const projects: Project[] = [
+    // A.I Tools Mastery Course Projects - 6 Module Structure
+    {
+      id: 'ai-tools-project-1',
+      title: 'Module 1 Project: AI Image Generation Portfolio',
+      courseId: 'ai-tools-mastery',
+      courseName: 'A.I Tools Mastery',
+      difficulty: 'intermediate',
+      description: 'Create a professional portfolio showcasing AI-generated images using DALL-E 3, Midjourney, and Stable Diffusion with Promptly AI optimization.',
+      requirements: [
+        'Generate 50+ professional images using different AI tools',
+        'Use Promptly AI to optimize and perfect prompts',
+        'Create themed collections (business, art, photography)',
+        'Build a responsive web gallery to showcase work',
+        'Document prompt engineering techniques used'
+      ],
+      technologies: ['DALL-E 3', 'Midjourney', 'Stable Diffusion', 'Promptly AI', 'HTML/CSS/JS'],
+      estimatedTime: '2-3 weeks',
+      status: 'not_started'
+    },
+    {
+      id: 'ai-tools-project-2',
+      title: 'Module 2 Project: AI Video Production Studio',
+      courseId: 'ai-tools-mastery',
+      courseName: 'A.I Tools Mastery',
+      difficulty: 'advanced',
+      description: 'Produce a complete 5-minute promotional video using AI video generation tools and professional editing techniques.',
+      requirements: [
+        'Create video content using Runway ML and Synthesia',
+        'Generate AI avatars and voiceovers',
+        'Use Luma AI for cinematic sequences',
+        'Edit and post-process with professional tools',
+        'Create a complete video production pipeline'
+      ],
+      technologies: ['Runway ML', 'Synthesia', 'Luma AI', 'Pika Labs', 'DaVinci Resolve'],
+      estimatedTime: '3-4 weeks',
+      status: 'not_started'
+    },
+    {
+      id: 'ai-tools-project-3',
+      title: 'Module 3 Project: Image-to-Video Animation Suite',
+      courseId: 'ai-tools-mastery',
+      courseName: 'A.I Tools Mastery',
+      difficulty: 'intermediate',
+      description: 'Transform static images into dynamic videos using advanced AI animation techniques and motion control.',
+      requirements: [
+        'Convert 20+ static images to animated videos',
+        'Master motion brush and camera movement controls',
+        'Create seamless transitions and effects',
+        'Build an automated batch processing workflow',
+        'Produce a final compilation showcase video'
+      ],
+      technologies: ['Runway Gen-2', 'Stable Video Diffusion', 'Pika Labs', 'Motion Brush', 'FFmpeg'],
+      estimatedTime: '2-3 weeks',
+      status: 'not_started'
+    },
+    {
+      id: 'ai-tools-project-4',
+      title: 'Module 4 Project: JSON-Powered AI Data Generator',
+      courseId: 'ai-tools-mastery',
+      courseName: 'A.I Tools Mastery',
+      difficulty: 'advanced',
+      description: 'Build a comprehensive data generation system using structured JSON prompts for business applications.',
+      requirements: [
+        'Design JSON schemas for different data types',
+        'Create automated data generation workflows',
+        'Build API integrations for data processing',
+        'Implement data validation and quality control',
+        'Generate sample datasets for e-commerce, CRM, and analytics'
+      ],
+      technologies: ['JSON Schema', 'OpenAI API', 'Node.js', 'MongoDB', 'Data Validation'],
+      estimatedTime: '3-4 weeks',
+      status: 'not_started'
+    },
+    {
+      id: 'ai-tools-project-5',
+      title: 'Module 5 Project: Multi-Platform AI Agent Network',
+      courseId: 'ai-tools-mastery',
+      courseName: 'A.I Tools Mastery',
+      difficulty: 'advanced',
+      description: 'Create an intelligent agent network using n8n, Zapier, and Make.com for complete business automation.',
+      requirements: [
+        'Design multi-step automation workflows',
+        'Integrate AI decision-making capabilities',
+        'Connect multiple platforms and APIs',
+        'Implement error handling and monitoring',
+        'Create a dashboard for workflow management'
+      ],
+      technologies: ['n8n', 'Zapier', 'Make.com', 'OpenAI API', 'Webhook Integration'],
+      estimatedTime: '4-5 weeks',
+      status: 'not_started'
+    },
+    {
+      id: 'ai-tools-project-6',
+      title: 'Module 6 Project: Claude AI Enterprise Application',
+      courseId: 'ai-tools-mastery',
+      courseName: 'A.I Tools Mastery',
+      difficulty: 'expert',
+      description: 'Develop a complete enterprise application using Claude AI API with advanced features and custom integrations.',
+      requirements: [
+        'Build a full-stack application with Claude API integration',
+        'Implement advanced prompt engineering techniques',
+        'Create custom Claude workflows and automations',
+        'Add enterprise features (user management, analytics)',
+        'Deploy with proper security and scaling considerations'
+      ],
+      technologies: ['Claude API', 'React/Next.js', 'Node.js', 'PostgreSQL', 'Docker', 'AWS/Azure'],
+      estimatedTime: '5-6 weeks',
+      status: 'not_started'
+    },
+
+    // Frontend Development - Beginner Course Projects
     {
       id: 'project-1',
       title: 'Personal Portfolio Website',
@@ -563,10 +696,240 @@ const StudentPortal = () => {
     },
 
 
+
   ];
 
   // Comprehensive assignments data - 6 assignments per purchased course
   const assignments: Assignment[] = [
+    // A.I Tools Mastery Professional Certification Program Assignments (Course ID: 'ai-tools-mastery') - 6 Module Structure
+    {
+      id: 'ai-tools-1',
+      title: 'Module 1: Professional Image Creation & Brand Design Portfolio',
+      courseId: 'ai-tools-mastery',
+      courseName: 'A.I Tools Mastery - Professional Certification Program',
+      dueDate: '2024-02-10',
+      status: 'pending',
+      description: '🎯 ENTERPRISE PROJECT: Create a complete brand identity package for a Fortune 500 client using DALL-E 3, Midjourney, and Stable Diffusion. Master enterprise-grade prompt engineering with Promptly AI. Deliverables: Logo suite, brand guidelines, marketing materials, and client presentation deck.',
+      studyMaterials: [
+        'DALL-E 3 Enterprise Techniques & Commercial Applications',
+        'Midjourney Professional Brand Workflow Masterclass',
+        'Stable Diffusion Custom Model Training for Business',
+        'Promptly AI Advanced Optimization & Enterprise Setup',
+        'Commercial Image Enhancement & Professional Editing',
+        'Copyright, Licensing & Legal Compliance for AI-Generated Content',
+        'Client Presentation Techniques & Portfolio Development',
+        'Brand Identity Design Principles for AI Artists'
+      ],
+      testQuestions: [
+        {
+          question: 'What is Promptly AI\'s primary enterprise application?',
+          options: ['Video editing workflows', 'Advanced prompt optimization and correction for professional AI outputs', 'Audio generation', 'Code debugging'],
+          correctAnswer: 1
+        },
+        {
+          question: 'Which tool provides the most control for creating custom AI models for enterprise image generation?',
+          options: ['DALL-E 3', 'Midjourney', 'Stable Diffusion with custom training', 'Canva Pro'],
+          correctAnswer: 2
+        },
+        {
+          question: 'What is the most important consideration when using AI-generated images for commercial clients?',
+          options: ['Image quality', 'Copyright and licensing compliance', 'Processing speed', 'File size'],
+          correctAnswer: 1
+        }
+      ]
+    },
+    {
+      id: 'ai-tools-2',
+      title: 'Module 2: Enterprise Video Production & AI Cinematography Mastery',
+      courseId: 'ai-tools-mastery',
+      courseName: 'A.I Tools Mastery - Professional Certification Program',
+      dueDate: '2024-02-24',
+      status: 'pending',
+      description: '🎬 ENTERPRISE PROJECT: Produce a complete video marketing campaign for a Fortune 500 client using Runway ML, Synthesia, Luma AI Dream Machine, and Pika Labs. Create corporate training videos, product launches, and executive presentations. Deliverables: 15+ professional video assets, production timeline, and client presentation.',
+      studyMaterials: [
+        'Runway ML Enterprise Video Production & Custom Model Training',
+        'Synthesia Professional AI Avatar Creation & Brand Alignment',
+        'Luma AI Dream Machine Advanced Cinematography Techniques',
+        'Pika Labs Professional Animation & Motion Graphics',
+        'Enterprise Video Editing Workflows & Quality Standards',
+        'Corporate Video Production Pipeline & Project Management',
+        'AI Cinematography for Business Applications',
+        'Video ROI Analytics & Performance Measurement',
+        'Client Video Delivery & Professional Presentation'
+      ],
+      testQuestions: [
+        {
+          question: 'Which AI tool provides the most professional control for creating branded corporate avatars?',
+          options: ['Runway ML', 'Synthesia with custom avatar training', 'Luma AI', 'Pika Labs'],
+          correctAnswer: 1
+        },
+        {
+          question: 'What is the primary advantage of Luma AI Dream Machine for enterprise video production?',
+          options: ['Low cost', 'Advanced 3D scene generation and realistic physics', 'Simple interface', 'Fast rendering'],
+          correctAnswer: 1
+        },
+        {
+          question: 'What is most important when delivering enterprise video projects?',
+          options: ['Video length', 'Brand consistency and professional quality standards', 'File size', 'Social media optimization'],
+          correctAnswer: 1
+        }
+      ]
+    },
+    {
+      id: 'ai-tools-3',
+      title: 'Module 3: Professional Image-to-Video Transformation & Motion Design',
+      courseId: 'ai-tools-mastery',
+      courseName: 'A.I Tools Mastery - Professional Certification Program',
+      dueDate: '2024-03-10',
+      status: 'pending',
+      description: '🎨 ENTERPRISE PROJECT: Transform static brand assets into dynamic video content for a luxury brand campaign using Runway Gen-2, Stable Video Diffusion, and Pika Labs. Create product showcases, architectural walkthroughs, and brand storytelling videos. Deliverables: 20+ animated assets, motion design guidelines, and campaign presentation.',
+      studyMaterials: [
+        'Runway Gen-2 Enterprise Image Animation & Custom Training',
+        'Stable Video Diffusion Professional Motion Control',
+        'Pika Labs Advanced Image-to-Video Production Workflows',
+        'Professional Motion Brush Techniques & Precision Control',
+        'Cinematic Camera Movement & Direction for Brand Videos',
+        'Enterprise Animation Workflows & Quality Standards',
+        'Luxury Brand Motion Design Principles',
+        'Product Visualization & Architectural Animation',
+        'Client Motion Design Delivery & Brand Guidelines'
+      ],
+      testQuestions: [
+        {
+          question: 'Which tool provides the most precise control for enterprise image-to-video transformation?',
+          options: ['Basic video editors', 'Runway Gen-2 with motion brush', 'Simple GIF makers', 'PowerPoint animations'],
+          correctAnswer: 1
+        },
+        {
+          question: 'What is the key advantage of Stable Video Diffusion for professional motion design?',
+          options: ['Free usage', 'Customizable models and enterprise deployment', 'Simple interface', 'Fast processing'],
+          correctAnswer: 1
+        },
+        {
+          question: 'What is most critical when creating motion design for luxury brands?',
+          options: ['Speed of production', 'Sophisticated motion quality and brand alignment', 'File compression', 'Social media format'],
+          correctAnswer: 1
+        }
+      ]
+    },
+    {
+      id: 'ai-tools-4',
+      title: 'Module 4: Enterprise JSON Prompts & Automated Data Systems',
+      courseId: 'ai-tools-mastery',
+      courseName: 'A.I Tools Mastery - Professional Certification Program',
+      dueDate: '2024-03-24',
+      status: 'pending',
+      description: '⚙️ ENTERPRISE PROJECT: Build an automated data processing system for a multinational corporation using advanced JSON prompt engineering. Create structured data pipelines, API integrations, and enterprise-grade automation workflows. Deliverables: Complete data system, API documentation, and scalability report.',
+      studyMaterials: [
+        'Enterprise JSON Prompt Engineering & Schema Design',
+        'Advanced Structured Data Generation for Business Intelligence',
+        'Enterprise API Integration Patterns & Security',
+        'Scalable Schema Design for Large-Scale AI Applications',
+        'Automated Batch Processing & Enterprise Workflows',
+        'Data Validation, Quality Control & Compliance Standards',
+        'Enterprise Data Pipeline Architecture',
+        'JSON-Based AI System Integration & Deployment',
+        'Performance Optimization for High-Volume Data Processing'
+      ],
+      testQuestions: [
+        {
+          question: 'What is the primary advantage of JSON prompts in enterprise AI applications?',
+          options: ['Faster processing', 'Structured, predictable outputs for system integration', 'Smaller file sizes', 'Better graphics'],
+          correctAnswer: 1
+        },
+        {
+          question: 'Which approach is most important for enterprise data validation?',
+          options: ['Speed optimization', 'Comprehensive schema validation and error handling', 'Visual presentation', 'File compression'],
+          correctAnswer: 1
+        },
+        {
+          question: 'What is critical when designing JSON schemas for enterprise systems?',
+          options: ['Simplicity only', 'Scalability, maintainability, and compliance standards', 'Color coding', 'Font selection'],
+          correctAnswer: 1
+        }
+      ]
+    },
+    {
+      id: 'ai-tools-5',
+      title: 'Module 5: Enterprise AI Agents & Business Process Automation',
+      courseId: 'ai-tools-mastery',
+      courseName: 'A.I Tools Mastery - Professional Certification Program',
+      dueDate: '2024-04-07',
+      status: 'pending',
+      description: '🤖 ENTERPRISE PROJECT: Design and deploy an intelligent business automation ecosystem for a Fortune 500 company using n8n, Zapier, Make.com, and custom AI agents. Automate complex workflows, integrate enterprise systems, and optimize business processes. Deliverables: Complete automation suite, ROI analysis, and deployment guide.',
+      studyMaterials: [
+        'n8n Enterprise Workflow Automation & Custom Node Development',
+        'Zapier Professional AI Integrations & Enterprise Connectors',
+        'Make.com Advanced Business Scenarios & Error Handling',
+        'Custom AI Agent Development for Enterprise Applications',
+        'Multi-Platform Integration Architecture & Security',
+        'Enterprise Business Process Automation & Optimization',
+        'AI Agent Deployment & Monitoring in Production',
+        'Workflow Performance Analytics & ROI Measurement',
+        'Enterprise Integration Security & Compliance'
+      ],
+      testQuestions: [
+        {
+          question: 'Which platform provides the most flexibility for custom enterprise AI agent development?',
+          options: ['Basic Zapier', 'n8n with custom nodes and self-hosting', 'Simple IFTTT', 'Manual processes'],
+          correctAnswer: 1
+        },
+        {
+          question: 'What is the most critical factor when deploying AI agents in enterprise environments?',
+          options: ['Speed only', 'Security, compliance, and error handling', 'Visual design', 'Cost reduction'],
+          correctAnswer: 1
+        },
+        {
+          question: 'How should enterprise AI automation ROI be measured?',
+          options: ['Time saved only', 'Comprehensive metrics including efficiency, accuracy, and cost reduction', 'User satisfaction only', 'Technical performance only'],
+          correctAnswer: 1
+        }
+      ]
+    },
+    {
+      id: 'ai-tools-6',
+      title: 'Module 6: Enterprise Claude AI Mastery & Custom Application Development',
+      courseId: 'ai-tools-mastery',
+      courseName: 'A.I Tools Mastery - Professional Certification Program',
+      dueDate: '2024-04-21',
+      status: 'pending',
+      description: '🚀 CAPSTONE PROJECT: Build a complete enterprise AI application using Claude AI for a Fortune 500 client. Develop custom solutions with advanced API integration, implement enterprise security, and create scalable AI-powered business applications. Deliverables: Full-stack AI application, technical documentation, and deployment strategy.',
+      studyMaterials: [
+        'Claude AI Enterprise Features & Advanced Capabilities',
+        'Claude API Advanced Integration & Authentication',
+        'Professional Claude Prompting & Optimization Techniques',
+        'Claude for Enterprise Developers & System Architecture',
+        'Building Production Applications with Claude API',
+        'Claude Enterprise Security & Compliance Implementation',
+        'Claude vs Other AI Models: Enterprise Comparison & Selection',
+        'Custom Claude Workflows & Enterprise Automation',
+        'Claude API Performance Optimization & Scaling',
+        'Enterprise AI Application Deployment & Monitoring'
+      ],
+      testQuestions: [
+        {
+          question: 'What is Claude AI\'s primary enterprise advantage over other AI models?',
+          options: ['Image generation capabilities', 'Superior long-form reasoning, safety, and enterprise compliance', 'Video creation features', 'Audio processing abilities'],
+          correctAnswer: 1
+        },
+        {
+          question: 'Which API endpoint is used for Claude enterprise text generation?',
+          options: ['/v1/chat/completions', '/v1/messages', '/v1/generate', '/v1/claude'],
+          correctAnswer: 1
+        },
+        {
+          question: 'What is most critical when implementing Claude AI in enterprise environments?',
+          options: ['Processing speed only', 'Security, compliance, and scalable architecture', 'User interface design', 'Cost optimization only'],
+          correctAnswer: 1
+        },
+        {
+          question: 'How should enterprise Claude AI applications be optimized?',
+          options: ['Focus on speed only', 'Balance performance, accuracy, cost, and compliance requirements', 'Prioritize visual design', 'Minimize functionality'],
+          correctAnswer: 1
+        }
+      ]
+    },
+
     // Frontend Development - Beginner Course Assignments (Course ID: 'frontend-beginner')
     {
       id: 'frontend-beginner-1',
@@ -622,7 +985,9 @@ const StudentPortal = () => {
       dueDate: '2024-03-16',
       status: 'pending',
       description: 'DOM manipulation and interactive web development.'
-    }
+    },
+
+
   ];
 
   // Purchase history - use enrolledCourses for enrolled courses summary
@@ -778,6 +1143,32 @@ const StudentPortal = () => {
   }, [navigate]);
 
   const handleContinueLearning = (courseId: string) => {
+    // Check payment confirmation status before allowing access
+    const courseData = enrolledCoursesData.find(c => (c.id || c.courseId) === courseId);
+    const confirmationStatus = courseData?.confirmationStatus || 'unknown';
+    const paymentStatus = courseData?.paymentStatus || 'unknown';
+    
+    console.log('Course access check:', {
+      courseId,
+      confirmationStatus,
+      paymentStatus,
+      courseData
+    });
+    
+    // Allow access if payment is confirmed by admin
+    const isAccessAllowed = confirmationStatus === 'confirmed';
+    
+    if (!isAccessAllowed) {
+      if (confirmationStatus === 'waiting_for_confirmation') {
+        alert('⏳ Your payment is being verified. Course access will be granted within 24 hours after confirmation.');
+      } else if (confirmationStatus === 'rejected') {
+        alert('❌ Your payment was rejected. Please contact support or submit a new payment to access this course.');
+      } else {
+        alert('❓ Payment status unknown. Please contact support for assistance.');
+      }
+      return;
+    }
+    
     // Navigate to course content/study material based on course ID
     console.log('Navigating to course:', courseId);
     
@@ -819,6 +1210,8 @@ const StudentPortal = () => {
     setSelectedCourseForDetails(course);
     setShowCourseDetails(true);
   };
+
+
 
   const handleReferralCodeChange = async (code: string) => {
     setReferralCode(code);
@@ -881,85 +1274,70 @@ const StudentPortal = () => {
   };
 
   const processPayment = async () => {
-    if (!paymentModalData) return;
+    if (!paymentModalData || !transactionId.trim()) {
+      alert('Please enter a valid transaction ID');
+      return;
+    }
 
     setIsProcessingPayment(true);
     
     try {
-      // Initialize Razorpay payment
-      const options = {
-        key: 'rzp_test_9WsLnHkruf61R1', // Replace with your Razorpay key
-        amount: Math.round(paymentModalData.discountedPrice * 100), // Amount in paise
-        currency: 'INR',
-        name: 'VStudents',
-        description: `Purchase ${paymentModalData.course.title}`,
-        image: '/logo.png',
-        handler: async function (response: any) {
-          // Payment successful
-          console.log('Payment successful:', response);
-          
-          try {
-            // Record purchase in backend
-            const currentUser = localStorage.getItem('currentUser');
-            if (currentUser) {
-              const userData = JSON.parse(currentUser);
-              
-              const purchaseResponse = await fetch('http://localhost:5000/api/courses/purchase', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  courseId: paymentModalData.course.id,
-                  studentId: userData.email,
-                  paymentId: response.razorpay_payment_id,
-                  referralCode: paymentModalData.referralCode || null
-                })
-              });
-              
-              if (purchaseResponse.ok) {
-                const result = await purchaseResponse.json();
-                if (result.success) {
-                  // Add course to purchased courses
-                  setPurchasedCourses(prev => [...prev, paymentModalData.course.id]);
-                  
-                  // Show success message
-                  alert(`Payment successful! You can now access ${paymentModalData.course.title} in your courses.`);
-                  
-                  // Switch to My Courses tab
-                  setActiveTab('courses');
-                } else {
-                  alert('Payment successful but failed to record purchase. Please contact support.');
-                }
-              } else {
-                alert('Payment successful but failed to record purchase. Please contact support.');
-              }
-            }
-          } catch (error) {
-            console.error('Error recording purchase:', error);
-            alert('Payment successful but failed to record purchase. Please contact support.');
+      // Get current user from localStorage
+      const currentUser = localStorage.getItem('currentUser');
+      if (!currentUser) {
+        alert('Please log in to continue');
+        return;
+      }
+
+      const userData = JSON.parse(currentUser);
+      
+      // Submit payment with transaction ID
+      const paymentResponse = await fetch('http://localhost:5000/api/payments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          transactionId: transactionId.trim(),
+          studentId: userData.id || userData._id,
+          courseId: paymentModalData.course.id,
+          courseName: paymentModalData.course.title,
+          amount: paymentModalData.discountedPrice,
+          originalAmount: paymentModalData.originalPrice,
+          studentName: userData.name || `${userData.firstName} ${userData.lastName}`,
+          studentEmail: userData.email,
+          referralCode: paymentModalData.referralCode || null,
+          metadata: {
+            paymentMethod: 'manual_qr',
+            submittedAt: new Date().toISOString()
           }
+        })
+      });
+      
+      if (paymentResponse.ok) {
+        const result = await paymentResponse.json();
+        if (result.success) {
+          // Show success message
+          alert(`Payment submitted successfully! Your course will be listed in "My Courses" tab shortly after confirmation of payment in max 24hrs. Transaction ID: ${transactionId}`);
           
-          // Close modal
+          // Close modal and reset form
           setShowPaymentModal(false);
           setPaymentModalData(null);
           setReferralCode('');
-        },
-        prefill: {
-          name: studentProfile?.name || 'Student',
-          email: studentProfile?.email || 'student@example.com',
-          contact: studentProfile?.phone || '9999999999'
-        },
-        theme: {
-          color: '#3B82F6'
+          setTransactionId('');
+          
+          // Switch to My Courses tab
+          setActiveTab('courses');
+        } else {
+          alert('Failed to submit payment. Please try again.');
         }
-      };
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
+      } else {
+        const errorData = await paymentResponse.json();
+        alert(errorData.message || 'Failed to submit payment. Please try again.');
+      }
     } catch (error) {
-      console.error('Payment error:', error);
-      alert('Payment failed. Please try again.');
+      console.error('Payment submission error:', error);
+      alert('Error submitting payment. Please try again.');
     } finally {
       setIsProcessingPayment(false);
     }
@@ -1038,7 +1416,59 @@ const StudentPortal = () => {
       case 'courses':
         return (
           <div className="space-y-6">
-            <h2 className="text-white text-2xl font-bold">My Courses</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-white text-2xl font-bold">My Courses</h2>
+              <button
+                onClick={() => {
+                  setIsLoading(true);
+                  const loadStudentData = async () => {
+                    try {
+                      const currentUser = localStorage.getItem('currentUser');
+                      if (!currentUser) return;
+                      
+                      const userData = JSON.parse(currentUser);
+                      const response = await fetch(`http://localhost:5000/api/courses/purchased/${userData.email}`);
+                      if (response.ok) {
+                        const result = await response.json();
+                        if (result.success && result.data) {
+                          const enrolledCoursesData = result.data || [];
+                          const courseIds = enrolledCoursesData.map((course: any) => course.courseId || course.id);
+                          setPurchasedCourses(courseIds);
+                          setEnrolledCoursesData(enrolledCoursesData);
+                          
+                          const progressData = enrolledCoursesData.reduce((acc: any, course: any) => {
+                            const courseId = course.courseId || course.id;
+                            acc[courseId] = {
+                              courseId: courseId,
+                              progress: course.progress || 0,
+                              completedLessons: 0,
+                              totalLessons: course.modules?.length * 5 || 20,
+                              lastAccessedAt: course.enrollmentDate || new Date().toISOString(),
+                              nextLesson: course.progress > 0 ? 'Continue Learning' : 'Start Course',
+                              isStarted: course.progress > 0 || course.status === 'active'
+                            };
+                            return acc;
+                          }, {});
+                          
+                          setCourseProgress(progressData);
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Error refreshing course data:', error);
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  };
+                  loadStudentData();
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh Status
+              </button>
+            </div>
             
             {/* Assignment Information Message */}
             <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-lg p-4">
@@ -1066,6 +1496,17 @@ const StudentPortal = () => {
                   isStarted: false
                 };
                 
+                // Get payment status from enrolledCoursesData
+                const courseData = enrolledCoursesData.find(c => (c.id || c.courseId) === course.id);
+                const confirmationStatus = courseData?.confirmationStatus || 'unknown';
+                const paymentStatus = courseData?.paymentStatus || 'unknown';
+                const transactionId = courseData?.transactionId;
+                
+                // Determine if course access is allowed
+                const isAccessAllowed = confirmationStatus === 'confirmed';
+                const isPending = confirmationStatus === 'waiting_for_confirmation';
+                const isRejected = confirmationStatus === 'rejected';
+                
                 return (
                   <div key={course.id} className="bg-gray-800 rounded-lg p-6">
                     <div className="flex items-center justify-between">
@@ -1073,36 +1514,109 @@ const StudentPortal = () => {
                         <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
                           <span className="text-white font-bold text-lg">{course.title.charAt(0)}</span>
                         </div>
-                        <div>
-                          <h4 className="text-white text-lg font-semibold">{course.title}</h4>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h4 className="text-white text-lg font-semibold">{course.title}</h4>
+                            {/* Payment Status Badge */}
+                            <PaymentStatusBadge 
+                              status={
+                                isAccessAllowed ? 'confirmed' :
+                                isPending ? 'pending' :
+                                isRejected ? 'rejected' :
+                                'unknown'
+                              } 
+                              description={true}
+                            />
+                          </div>
                           <p className="text-gray-400 text-sm">
                             Instructor: {course.instructor} • Duration: {course.duration}
                           </p>
-                          <div className="mt-2">
-                            <p className="text-gray-300 text-sm mb-1">Progress</p>
-                            <div className="w-96 bg-gray-700 rounded-full h-2">
-                              <div 
-                                className="bg-green-500 h-2 rounded-full transition-all duration-300" 
-                                style={{width: `${progress.progress}%`}}
-                              />
-                            </div>
-                            <p className="text-gray-400 text-sm mt-1">
-                              Next: {progress.nextLesson}
+                          {transactionId && (
+                            <p className="text-gray-500 text-xs mt-1">
+                              Transaction ID: {transactionId}
                             </p>
-                          </div>
+                          )}
+                          
+                          {/* Payment Status Message */}
+                          {isPending && (
+                            <div className="mt-2 p-2 bg-yellow-600/20 border border-yellow-600/30 rounded text-yellow-300 text-xs">
+                              💳 Payment verification in progress. Course access will be granted within 24 hours after confirmation.
+                            </div>
+                          )}
+                          {isRejected && (
+                            <div className="mt-2 p-2 bg-red-600/20 border border-red-600/30 rounded text-red-300 text-xs">
+                              ❌ Payment was rejected. Please contact support or submit a new payment.
+                            </div>
+                          )}
+                          
+                          {/* Progress Section - Only show if access is allowed */}
+                          {isAccessAllowed && (
+                            <div className="mt-2">
+                              <p className="text-gray-300 text-sm mb-1">Progress</p>
+                              <div className="w-96 bg-gray-700 rounded-full h-2">
+                                <div 
+                                  className="bg-green-500 h-2 rounded-full transition-all duration-300" 
+                                  style={{width: `${progress.progress}%`}}
+                                />
+                              </div>
+                              <p className="text-gray-400 text-sm mt-1">
+                                Next: {progress.nextLesson}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="text-right flex flex-col items-end space-y-2">
-                        <p className="text-white text-sm mb-1">
-                          {progress.completedLessons} of {progress.totalLessons} lessons completed
-                        </p>
-                        <p className="text-white text-2xl font-bold">{progress.progress}%</p>
-                        <button
-                          onClick={() => handleContinueLearning(course.id)}
-                          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                        >
-                          {progress.isStarted && progress.progress > 0 ? 'Continue Learning' : 'Start Learning'}
-                        </button>
+                        {isAccessAllowed && (
+                          <>
+                            <p className="text-white text-sm mb-1">
+                              {progress.completedLessons} of {progress.totalLessons} lessons completed
+                            </p>
+                            <p className="text-white text-2xl font-bold">{progress.progress}%</p>
+                            <button
+                              onClick={() => handleContinueLearning(course.id)}
+                              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                            >
+                              {progress.isStarted && progress.progress > 0 ? 'Continue Learning' : 'Start Learning'}
+                            </button>
+                          </>
+                        )}
+                        {isPending && (
+                          <div className="text-center">
+                            <div className="text-yellow-400 text-sm mb-2">⏳ Awaiting Confirmation</div>
+                            <button
+                              disabled
+                              className="bg-gray-600 text-gray-400 px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed"
+                            >
+                              Access Pending
+                            </button>
+                          </div>
+                        )}
+                        {isRejected && (
+                          <div className="text-center">
+                            <div className="text-red-400 text-sm mb-2">❌ Payment Rejected</div>
+                            <button
+                              onClick={() => {
+                                // You could implement a re-payment flow here
+                                alert('Please contact support to resolve payment issues or submit a new payment.');
+                              }}
+                              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                            >
+                              Contact Support
+                            </button>
+                          </div>
+                        )}
+                        {!isAccessAllowed && !isPending && !isRejected && (
+                          <div className="text-center">
+                            <div className="text-gray-400 text-sm mb-2">❓ Status Unknown</div>
+                            <button
+                              disabled
+                              className="bg-gray-600 text-gray-400 px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed"
+                            >
+                              Contact Support
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1445,6 +1959,7 @@ const StudentPortal = () => {
         return (
           <div className="space-y-6">
             <h2 className="text-white text-2xl font-bold">Purchase History</h2>
+            
             <div className="space-y-4">
               {purchaseHistory.map((purchase) => (
                 <div key={purchase.id} className="bg-gray-800 rounded-lg p-6">
@@ -2030,16 +2545,49 @@ const StudentPortal = () => {
               </div>
             </div>
 
+            {/* QR Code Payment Section */}
+            <div className="mb-6 text-center">
+              <h4 className="text-lg font-semibold text-white mb-3">Scan QR Code to Pay</h4>
+              <div className="bg-white p-4 rounded-lg inline-block mb-4">
+                <img 
+                  src="/img/qr.png" 
+                  alt="Payment QR Code" 
+                  className="w-48 h-48 mx-auto"
+                />
+              </div>
+              <p className="text-gray-300 text-sm mb-4">
+                Scan the QR code above with your UPI app to make the payment of ₹{Math.round(paymentModalData.discountedPrice).toLocaleString()}
+              </p>
+            </div>
+
+            {/* Transaction ID Input */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Transaction ID *
+              </label>
+              <input
+                type="text"
+                value={transactionId}
+                onChange={(e) => setTransactionId(e.target.value)}
+                placeholder="Enter your transaction ID after payment"
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              <p className="text-gray-400 text-xs mt-1">
+                Enter the transaction ID you received after making the payment
+              </p>
+            </div>
+
             <button
               onClick={processPayment}
-              disabled={isProcessingPayment}
+              disabled={isProcessingPayment || !transactionId.trim()}
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
             >
-              {isProcessingPayment ? 'Processing...' : 'Pay with Razorpay'}
+              {isProcessingPayment ? 'Submitting...' : 'Submit Payment'}
             </button>
 
             <p className="text-xs text-gray-400 text-center mt-3">
-              Secure payment powered by Razorpay
+              Your course will be activated within 24 hours after payment verification
             </p>
           </div>
         </div>
