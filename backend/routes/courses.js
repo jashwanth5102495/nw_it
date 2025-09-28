@@ -282,7 +282,7 @@ router.post('/purchase', async (req, res) => {
     // Create purchase record
     const Purchase = require('../models/Purchase');
     const purchase = new Purchase({
-      studentId: actualStudentId,
+      studentId: student._id, // Use student ObjectId for consistency
       courseId: course._id, // Use the course's ObjectId, not the string
       originalPrice: course.price,
       finalPrice,
@@ -299,7 +299,7 @@ router.post('/purchase', async (req, res) => {
     const generatedPaymentId = paymentId || `PAY_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const payment = new Payment({
       paymentId: generatedPaymentId,
-      studentId: actualStudentId,
+      studentId: student._id, // Use student ObjectId, not studentId string
       courseId: course._id,
       courseName: course.title,
       amount: finalPrice,
@@ -365,11 +365,12 @@ router.get('/purchased/:studentId', async (req, res) => {
     const purchasedCourses = await Promise.all(student.enrolledCourses.map(async (enrollment) => {
       const course = enrollment.courseId;
       
-      // Find the payment record for this course and student
+      // Find the payment record for this course and student - Payment model uses ObjectId for studentId
       const payment = await Payment.findOne({
-        studentId: student._id,
+        studentId: student._id, // This is correct - Payment model expects ObjectId
         courseId: course._id
       }).sort({ createdAt: -1 }); // Get the latest payment record
+      console.log("Payment found for course", course.title, ":", payment);
       
       return {
         id: course._id.toString(),
@@ -388,8 +389,8 @@ router.get('/purchased/:studentId', async (req, res) => {
         progress: enrollment.progress || 0,
         status: enrollment.status || 'active',
         // Payment confirmation status
-        paymentStatus: payment ? payment.status : 'unknown',
-        confirmationStatus: payment ? payment.confirmationStatus : 'unknown',
+        paymentStatus: payment ? payment.status : 'no_payment_record',
+        confirmationStatus: payment ? payment.confirmationStatus : 'no_payment_record',
         transactionId: payment ? payment.transactionId : null,
         paymentMethod: payment ? payment.paymentMethod : null,
         adminConfirmedBy: payment ? payment.adminConfirmedBy : null,

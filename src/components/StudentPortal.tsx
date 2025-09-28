@@ -14,7 +14,6 @@ import {
   LinkIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
-import { PaymentStatusBadge, PaymentStatusType } from './PaymentStatus';
 
 interface CourseModule {
   title: string;
@@ -176,6 +175,39 @@ const StudentPortal = () => {
     };
     return mappings[courseId] || [courseId];
   };
+
+  // Course type definition (add optional courseId)
+  interface Course {
+    id: string;
+    courseId?: string; // <-- Add this line
+    title: string;
+    category: string;
+    level: string;
+    description: string;
+    technologies: string[];
+    price: number;
+    originalPrice?: number;
+    duration: string;
+    projects: number;
+    image: string;
+    rating: number;
+    students: number;
+    maxStudents: number;
+    instructor: string;
+    certification?: string;
+    premiumFeatures?: string[];
+    modules?: {
+      title: string;
+      duration: string;
+      topics: string[];
+    }[];
+    confirmationStatus?: string;
+    paymentStatus?: string;
+    transactionId?: string;
+    progress?: number;
+    status?: string;
+    enrollmentDate?: string;
+  }
 
   // All available courses from the Courses page
   const allCourses: Course[] = [
@@ -483,6 +515,13 @@ const StudentPortal = () => {
     duration: string;
     nextLesson: string;
     isStarted: boolean;
+    // Payment status fields
+    paymentStatus?: string;
+    confirmationStatus?: string;
+    transactionId?: string;
+    paymentMethod?: string;
+    adminConfirmedBy?: string;
+    adminConfirmedAt?: string;
   }
 
   // Generate enrolled courses summary from backend data
@@ -500,7 +539,14 @@ const StudentPortal = () => {
       completedLessons: progress?.completedLessons || 0,
       duration: course.duration,
       nextLesson: progress?.nextLesson || 'Introduction to Course',
-      isStarted: progress?.isStarted || false
+      isStarted: progress?.isStarted || false,
+      // Include payment status fields
+      paymentStatus: course.paymentStatus,
+      confirmationStatus: course.confirmationStatus,
+      transactionId: course.transactionId,
+      paymentMethod: course.paymentMethod,
+      adminConfirmedBy: course.adminConfirmedBy,
+      adminConfirmedAt: course.adminConfirmedAt
     };
   });
   console.log('Final enrolledCourses:', enrolledCourses);
@@ -608,7 +654,7 @@ const StudentPortal = () => {
       title: 'Module 6 Project: Claude AI Enterprise Application',
       courseId: 'ai-tools-mastery',
       courseName: 'A.I Tools Mastery',
-      difficulty: 'expert',
+      difficulty: 'advanced',
       description: 'Develop a complete enterprise application using Claude AI API with advanced features and custom integrations.',
       requirements: [
         'Build a full-stack application with Claude API integration',
@@ -1144,7 +1190,9 @@ const StudentPortal = () => {
 
   const handleContinueLearning = (courseId: string) => {
     // Check payment confirmation status before allowing access
-    const courseData = enrolledCoursesData.find(c => (c.id || c.courseId) === courseId);
+    const courseData = enrolledCoursesData.find(c => c.courseId === courseId);
+    console.log(enrolledCoursesData);
+    console.log("CourseData: ", courseData);
     const confirmationStatus = courseData?.confirmationStatus || 'unknown';
     const paymentStatus = courseData?.paymentStatus || 'unknown';
     
@@ -1430,6 +1478,7 @@ const StudentPortal = () => {
                       const response = await fetch(`http://localhost:5000/api/courses/purchased/${userData.email}`);
                       if (response.ok) {
                         const result = await response.json();
+                        console.log("Enrolled data: ", result.data);
                         if (result.success && result.data) {
                           const enrolledCoursesData = result.data || [];
                           const courseIds = enrolledCoursesData.map((course: any) => course.courseId || course.id);
@@ -1496,19 +1545,52 @@ const StudentPortal = () => {
                   isStarted: false
                 };
                 
-                // Get payment status from enrolledCoursesData
-                const courseData = enrolledCoursesData.find(c => (c.id || c.courseId) === course.id);
-                const confirmationStatus = courseData?.confirmationStatus || 'unknown';
-                const paymentStatus = courseData?.paymentStatus || 'unknown';
-                const transactionId = courseData?.transactionId;
+                // Use payment status directly from course data
+                const confirmationStatus = course.confirmationStatus || 'unknown';
+                const transactionId = course.transactionId;
                 
                 // Determine if course access is allowed
                 const isAccessAllowed = confirmationStatus === 'confirmed';
                 const isPending = confirmationStatus === 'waiting_for_confirmation';
                 const isRejected = confirmationStatus === 'rejected';
+                const hasNoPayment = confirmationStatus === 'no_payment_record';
                 
                 return (
                   <div key={course.id} className="bg-gray-800 rounded-lg p-6">
+                    {/* Payment Status Info Bar */}
+                    {!isAccessAllowed && (
+                      <div className={`mb-4 p-3 rounded-lg border ${
+                        isPending ? 'bg-yellow-900/20 border-yellow-600/30' :
+                        isRejected ? 'bg-red-900/20 border-red-600/30' :
+                        hasNoPayment ? 'bg-blue-900/20 border-blue-600/30' :
+                        'bg-gray-900/20 border-gray-600/30'
+                      }`}>
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className={`w-2 h-2 rounded-full ${
+                            isPending ? 'bg-yellow-500' :
+                            isRejected ? 'bg-red-500' :
+                            hasNoPayment ? 'bg-blue-500' :
+                            'bg-gray-500'
+                          }`}></span>
+                          <span className={`font-medium ${
+                            isPending ? 'text-yellow-400' :
+                            isRejected ? 'text-red-400' :
+                            hasNoPayment ? 'text-blue-400' :
+                            'text-gray-400'
+                          }`}>
+                            {isPending ? 'Payment Pending Admin Confirmation' :
+                             isRejected ? 'Payment Rejected - Please Contact Support' :
+                             hasNoPayment ? 'No Payment Record Found' :
+                             'Payment Status Unknown'}
+                          </span>
+                        </div>
+                        {transactionId && (
+                          <p className="text-gray-400 text-xs mt-1">
+                            Transaction ID: {transactionId}
+                          </p>
+                        )}
+                      </div>
+                    )}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -1517,16 +1599,12 @@ const StudentPortal = () => {
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
                             <h4 className="text-white text-lg font-semibold">{course.title}</h4>
-                            {/* Payment Status Badge */}
-                            <PaymentStatusBadge 
-                              status={
-                                isAccessAllowed ? 'confirmed' :
-                                isPending ? 'pending' :
-                                isRejected ? 'rejected' :
-                                'unknown'
-                              } 
-                              description={true}
-                            />
+                            {/* Show payment status badge */}
+                            {isAccessAllowed && (
+                              <span className="px-2 py-1 text-xs font-medium bg-green-600/20 text-green-400 rounded-full">
+                                Confirmed
+                              </span>
+                            )}
                           </div>
                           <p className="text-gray-400 text-sm">
                             Instructor: {course.instructor} • Duration: {course.duration}
