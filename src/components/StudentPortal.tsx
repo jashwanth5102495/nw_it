@@ -142,12 +142,16 @@ const StudentPortal = () => {
   const [showProjectSubmissionModal, setShowProjectSubmissionModal] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [projectGitUrl, setProjectGitUrl] = useState('');
+  const [projectGoogleDriveUrl, setProjectGoogleDriveUrl] = useState('');
 
   // Assignment course selection state
   const [selectedCourseForAssignments, setSelectedCourseForAssignments] = useState<string | null>(null);
   
   // Project course selection state
   const [selectedCourseForProjects, setSelectedCourseForProjects] = useState<string | null>(null);
+
+  // Overall completion tracking state
+  const [overallCompletionPercentage, setOverallCompletionPercentage] = useState<number>(0);
   const [selectedStudyMaterials, setSelectedStudyMaterials] = useState<string[]>([]);
   const [selectedTestQuestions, setSelectedTestQuestions] = useState<Assignment['testQuestions']>([]);
   
@@ -166,14 +170,135 @@ const StudentPortal = () => {
   // Course ID mapping function to handle inconsistent courseId values
   const getCourseIdMapping = (courseId: string): string[] => {
     const mappings: { [key: string]: string[] } = {
-      'ai-tools-mastery': ['1', 'AI-TOOLS-MASTERY'],
-      'frontend-beginner': ['frontend-beginner'],
-      'frontend-advanced': ['3'],
-      'devops-beginner': ['DEVOPS-BEGINNER'],
-      'devops-intermediate': ['4'],
-      'mobile-core': ['5']
+      'ai-tools-mastery': ['1', 'AI-TOOLS-MASTERY', 'ai-tools-mastery', 'AI Tools Mastery'],
+      'frontend-beginner': ['frontend-beginner', 'Frontend Development - Beginner', 'FRONTEND-BEGINNER'],
+      'frontend-advanced': ['3', 'frontend-advanced', 'Frontend Development - Advanced'],
+      'devops-beginner': ['DEVOPS-BEGINNER', 'devops-beginner', 'DevOps - Beginner'],
+      'devops-intermediate': ['4', 'devops-intermediate', 'DevOps - Intermediate'],
+      'mobile-core': ['5', 'mobile-core', 'Mobile Development - Core'],
+      // Reverse mappings for backend course IDs
+      '1': ['ai-tools-mastery', 'AI-TOOLS-MASTERY', 'AI Tools Mastery'],
+      'AI-TOOLS-MASTERY': ['ai-tools-mastery', '1', 'AI Tools Mastery'],
+      'AI Tools Mastery': ['ai-tools-mastery', '1', 'AI-TOOLS-MASTERY'],
+      'Frontend Development - Beginner': ['frontend-beginner', 'FRONTEND-BEGINNER'],
+      'FRONTEND-BEGINNER': ['frontend-beginner', 'Frontend Development - Beginner'],
+      'DevOps - Beginner': ['devops-beginner', 'DEVOPS-BEGINNER'],
+      'DEVOPS-BEGINNER': ['devops-beginner', 'DevOps - Beginner']
     };
     return mappings[courseId] || [courseId];
+  };
+
+  // Helper function to check if a course is accessible (either purchased or confirmed payment)
+  const isCourseAccessible = (courseId: string): boolean => {
+    console.log('🔍 Checking course accessibility for:', courseId);
+    console.log('📚 Purchased courses:', purchasedCourses);
+    console.log('🎓 Enrolled courses:', enrolledCourses.map(c => ({ id: c.id, status: c.confirmationStatus })));
+    
+
+    
+    // Check if course is in purchased courses list
+    if (purchasedCourses.includes(courseId)) {
+      console.log('✅ Course found in purchased courses');
+      return true;
+    }
+    
+    // Check if course has confirmed payment status in enrolled courses
+    const enrolledCourse = enrolledCourses.find(course => course.id === courseId);
+    if (enrolledCourse && enrolledCourse.confirmationStatus === 'confirmed') {
+      console.log('✅ Course found in enrolled courses with confirmed status');
+      return true;
+    }
+    
+    // Check for courseId mappings (for assignments/projects that use different courseId formats)
+    const possibleMappings = getCourseIdMapping(courseId);
+    for (const mappedId of possibleMappings) {
+      if (purchasedCourses.includes(mappedId)) {
+        console.log('✅ Course found via mapping in purchased courses:', mappedId);
+        return true;
+      }
+      
+      const mappedEnrolledCourse = enrolledCourses.find(course => course.id === mappedId);
+      if (mappedEnrolledCourse && mappedEnrolledCourse.confirmationStatus === 'confirmed') {
+        console.log('✅ Course found via mapping in enrolled courses with confirmed status:', mappedId);
+        return true;
+      }
+    }
+    
+    // Check reverse mapping - if any enrolled course maps to this courseId
+    const confirmedCourseIds = [...purchasedCourses, ...enrolledCourses.filter(c => c.confirmationStatus === 'confirmed').map(c => c.id)];
+    for (const backendCourseId of confirmedCourseIds) {
+      const backendMappings = getCourseIdMapping(backendCourseId);
+      if (backendMappings.includes(courseId)) {
+        console.log('✅ Course found via reverse mapping:', backendCourseId, '→', courseId);
+        return true;
+      }
+    }
+    
+    console.log('❌ Course not accessible');
+    return false;
+  };
+
+  // Function to calculate overall completion percentage
+  const calculateOverallCompletionPercentage = (): number => {
+    try {
+      // Get all accessible courses
+      const accessibleCourses = allCourses.filter(course => 
+        isCourseAccessible(course.courseId || course.id)
+      );
+      
+      if (accessibleCourses.length === 0) return 0;
+
+      let totalAssignments = 0;
+      let completedAssignments = 0;
+      let totalProjects = 0;
+      let completedProjects = 0;
+      let totalStudyModules = 0;
+      let completedStudyModules = 0;
+
+      // Calculate assignments progress
+      accessibleCourses.forEach(course => {
+        const courseAssignments = assignments.filter(assignment => {
+          const mappedIds = getCourseIdMapping(course.courseId || course.id);
+          return mappedIds.includes(assignment.courseId);
+        });
+        
+        totalAssignments += courseAssignments.length;
+        completedAssignments += courseAssignments.filter(a => 
+          (assignmentStatuses[a.id] || a.status) === 'graded'
+        ).length;
+      });
+
+      // Calculate projects progress
+      accessibleCourses.forEach(course => {
+        const courseProjects = projects.filter(project => 
+          project.courseId === (course.courseId || course.id)
+        );
+        
+        totalProjects += courseProjects.length;
+        completedProjects += courseProjects.filter(p => p.status === 'completed').length;
+      });
+
+      // Calculate study materials progress (simplified - assuming each course has modules)
+      accessibleCourses.forEach(course => {
+        const progress = courseProgress[course.courseId || course.id];
+        if (progress) {
+          totalStudyModules += progress.totalModules || 0;
+          completedStudyModules += progress.completedModules || 0;
+        }
+      });
+
+      // Calculate weighted average (assignments: 40%, projects: 40%, study materials: 20%)
+      const assignmentProgress = totalAssignments > 0 ? (completedAssignments / totalAssignments) * 100 : 0;
+      const projectProgress = totalProjects > 0 ? (completedProjects / totalProjects) * 100 : 0;
+      const studyProgress = totalStudyModules > 0 ? (completedStudyModules / totalStudyModules) * 100 : 0;
+
+      const overallProgress = (assignmentProgress * 0.4) + (projectProgress * 0.4) + (studyProgress * 0.2);
+      
+      return Math.round(overallProgress);
+    } catch (error) {
+      console.error('Error calculating overall completion percentage:', error);
+      return 0;
+    }
   };
 
   // Course type definition (add optional courseId)
@@ -528,7 +653,7 @@ const StudentPortal = () => {
   console.log('enrolledCoursesData:', enrolledCoursesData);
   const enrolledCourses: EnrolledCourseSummary[] = enrolledCoursesData.map((course: any) => {
     const progress = courseProgress[course.courseId] || courseProgress[course.id];
-    console.log('Processing course:', course);
+
     
     return {
       id: course.courseId || course.id,
@@ -737,6 +862,80 @@ const StudentPortal = () => {
         'Responsive design for all devices'
       ],
       technologies: ['HTML5', 'CSS3', 'JavaScript', 'Local Storage'],
+      estimatedTime: '2.5 weeks',
+      status: 'not_started'
+    },
+
+    // DevOps - Beginner Course Projects
+    {
+      id: 'devops-project-1',
+      title: 'Git Version Control Setup',
+      courseId: 'devops-beginner',
+      courseName: 'DevOps - Beginner',
+      difficulty: 'beginner',
+      description: 'Set up a complete Git workflow with branching strategies and collaboration practices',
+      requirements: [
+        'Create a Git repository with proper structure',
+        'Implement branching strategy (main, develop, feature branches)',
+        'Set up pull request workflow',
+        'Configure Git hooks for automated checks',
+        'Document the workflow and best practices'
+      ],
+      technologies: ['Git', 'GitHub/GitLab', 'Shell Scripting'],
+      estimatedTime: '1.5 weeks',
+      status: 'not_started'
+    },
+    {
+      id: 'devops-project-2',
+      title: 'CI/CD Pipeline Implementation',
+      courseId: 'devops-beginner',
+      courseName: 'DevOps - Beginner',
+      difficulty: 'intermediate',
+      description: 'Build a complete CI/CD pipeline for a web application with automated testing and deployment',
+      requirements: [
+        'Set up automated build process',
+        'Implement automated testing (unit, integration)',
+        'Configure deployment to staging and production',
+        'Set up monitoring and alerting',
+        'Create deployment rollback strategy'
+      ],
+      technologies: ['GitHub Actions', 'Docker', 'AWS/Azure', 'Testing Frameworks'],
+      estimatedTime: '2.5 weeks',
+      status: 'not_started'
+    },
+    {
+      id: 'devops-project-3',
+      title: 'Docker Containerization Project',
+      courseId: 'devops-beginner',
+      courseName: 'DevOps - Beginner',
+      difficulty: 'intermediate',
+      description: 'Containerize a multi-tier application using Docker and Docker Compose',
+      requirements: [
+        'Create Dockerfiles for frontend and backend services',
+        'Set up Docker Compose for multi-container deployment',
+        'Implement environment-specific configurations',
+        'Set up container networking and volumes',
+        'Optimize container images for production'
+      ],
+      technologies: ['Docker', 'Docker Compose', 'Linux', 'Networking'],
+      estimatedTime: '2 weeks',
+      status: 'not_started'
+    },
+    {
+      id: 'devops-project-4',
+      title: 'Infrastructure Monitoring Dashboard',
+      courseId: 'devops-beginner',
+      courseName: 'DevOps - Beginner',
+      difficulty: 'intermediate',
+      description: 'Set up comprehensive monitoring and logging for application infrastructure',
+      requirements: [
+        'Deploy monitoring stack (Prometheus, Grafana)',
+        'Configure application and infrastructure metrics',
+        'Set up centralized logging with ELK stack',
+        'Create custom dashboards and alerts',
+        'Implement automated incident response'
+      ],
+      technologies: ['Prometheus', 'Grafana', 'ELK Stack', 'Docker', 'Linux'],
       estimatedTime: '2.5 weeks',
       status: 'not_started'
     },
@@ -1033,6 +1232,17 @@ const StudentPortal = () => {
       description: 'DOM manipulation and interactive web development.'
     },
 
+    // DevOps - Beginner Course Assignments (Course ID: 'devops-beginner')
+    {
+      id: 'devops-beginner-1',
+      title: 'DevOps Beginner Assignment',
+      courseId: 'devops-beginner',
+      courseName: 'DevOps - Beginner',
+      dueDate: '2024-04-01',
+      status: 'pending',
+      description: 'Learn DevOps fundamentals including CI/CD, containerization, and automation practices.'
+    },
+
 
   ];
 
@@ -1097,14 +1307,14 @@ const StudentPortal = () => {
             if (result.success && result.data) {
               // Backend now returns full course details with enrollment info
               const enrolledCoursesData = result.data || [];
-              console.log('Enrolled courses data:', enrolledCoursesData);
-              
               // Set purchased courses (just the IDs for compatibility)
               const courseIds = enrolledCoursesData.map((course: any) => course.courseId || course.id);
               setPurchasedCourses(courseIds);
               
               // Set the full course data for display
               setEnrolledCoursesData(enrolledCoursesData);
+              
+
               
               // Create course progress from enrollment data
               const progressData = enrolledCoursesData.reduce((acc: any, course: any) => {
@@ -1188,6 +1398,12 @@ const StudentPortal = () => {
     loadStudentData();
   }, [navigate]);
 
+  // Update overall completion percentage when relevant data changes
+  useEffect(() => {
+    const newCompletionPercentage = calculateOverallCompletionPercentage();
+    setOverallCompletionPercentage(newCompletionPercentage);
+  }, [assignmentStatuses, courseProgress, purchasedCourses, enrolledCoursesData]);
+
   const handleContinueLearning = (courseId: string) => {
     // Check payment confirmation status before allowing access
     const courseData = enrolledCoursesData.find(c => c.courseId === courseId);
@@ -1224,10 +1440,14 @@ const StudentPortal = () => {
     const courseRoutes: { [key: string]: string } = {
       'frontend-beginner': '/course-learning/frontend-beginner/html-fundamentals/html-structure',
       'frontend-advanced': '/course-learning-advanced/frontend-advanced/advanced-react/performance-optimization',
-      'devops-beginner': '/course-learning-devops-beginner/devops-beginner/docker-basics/containerization',
+      'devops-beginner': '/course-learning-devops-beginner/devops-beginner/devops-fundamentals/devops-intro',
+      'DEVOPS-BEGINNER': '/course-learning-devops-beginner/devops-beginner/devops-fundamentals/devops-intro',
       'devops-advanced': '/course-learning-devops-advanced/devops-advanced/kubernetes/cluster-management',
+      'DEVOPS-ADVANCED': '/course-learning-devops-advanced/devops-advanced/kubernetes/cluster-management',
       'mobile-advanced': '/course-learning-mobile-advanced/mobile-advanced/react-native/navigation',
-      'browser-extensions': '/course-learning-browser-extensions/browser-extensions/extension-fundamentals/manifest-files'
+      'browser-extensions': '/course-learning-browser-extensions/browser-extensions/extension-fundamentals/manifest-files',
+      'ai-tools-mastery': '/ai-study-material',
+      'AI-TOOLS-MASTERY': '/ai-study-material'
     };
 
     // Navigate to the appropriate course learning page
@@ -1713,7 +1933,7 @@ const StudentPortal = () => {
               <h3 className="text-white text-lg font-semibold mb-4">Select Course</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {allCourses
-                  .filter(course => purchasedCourses.includes(course.id))
+                  .filter(course => isCourseAccessible(course.id))
                   .map(course => (
                     <div
                       key={course.id}
@@ -1743,7 +1963,7 @@ const StudentPortal = () => {
                   ))}
               </div>
               
-              {purchasedCourses.length === 0 && (
+              {allCourses.filter(course => isCourseAccessible(course.id)).length === 0 && (
                 <div className="text-center py-8">
                   <BookOpenIcon className="w-12 h-12 text-gray-500 mx-auto mb-4" />
                   <p className="text-gray-400">No enrolled courses found. Please enroll in a course to view assignments.</p>
@@ -1822,6 +2042,12 @@ const StudentPortal = () => {
               {assignments
                 .filter(assignment => {
                   const mappedIds = getCourseIdMapping(selectedCourseForAssignments);
+                  console.log('Filtering assignments:', {
+                    selectedCourse: selectedCourseForAssignments,
+                    mappedIds,
+                    assignmentCourseId: assignment.courseId,
+                    includes: mappedIds.includes(assignment.courseId)
+                  });
                   return mappedIds.includes(assignment.courseId);
                 })
                 .map((assignment) => (
@@ -2074,7 +2300,7 @@ const StudentPortal = () => {
               <h3 className="text-white text-lg font-semibold mb-4">Select Course</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {allCourses
-                  .filter(course => purchasedCourses.includes(course.id))
+                  .filter(course => isCourseAccessible(course.id))
                   .map(course => (
                     <div
                       key={course.id}
@@ -2104,7 +2330,7 @@ const StudentPortal = () => {
                   ))}
               </div>
               
-              {purchasedCourses.length === 0 && (
+              {allCourses.filter(course => isCourseAccessible(course.id)).length === 0 && (
                 <div className="text-center py-8">
                   <GlobeAltIcon className="w-12 h-12 text-gray-500 mx-auto mb-4" />
                   <p className="text-gray-400">No enrolled courses found. Please enroll in a course to view projects.</p>
@@ -2157,6 +2383,12 @@ const StudentPortal = () => {
               {projects
                 .filter(project => {
                   const mappedIds = getCourseIdMapping(selectedCourseForProjects);
+                  console.log('Filtering projects:', {
+                    selectedCourse: selectedCourseForProjects,
+                    mappedIds,
+                    projectCourseId: project.courseId,
+                    includes: mappedIds.includes(project.courseId)
+                  });
                   return mappedIds.includes(project.courseId);
                 })
                 .map((project) => (
@@ -2223,39 +2455,84 @@ const StudentPortal = () => {
                   
                   {project.status !== 'completed' && (
                     <div className="space-y-3">
-                      {/* Git URL Upload Field */}
+                      {/* URL Upload Field - Conditional based on course */}
                       <div className="space-y-3">
                         <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Git Repository URL
-                          </label>
-                          <input
-                            type="url"
-                            value={projectGitUrl}
-                            onChange={(e) => setProjectGitUrl(e.target.value)}
-                            placeholder="https://github.com/username/project-name"
-                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                          <p className="text-gray-400 text-xs mt-1">
-                            Enter your GitHub repository URL to submit your project
-                          </p>
+                          {project.courseId === 'ai-tools-mastery' ? (
+                            <>
+                              <label className="block text-sm font-medium text-gray-300 mb-2">
+                                Google Drive Folder URL
+                              </label>
+                              <input
+                                type="url"
+                                value={projectGoogleDriveUrl}
+                                onChange={(e) => setProjectGoogleDriveUrl(e.target.value)}
+                                placeholder="https://drive.google.com/drive/folders/your-folder-id"
+                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                              <p className="text-gray-400 text-xs mt-1">
+                                Share your Google Drive folder containing your AI tools project files
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <label className="block text-sm font-medium text-gray-300 mb-2">
+                                Git Repository URL
+                              </label>
+                              <input
+                                type="url"
+                                value={projectGitUrl}
+                                onChange={(e) => setProjectGitUrl(e.target.value)}
+                                placeholder="https://github.com/username/project-name"
+                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                              <p className="text-gray-400 text-xs mt-1">
+                                Enter your GitHub repository URL to submit your project
+                              </p>
+                            </>
+                          )}
                         </div>
                         
                         <div className="flex gap-3">
+                          {/* View Details Button */}
                           <button 
                             onClick={() => {
-                              if (projectGitUrl.trim()) {
-                                console.log('Starting project with Git URL:', projectGitUrl, 'for project:', project.id);
-                                alert(`Project started with repository: ${projectGitUrl}`);
-                                setProjectGitUrl('');
+                              // Navigate to specific project page based on course type
+                              if (project.courseId === 'ai-tools-mastery') {
+                                navigate(`/ai-tools-project/${project.id}`);
+                              } else if (project.courseId === 'devops-beginner' || project.courseId === 'devops-advanced') {
+                                navigate(`/devops-project/${project.id}`);
                               } else {
-                                alert('Please enter a valid Git repository URL');
+                                // For other courses, show alert for now
+                                alert('Project details page coming soon for this course!');
                               }
                             }}
-                            disabled={!projectGitUrl.trim()}
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+                          >
+                            View Details
+                          </button>
+                          
+                          <button 
+                            onClick={() => {
+                              const isAIToolsProject = project.courseId === 'ai-tools-mastery';
+                              const submissionUrl = isAIToolsProject ? projectGoogleDriveUrl.trim() : projectGitUrl.trim();
+                              
+                              if (submissionUrl) {
+                                console.log('Starting project with URL:', submissionUrl, 'for project:', project.id, 'Type:', isAIToolsProject ? 'Google Drive' : 'Git');
+                                alert(`Project started with ${isAIToolsProject ? 'Google Drive folder' : 'repository'}: ${submissionUrl}`);
+                                if (isAIToolsProject) {
+                                  setProjectGoogleDriveUrl('');
+                                } else {
+                                  setProjectGitUrl('');
+                                }
+                              } else {
+                                alert(`Please enter a valid ${isAIToolsProject ? 'Google Drive folder URL' : 'Git repository URL'}`);
+                              }
+                            }}
+                            disabled={project.courseId === 'ai-tools-mastery' ? !projectGoogleDriveUrl.trim() : !projectGitUrl.trim()}
                             className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-colors"
                           >
-                            {project.status === 'not_started' ? 'Start Project' : 'Update Repository'}
+                            {project.status === 'not_started' ? 'Start Project' : (project.courseId === 'ai-tools-mastery' ? 'Update Folder' : 'Update Repository')}
                           </button>
                           {project.status === 'in_progress' && (
                             <button 
@@ -2461,9 +2738,32 @@ const StudentPortal = () => {
                         </div>
                       </div>
                       <p className="text-gray-400 text-sm text-center mb-3">Upload your introduction video</p>
-                      <button className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-600">
+                      <button 
+                        className={`w-full px-4 py-2 rounded-lg text-sm transition-all duration-300 ${
+                          overallCompletionPercentage >= 80 
+                            ? 'bg-gray-700 text-white hover:bg-gray-600 cursor-pointer' 
+                            : 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-60'
+                        }`}
+                        disabled={overallCompletionPercentage < 80}
+                        onClick={() => {
+                          if (overallCompletionPercentage < 80) {
+                            alert(`Video upload will be enabled after completing 80% of your courses, projects, and assignments. Current progress: ${overallCompletionPercentage}%`);
+                          } else {
+                            // Handle file upload logic here
+                            const input = document.createElement('input');
+                            input.type = 'file';
+                            input.accept = 'video/*';
+                            input.click();
+                          }
+                        }}
+                      >
                         Choose Video File
                       </button>
+                      {overallCompletionPercentage < 80 && (
+                        <p className="text-yellow-400 text-xs text-center mt-2">
+                          🔒 Unlocks at 80% completion ({overallCompletionPercentage}% current)
+                        </p>
+                      )}
                     </div>
 
                     <div className="bg-gray-800 rounded-lg p-4">
@@ -2471,9 +2771,32 @@ const StudentPortal = () => {
                       <div className="space-y-4">
                         <div>
                           <p className="text-gray-400 text-sm mb-2">Upload your resume:</p>
-                          <button className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-600">
+                          <button 
+                            className={`w-full px-4 py-2 rounded-lg text-sm transition-all duration-300 ${
+                              overallCompletionPercentage >= 80 
+                                ? 'bg-gray-700 text-white hover:bg-gray-600 cursor-pointer' 
+                                : 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-60'
+                            }`}
+                            disabled={overallCompletionPercentage < 80}
+                            onClick={() => {
+                              if (overallCompletionPercentage < 80) {
+                                alert(`Resume upload will be enabled after completing 80% of your courses, projects, and assignments. Current progress: ${overallCompletionPercentage}%`);
+                              } else {
+                                // Handle file upload logic here
+                                const input = document.createElement('input');
+                                input.type = 'file';
+                                input.accept = '.pdf,.doc,.docx';
+                                input.click();
+                              }
+                            }}
+                          >
                             Choose Resume File
                           </button>
+                          {overallCompletionPercentage < 80 && (
+                            <p className="text-yellow-400 text-xs text-center mt-2">
+                              🔒 Unlocks at 80% completion ({overallCompletionPercentage}% current)
+                            </p>
+                          )}
                         </div>
                         
                         <div>
@@ -2672,81 +2995,125 @@ const StudentPortal = () => {
       )}
 
       {/* Project Submission Modal */}
-      {showProjectSubmissionModal && selectedProjectId && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">Submit Project</h3>
-              <button
-                onClick={() => {
-                  setShowProjectSubmissionModal(false);
-                  setSelectedProjectId(null);
-                  setProjectGitUrl('');
-                }}
-                className="text-gray-400 hover:text-white"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
-            </div>
-
-            <div className="mb-4">
-              <p className="text-gray-300 text-sm mb-4">
-                Submit your project by providing the Git repository URL. Make sure your repository is public so instructors can review your code.
-              </p>
-              
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Git Repository URL *
-              </label>
-              <input
-                type="url"
-                value={projectGitUrl}
-                onChange={(e) => setProjectGitUrl(e.target.value)}
-                placeholder="https://github.com/username/project-name"
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
-                required
-              />
-              <p className="text-gray-400 text-xs mt-1">
-                Example: https://github.com/yourusername/your-project
-              </p>
-            </div>
-
-            <div className="bg-blue-600/20 border border-blue-600/30 rounded-lg p-3 mb-4">
-              <p className="text-blue-400 text-sm">
-                💡 <strong>Tip:</strong> Don't know how to use Git? Click the "Learn Git" button in your project to get started with step-by-step instructions!
-              </p>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowProjectSubmissionModal(false);
-                  setSelectedProjectId(null);
-                  setProjectGitUrl('');
-                }}
-                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  if (projectGitUrl.trim()) {
-                    // Here you would typically send the submission to your backend
-                    console.log('Submitting project:', selectedProjectId, 'with Git URL:', projectGitUrl);
-                    alert('Project submitted successfully! Your instructor will review it soon.');
+      {showProjectSubmissionModal && selectedProjectId && (() => {
+        const selectedProject = projects.find(p => p.id === selectedProjectId);
+        const isAIToolsProject = selectedProject?.courseId === 'ai-tools-mastery';
+        
+        return (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white">Submit Project</h3>
+                <button
+                  onClick={() => {
                     setShowProjectSubmissionModal(false);
                     setSelectedProjectId(null);
                     setProjectGitUrl('');
-                  }
-                }}
-                disabled={!projectGitUrl.trim()}
-                className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                Submit Project
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                    setProjectGoogleDriveUrl('');
+                  }}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <XMarkIcon className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="mb-4">
+                {isAIToolsProject ? (
+                  <>
+                    <p className="text-gray-300 text-sm mb-4">
+                      Submit your AI Tools project by providing a Google Drive URL. Make sure your folder is shared with view access so instructors can review your work.
+                    </p>
+                    
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Google Drive Folder URL *
+                    </label>
+                    <input
+                      type="url"
+                      value={projectGoogleDriveUrl}
+                      onChange={(e) => setProjectGoogleDriveUrl(e.target.value)}
+                      placeholder="https://drive.google.com/drive/folders/your-folder-id"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      required
+                    />
+                    <p className="text-gray-400 text-xs mt-1">
+                      Example: https://drive.google.com/drive/folders/1ABC123xyz...
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-gray-300 text-sm mb-4">
+                      Submit your project by providing the Git repository URL. Make sure your repository is public so instructors can review your code.
+                    </p>
+                    
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Git Repository URL *
+                    </label>
+                    <input
+                      type="url"
+                      value={projectGitUrl}
+                      onChange={(e) => setProjectGitUrl(e.target.value)}
+                      placeholder="https://github.com/username/project-name"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      required
+                    />
+                    <p className="text-gray-400 text-xs mt-1">
+                      Example: https://github.com/yourusername/your-project
+                    </p>
+                  </>
+                )}
+              </div>
+
+              {!isAIToolsProject && (
+                <div className="bg-blue-600/20 border border-blue-600/30 rounded-lg p-3 mb-4">
+                  <p className="text-blue-400 text-sm">
+                    💡 <strong>Tip:</strong> Don't know how to use Git? Click the "Learn Git" button in your project to get started with step-by-step instructions!
+                  </p>
+                </div>
+              )}
+
+              {isAIToolsProject && (
+                <div className="bg-purple-600/20 border border-purple-600/30 rounded-lg p-3 mb-4">
+                  <p className="text-purple-400 text-sm">
+                    📁 <strong>Tip:</strong> Create a well-organized folder structure with your AI-generated content, prompts used, and documentation. Make sure to set sharing permissions to "Anyone with the link can view".
+                  </p>
+                </div>
+              )}
+
+               <div className="flex gap-3">
+                 <button
+                   onClick={() => {
+                     setShowProjectSubmissionModal(false);
+                     setSelectedProjectId(null);
+                     setProjectGitUrl('');
+                     setProjectGoogleDriveUrl('');
+                   }}
+                   className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
+                 >
+                   Cancel
+                 </button>
+                 <button
+                   onClick={() => {
+                     const submissionUrl = isAIToolsProject ? projectGoogleDriveUrl.trim() : projectGitUrl.trim();
+                     if (submissionUrl) {
+                       // Here you would typically send the submission to your backend
+                       console.log('Submitting project:', selectedProjectId, 'with URL:', submissionUrl, 'Type:', isAIToolsProject ? 'Google Drive' : 'Git');
+                       alert(`Project submitted successfully! Your instructor will review your ${isAIToolsProject ? 'Google Drive folder' : 'Git repository'} soon.`);
+                       setShowProjectSubmissionModal(false);
+                       setSelectedProjectId(null);
+                       setProjectGitUrl('');
+                       setProjectGoogleDriveUrl('');
+                     }
+                   }}
+                   disabled={isAIToolsProject ? !projectGoogleDriveUrl.trim() : !projectGitUrl.trim()}
+                   className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+                 >
+                   Submit Project
+                 </button>
+               </div>
+             </div>
+           </div>
+         );
+       })()}
 
       {/* Git Tutorial Modal */}
       {showGitTutorialModal && (

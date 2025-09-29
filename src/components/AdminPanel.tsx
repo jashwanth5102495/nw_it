@@ -166,6 +166,20 @@ const AdminPanel: React.FC = () => {
   const [pendingPaymentChanges, setPendingPaymentChanges] = useState<{[key: string]: {studentId: string, paymentIndex: number, newStatus: string, paymentId?: string}}>({});
   const [savingPayments, setSavingPayments] = useState<{[key: string]: boolean}>({});
 
+  // Collapsible Sections States
+  const [expandedStudents, setExpandedStudents] = useState<{[key: string]: {courses: boolean, payments: boolean}}>({});
+
+  // Toggle functions for collapsible sections
+  const toggleStudentSection = (studentId: string, section: 'courses' | 'payments') => {
+    setExpandedStudents(prev => ({
+      ...prev,
+      [studentId]: {
+        ...prev[studentId],
+        [section]: !prev[studentId]?.[section]
+      }
+    }));
+  };
+
   // Helper function to get payments for a specific student
   const getStudentPayments = (studentId: string): Payment[] => {
     return payments.filter(payment => payment.studentId._id === studentId);
@@ -1180,8 +1194,17 @@ const AdminPanel: React.FC = () => {
                     {/* Enrolled Courses */}
                     {student.enrolledCourses && student.enrolledCourses.length > 0 && (
                       <div className="mb-4">
-                        <h4 className="text-white font-medium mb-3">Enrolled Courses ({student.enrolledCourses.length})</h4>
-                        <div className="space-y-3">
+                        <div 
+                          className="flex items-center justify-between cursor-pointer hover:bg-white/5 rounded-lg p-2 -m-2 transition-colors duration-200"
+                          onClick={() => toggleStudentSection(student._id, 'courses')}
+                        >
+                          <h4 className="text-white font-medium">Enrolled Courses ({student.enrolledCourses.length})</h4>
+                          <span className="text-white/60 text-lg">
+                            {expandedStudents[student._id]?.courses ? '▼' : '▶'}
+                          </span>
+                        </div>
+                        {expandedStudents[student._id]?.courses && (
+                          <div className="space-y-3 mt-3">
                           {student.enrolledCourses.map((enrollment, index) => (
                             <div key={index} className="bg-black/30 rounded-lg p-4 border border-white/10">
                               <div className="flex items-center justify-between mb-3">
@@ -1393,7 +1416,8 @@ const AdminPanel: React.FC = () => {
                               </div>
                             </div>
                           ))}
-                        </div>
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -1402,8 +1426,17 @@ const AdminPanel: React.FC = () => {
                       const studentPayments = getStudentPayments(student._id);
                       return studentPayments.length > 0 && (
                         <div>
-                          <h4 className="text-white font-medium mb-3">Payment History ({studentPayments.length})</h4>
-                          <div className="space-y-2">
+                          <div 
+                            className="flex items-center justify-between cursor-pointer hover:bg-white/5 rounded-lg p-2 -m-2 transition-colors duration-200"
+                            onClick={() => toggleStudentSection(student._id, 'payments')}
+                          >
+                            <h4 className="text-white font-medium">Payment History ({studentPayments.length})</h4>
+                            <span className="text-white/60 text-lg">
+                              {expandedStudents[student._id]?.payments ? '▼' : '▶'}
+                            </span>
+                          </div>
+                          {expandedStudents[student._id]?.payments && (
+                            <div className="space-y-2 mt-3">
                             {studentPayments.map((payment, index) => (
                               <div key={payment.paymentId} className="bg-black/30 rounded-lg p-3 border border-white/10">
                                 <div className="flex items-center justify-between">
@@ -1462,7 +1495,8 @@ const AdminPanel: React.FC = () => {
                                 </div>
                               </div>
                             ))}
-                          </div>
+                            </div>
+                          )}
                         </div>
                       );
                     })()}

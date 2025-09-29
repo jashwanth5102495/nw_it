@@ -2,10 +2,22 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { 
+  loginLimiter, 
+  validateAdminLogin, 
+  handleValidationErrors 
+} = require('../middleware/security');
+
 const router = express.Router();
 
 // JWT Secret (in production, use environment variable)
 const JWT_SECRET = process.env.JWT_SECRET || 'jasnav-it-solutions-secret-key-2024';
+
+// Hardcoded admin credentials for maximum security
+const ADMIN_CREDENTIALS = {
+  userId: '8328246413',
+  password: '9441206407'
+};
 
 // Middleware to verify JWT token
 const authenticateToken = (req, res, next) => {
@@ -31,79 +43,75 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// POST /api/auth/login - Admin login
-router.post('/login', async (req, res) => {
-  try {
-    const { username, password } = req.body;
+// POST /api/auth/login - Admin login with comprehensive security
+router.post('/login', 
+  loginLimiter, // Rate limiting
+  validateAdminLogin, // Input validation
+  handleValidationErrors, // Handle validation errors
+  async (req, res) => {
+    try {
+      const { username, password } = req.body;
 
-    console.log("hit the server");
-    // Validate input
-    console.log(username, password);
+      // Log login attempt for security monitoring
+      console.log(`Login attempt from IP: ${req.ip}, User-Agent: ${req.get('User-Agent')}, Username: ${username}, Timestamp: ${new Date().toISOString()}`);
 
-    if (!username || !password) {``
-      return res.status(400).json({
-        success: false,
-        message: 'Username and password are required'
-      });
-    }
-
-    // Find user by username
-    const searchUsername = username.toLowerCase().trim();
-    const user = await User.findOne({ username: searchUsername });
-    
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials'
-      });
-    }
-
-    // Check password
-    const isPasswordValid = await user.comparePassword(password);
-    if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials'
-      });
-    }
-
-    // Update last login
-    user.lastLogin = new Date();
-    await user.save();
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { 
-        userId: user._id, 
-        username: user.username, 
-        role: user.role 
-      },
-      JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-
-    res.json({
-      success: true,
-      message: 'Login successful',
-      data: {
-        token,
-        user: {
-          id: user._id,
-          username: user.username,
-          role: user.role,
-          lastLogin: user.lastLogin
-        }
+      // Validate against hardcoded credentials
+      if (username !== ADMIN_CREDENTIALS.userId || password !== ADMIN_CREDENTIALS.password) {
+        // Log failed attempt
+        console.warn(`Failed login attempt from IP: ${req.ip}, Username: ${username}, Timestamp: ${new Date().toISOString()}`);
+        
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid credentials',
+          code: 'INVALID_CREDENTIALS'
+        });
       }
-    });
 
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+      // Generate secure JWT token
+      const token = jwt.sign(
+        { 
+          userId: ADMIN_CREDENTIALS.userId,
+          username: ADMIN_CREDENTIALS.userId,
+          role: 'admin',
+          loginTime: new Date().toISOString(),
+          ip: req.ip
+        },
+        JWT_SECRET,
+        { 
+          expiresIn: '2h', // Shorter session for security
+          issuer: 'jasnav-it-solutions',
+          audience: 'admin-panel'
+        }
+      );
+
+      // Log successful login
+      console.log(`Successful admin login from IP: ${req.ip}, Timestamp: ${new Date().toISOString()}`);
+
+      res.json({
+        success: true,
+        message: 'Login successful',
+        data: {
+          token,
+          user: {
+            id: ADMIN_CREDENTIALS.userId,
+            username: ADMIN_CREDENTIALS.userId,
+            role: 'admin',
+            loginTime: new Date().toISOString()
+          }
+        },
+        expiresIn: '2h'
+      });
+
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        code: 'SERVER_ERROR'
+      });
+    }
   }
-});
+);
 
 // POST /api/auth/change-password - Change admin password
 router.post('/change-password', authenticateToken, async (req, res) => {

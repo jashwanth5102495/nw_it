@@ -21,7 +21,7 @@ The **Project ID** is the most important element in this system - it's the uniqu
 ## 👨‍💼 **For Administrators**
 
 ### **Creating a Project**
-1. Navigate to `/admin` (Admin Panel button in header)
+1. Navigate to `/AJRV8328` (Secure Admin Panel - contact administrator for access)
 2. Click "Add Project" button
 3. Fill in all required fields:
    - **Project ID** (create your own custom format)
@@ -123,7 +123,7 @@ The **Project ID** is the most important element in this system - it's the uniqu
 - No external database required
 
 ### **Access Points**
-- **Admin Panel**: `/admin`
+- **Secure Admin Panel**: `/AJRV8328` (Authentication Required)
 - **Project Tracking**: `/project-tracking`
 - **Navigation**: Header buttons and service section
 

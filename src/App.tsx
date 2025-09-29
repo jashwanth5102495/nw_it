@@ -15,11 +15,16 @@ import StudentRegistration from './components/StudentRegistration';
 import StudentLogin from './components/StudentLogin';
 import StudentPortal from './components/StudentPortal';
 import CreatorPortal from './components/CreatorPortal';
-import AdminPanel from './components/AdminPanel';
+import SecureAdminPanel from './components/SecureAdminPanel';
 import ProjectTracking from './components/ProjectTracking';
 import CourseLearning from './components/CourseLearning';
+import CourseLearningDevOpsBeginner from './components/CourseLearningDevOpsBeginner';
+import CourseLearningDevOpsAdvanced from './components/CourseLearningDevOpsAdvanced';
 import CourseEnrollment from './components/CourseEnrollment';
 import AssignmentPage from './components/AssignmentPage';
+import AIStudyMaterial from './components/AIStudyMaterial';
+import AIToolsProjectPage from './components/AIToolsProjectPage';
+import DevOpsProjectPage from './components/DevOpsProjectPage';
 
 
 function AppInner() {
@@ -57,11 +62,18 @@ function AppInner() {
           <Route path="/student-login" element={<><Header /><StudentLogin /></>} />
           <Route path="/student-portal" element={<StudentPortal />} />
           <Route path="/creator-portal" element={<><Header /><CreatorPortal /></>} />
-          <Route path="/admin" element={<><Header /><AdminPanel /></>} />
+          <Route path="/AJRV8328" element={<SecureAdminPanel />} />
           <Route path="/project-tracking" element={<><Header /><ProjectTracking /></>} />
           <Route path="/course-learning/:courseId/:moduleId/:lessonId" element={<CourseLearning />} />
           <Route path="/course-learning" element={<CourseLearning />} />
+          <Route path="/course-learning-devops-beginner/:courseId/:moduleId/:lessonId" element={<CourseLearningDevOpsBeginner />} />
+          <Route path="/course-learning-devops-beginner/*" element={<CourseLearningDevOpsBeginner />} />
+          <Route path="/course-learning-devops-advanced/:courseId/:moduleId/:lessonId" element={<CourseLearningDevOpsAdvanced />} />
+          <Route path="/course-learning-devops-advanced/*" element={<CourseLearningDevOpsAdvanced />} />
+          <Route path="/ai-study-material" element={<AIStudyMaterial />} />
           <Route path="/assignment/:assignmentId" element={<AssignmentPage />} />
+          <Route path="/ai-tools-project/:projectId" element={<AIToolsProjectPage />} />
+          <Route path="/devops-project/:projectId" element={<DevOpsProjectPage />} />
 
         </Routes>
       </div>

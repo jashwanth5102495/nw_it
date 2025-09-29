@@ -13,6 +13,7 @@ import {
   CodeBracketIcon,
   DocumentTextIcon
 } from '@heroicons/react/24/outline';
+import MagnetLines from './MagnetLines';
 
 interface Question {
   id: number;
@@ -1402,6 +1403,211 @@ The box model is fundamental to CSS layout. Every element on a web page is a rec
            }
          ]
        },
+       'frontend-beginner-2': {
+         id: 'frontend-beginner-2',
+         title: 'HTML Part 2',
+         description: 'Master HTML forms and semantic elements.',
+         topics: [
+           {
+             id: 'html-forms',
+             title: 'HTML Forms',
+             content: `HTML forms are used to collect user input. The form element is a container for different types of input elements, such as text fields, checkboxes, radio buttons, submit buttons, etc.
+
+Form Structure:
+The <form> element is used to create an HTML form for user input. The form element can contain one or more of the following form elements:
+• <input> - for various input types
+• <textarea> - for multi-line text input
+• <button> - for clickable buttons
+• <select> - for dropdown lists
+• <option> - for options in dropdown lists
+• <optgroup> - for grouping options
+• <fieldset> - for grouping form elements
+• <legend> - for captions for fieldset elements
+• <label> - for labels for form elements
+
+Form Attributes:
+• action - specifies where to send the form data
+• method - specifies how to send form data (GET or POST)
+• target - specifies where to display the response
+• enctype - specifies how form data should be encoded
+• autocomplete - specifies whether autocomplete is on or off`,
+             syntax: '<form action="/submit" method="post">\n  <!-- form elements -->\n</form>',
+             examples: [
+               '<form action="/submit-form" method="post">\n  <label for="fname">First name:</label><br>\n  <input type="text" id="fname" name="fname"><br>\n  <label for="lname">Last name:</label><br>\n  <input type="text" id="lname" name="lname"><br><br>\n  <input type="submit" value="Submit">\n</form>'
+             ]
+           },
+           {
+             id: 'html-input-types',
+             title: 'HTML Input Types',
+             content: `The HTML <input> element can be displayed in many ways, depending on the type attribute.
+
+Common Input Types:
+• text - single-line text input
+• password - password input (characters are masked)
+• email - email input with validation
+• number - numeric input
+• tel - telephone number input
+• url - URL input with validation
+• search - search input
+• date - date picker
+• time - time picker
+• datetime-local - date and time picker
+• month - month and year picker
+• week - week and year picker
+• color - color picker
+• range - slider control
+• file - file upload
+• hidden - hidden input
+• checkbox - checkbox input
+• radio - radio button
+• submit - submit button
+• reset - reset button
+• button - clickable button
+
+Input Attributes:
+• placeholder - hint text
+• required - makes field mandatory
+• readonly - makes field read-only
+• disabled - disables the field
+• min/max - minimum and maximum values
+• step - increment step for numeric inputs
+• pattern - regular expression for validation
+• autocomplete - autocomplete behavior`,
+             syntax: '<input type="type" name="name" id="id" attributes>',
+             examples: [
+               '<!-- Text inputs -->\n<input type="text" name="username" placeholder="Enter username" required>\n<input type="email" name="email" placeholder="Enter email">\n<input type="password" name="password" required>\n\n<!-- Number and range -->\n<input type="number" name="age" min="1" max="120">\n<input type="range" name="volume" min="0" max="100" step="10">\n\n<!-- Date and time -->\n<input type="date" name="birthday">\n<input type="time" name="appointment">\n\n<!-- Checkboxes and radio buttons -->\n<input type="checkbox" name="subscribe" id="subscribe">\n<label for="subscribe">Subscribe to newsletter</label>\n\n<input type="radio" name="gender" value="male" id="male">\n<label for="male">Male</label>\n<input type="radio" name="gender" value="female" id="female">\n<label for="female">Female</label>\n\n<!-- File upload -->\n<input type="file" name="upload" accept=".jpg,.png,.pdf">'
+             ]
+           },
+           {
+             id: 'html-semantic-elements',
+             title: 'HTML Semantic Elements',
+             content: `Semantic elements clearly describe their meaning in a human- and machine-readable way. Elements such as <header>, <nav>, and <article> are all considered semantic because they accurately describe the purpose of the element and the type of content that is inside them.
+
+Why Use Semantic Elements?
+• Better accessibility for screen readers
+• Better SEO (Search Engine Optimization)
+• Easier to read and maintain code
+• More meaningful structure
+
+Common Semantic Elements:
+• <header> - represents introductory content
+• <nav> - represents navigation links
+• <main> - represents the main content
+• <section> - represents a section of content
+• <article> - represents independent, self-contained content
+• <aside> - represents content aside from main content
+• <footer> - represents footer information
+• <figure> - represents self-contained content like images
+• <figcaption> - represents caption for figure element
+• <time> - represents date/time
+• <mark> - represents highlighted text
+• <details> - represents additional details
+• <summary> - represents summary for details element
+
+Layout Structure:
+A typical semantic HTML5 page structure includes header, nav, main, sections/articles, aside, and footer elements arranged in a logical hierarchy.`,
+             syntax: '<semantic-element>\n  <!-- content -->\n</semantic-element>',
+             examples: [
+               '<!DOCTYPE html>\n<html>\n<head>\n  <title>Semantic HTML Example</title>\n</head>\n<body>\n  <header>\n    <h1>Website Title</h1>\n    <nav>\n      <ul>\n        <li><a href="#home">Home</a></li>\n        <li><a href="#about">About</a></li>\n        <li><a href="#contact">Contact</a></li>\n      </ul>\n    </nav>\n  </header>\n  \n  <main>\n    <section>\n      <h2>Main Section</h2>\n      <article>\n        <h3>Article Title</h3>\n        <p>Article content goes here...</p>\n        <time datetime="2024-01-15">January 15, 2024</time>\n      </article>\n    </section>\n    \n    <aside>\n      <h3>Related Links</h3>\n      <ul>\n        <li><a href="#">Link 1</a></li>\n        <li><a href="#">Link 2</a></li>\n      </ul>\n    </aside>\n  </main>\n  \n  <footer>\n    <p>&copy; 2024 Website Name. All rights reserved.</p>\n  </footer>\n</body>\n</html>'
+             ]
+           },
+           {
+             id: 'html-form-validation',
+             title: 'HTML Form Validation',
+             content: `HTML5 provides built-in form validation features that help ensure users enter valid data before submitting forms.
+
+Built-in Validation Attributes:
+• required - makes a field mandatory
+• pattern - specifies a regular expression pattern
+• min/max - minimum and maximum values for numbers and dates
+• minlength/maxlength - minimum and maximum length for text
+• step - increment step for numeric inputs
+• type - input type provides automatic validation (email, url, etc.)
+
+Validation States:
+• :valid - matches valid form elements
+• :invalid - matches invalid form elements
+• :required - matches required form elements
+• :optional - matches optional form elements
+
+Custom Validation Messages:
+You can customize validation messages using the setCustomValidity() method in JavaScript, or use the title attribute for pattern validation.
+
+Form Validation Best Practices:
+• Provide clear error messages
+• Validate on both client and server side
+• Use appropriate input types
+• Provide real-time feedback
+• Make required fields obvious`,
+             syntax: '<input type="type" required pattern="regex" title="error message">',
+             examples: [
+               '<!-- Required field -->\n<input type="text" name="username" required>\n\n<!-- Email validation -->\n<input type="email" name="email" required>\n\n<!-- Pattern validation -->\n<input type="text" name="phone" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" \n       title="Format: 123-456-7890" placeholder="123-456-7890">\n\n<!-- Length validation -->\n<input type="password" name="password" minlength="8" maxlength="20" required>\n\n<!-- Number validation -->\n<input type="number" name="age" min="18" max="100" required>\n\n<!-- Custom validation with JavaScript -->\n<script>\n  const input = document.querySelector(\'input[name="username"]\');\n  input.addEventListener(\'input\', function() {\n    if (this.value.length < 3) {\n      this.setCustomValidity(\'Username must be at least 3 characters\');\n    } else {\n      this.setCustomValidity(\'\');\n    }\n  });\n</script>'
+             ]
+           }
+         ],
+         questions: [
+           {
+             id: 1,
+             question: 'Which attribute specifies where to send form data when submitted?',
+             options: ['method', 'action', 'target', 'enctype'],
+             correctAnswer: 1
+           },
+           {
+             id: 2,
+             question: 'What input type is best for email addresses?',
+             options: ['text', 'email', 'url', 'string'],
+             correctAnswer: 1
+           },
+           {
+             id: 3,
+             question: 'Which element represents the main content of a document?',
+             options: ['<section>', '<main>', '<article>', '<div>'],
+             correctAnswer: 1
+           },
+           {
+             id: 4,
+             question: 'What attribute makes a form field required?',
+             options: ['mandatory', 'required', 'needed', 'must'],
+             correctAnswer: 1
+           },
+           {
+             id: 5,
+             question: 'Which element is used for navigation links?',
+             options: ['<navigation>', '<nav>', '<menu>', '<links>'],
+             correctAnswer: 1
+           },
+           {
+             id: 6,
+             question: 'What is the purpose of the <label> element?',
+             options: ['Style form elements', 'Group form elements', 'Provide accessible labels for form controls', 'Validate form data'],
+             correctAnswer: 2
+           },
+           {
+             id: 7,
+             question: 'Which input type creates a slider control?',
+             options: ['slider', 'range', 'number', 'scale'],
+             correctAnswer: 1
+           },
+           {
+             id: 8,
+             question: 'What does the <aside> element represent?',
+             options: ['Main content', 'Navigation', 'Content aside from main content', 'Footer information'],
+             correctAnswer: 2
+           },
+           {
+             id: 9,
+             question: 'Which attribute specifies the HTTP method for form submission?',
+             options: ['action', 'method', 'type', 'submit'],
+             correctAnswer: 1
+           },
+           {
+             id: 10,
+             question: 'What is the benefit of using semantic HTML elements?',
+             options: ['Faster loading', 'Better styling options', 'Improved accessibility and SEO', 'Smaller file size'],
+             correctAnswer: 2
+           }
+         ]
+       },
        'frontend-beginner-5': {
          id: 'frontend-beginner-5',
          title: 'CSS Part 2',
@@ -2192,6 +2398,612 @@ ES6 feature that allows extracting properties from objects into variables.`,
                correct: 1
              }
            ]
+         },
+
+         // AI Tools Mastery - Professional Certification Program Assignment
+         'ai-tools-1': {
+           id: 'ai-tools-1',
+           title: 'Module 1: Professional Image Creation & Brand Design Portfolio',
+           description: 'Master enterprise-grade AI image generation tools and create professional brand portfolios for Fortune 500 clients.',
+           topics: [
+             {
+               id: 'dalle-3-enterprise',
+               title: 'DALL-E 3 Enterprise Techniques & Commercial Applications',
+               content: `DALL-E 3 represents the cutting-edge of AI image generation, specifically designed for professional and commercial applications. This module covers enterprise-level techniques for creating high-quality, commercially viable images.
+
+Key Enterprise Features:
+• Advanced prompt engineering for commercial-grade outputs
+• Brand consistency and style guide adherence
+• High-resolution image generation for print and digital media
+• Copyright-safe image creation for commercial use
+• Batch processing for large-scale projects
+
+Commercial Applications:
+• Marketing campaign visuals
+• Product mockups and prototypes
+• Brand identity elements
+• Social media content creation
+• Website and app design assets
+
+Professional Workflow:
+1. Define project requirements and brand guidelines
+2. Craft precise prompts using enterprise techniques
+3. Generate multiple variations for client selection
+4. Refine and iterate based on feedback
+5. Deliver final assets in required formats
+
+Best Practices:
+• Use specific, detailed prompts for consistent results
+• Incorporate brand colors, fonts, and style elements
+• Test prompts across different scenarios
+• Maintain version control for prompt iterations
+• Document successful prompt patterns for reuse`,
+               syntax: 'Prompt Structure: [Subject] + [Style] + [Composition] + [Technical specs] + [Brand elements]',
+               examples: [
+                 'Enterprise Logo Design:\n"Create a minimalist tech company logo featuring a stylized circuit pattern, modern sans-serif typography, blue and silver color scheme, vector style, clean geometric shapes, suitable for Fortune 500 branding, high contrast for digital and print applications"',
+                 'Marketing Campaign Visual:\n"Professional product photography style image of a luxury smartphone, floating against a gradient background, dramatic lighting, premium materials visible, corporate presentation quality, 4K resolution, suitable for investor presentations"',
+                 'Brand Identity Element:\n"Abstract geometric pattern for corporate presentations, incorporating company brand colors #1E3A8A and #F59E0B, modern professional aesthetic, scalable vector design, suitable for backgrounds and headers"'
+               ]
+             },
+             {
+               id: 'midjourney-professional',
+               title: 'Midjourney Professional Brand Workflow Masterclass',
+               content: `Midjourney offers unparalleled artistic control and style consistency, making it ideal for professional brand development and creative campaigns.
+
+Professional Midjourney Features:
+• Advanced parameter control for precise outputs
+• Style reference and consistency tools
+• Commercial licensing for business use
+• High-resolution upscaling capabilities
+• Batch processing and automation
+
+Brand Workflow Mastery:
+• Creating brand style guides with AI
+• Maintaining visual consistency across campaigns
+• Collaborative workflows for design teams
+• Client presentation and approval processes
+• Asset organization and version management
+
+Advanced Parameters:
+• --style: Control artistic interpretation
+• --chaos: Adjust variation levels
+• --quality: Balance speed vs. detail
+• --aspect: Set precise dimensions
+• --seed: Ensure reproducible results
+
+Professional Techniques:
+• Multi-prompt blending for complex concepts
+• Image prompting for style consistency
+• Negative prompting to avoid unwanted elements
+• Parameter optimization for different use cases
+• Quality control and output validation`,
+               syntax: '/imagine [prompt] --style [value] --quality [value] --aspect [ratio] --chaos [value]',
+               examples: [
+                 'Brand Photography Style:\n"/imagine luxury watch product photography, minimalist studio setup, dramatic lighting, premium materials, corporate catalog quality --style 750 --quality 2 --aspect 16:9"',
+                 'Corporate Illustration:\n"/imagine business team collaboration illustration, modern flat design, professional color palette, diverse workforce, enterprise presentation style --style 250 --quality 1 --aspect 4:3"',
+                 'Marketing Visual:\n"/imagine tech startup office environment, modern workspace, natural lighting, productivity focus, recruitment campaign imagery --style 500 --quality 2 --aspect 3:2 --chaos 25"'
+               ]
+             },
+             {
+               id: 'stable-diffusion-custom',
+               title: 'Stable Diffusion Custom Model Training for Business',
+               content: `Stable Diffusion provides the ultimate flexibility for enterprise applications through custom model training and fine-tuning capabilities.
+
+Enterprise Advantages:
+• Complete control over training data
+• Custom style and brand consistency
+• On-premises deployment options
+• No usage restrictions or licensing fees
+• Integration with existing business systems
+
+Custom Model Training:
+• Dataset preparation and curation
+• Fine-tuning for specific brand styles
+• LoRA (Low-Rank Adaptation) training
+• DreamBooth for specific subjects
+• Textual inversion for custom concepts
+
+Business Implementation:
+• Setting up enterprise infrastructure
+• Model deployment and scaling
+• API integration for business applications
+• Quality assurance and testing protocols
+• Maintenance and update procedures
+
+Advanced Techniques:
+• ControlNet for precise composition control
+• Inpainting for selective editing
+• Outpainting for image extension
+• Style transfer and adaptation
+• Batch processing automation
+
+Security and Compliance:
+• Data privacy and protection
+• Model security and access control
+• Audit trails and version management
+• Compliance with industry standards
+• Risk assessment and mitigation`,
+               syntax: 'Training Command: python train.py --model_name="custom_brand" --dataset_path="./brand_images" --epochs=100',
+               examples: [
+                 'Brand Style Training:\n"Train custom model on 500+ brand images including logos, marketing materials, and product photos to ensure consistent brand representation across all AI-generated content"',
+                 'Product Photography Model:\n"Fine-tune Stable Diffusion on product catalog images to generate consistent product mockups and variations while maintaining brand photography standards"',
+                 'Corporate Illustration Style:\n"Create custom LoRA model trained on company illustration guidelines to generate consistent infographics, presentations, and marketing materials"'
+               ]
+             },
+             {
+               id: 'promptly-ai-optimization',
+               title: 'Promptly AI Advanced Optimization & Enterprise Setup',
+               content: `Promptly AI revolutionizes prompt engineering by providing intelligent optimization, correction, and enhancement capabilities for enterprise AI workflows.
+
+Enterprise Features:
+• Intelligent prompt optimization algorithms
+• Multi-model compatibility and testing
+• Team collaboration and prompt libraries
+• Performance analytics and optimization
+• Enterprise security and compliance
+
+Advanced Optimization:
+• Automatic prompt enhancement and refinement
+• A/B testing for prompt effectiveness
+• Context-aware prompt suggestions
+• Multi-language prompt optimization
+• Industry-specific prompt templates
+
+Enterprise Integration:
+• API integration for automated workflows
+• Custom prompt libraries and templates
+• Team management and access controls
+• Usage analytics and reporting
+• Cost optimization and budget management
+
+Professional Workflows:
+• Campaign planning and prompt strategy
+• Quality assurance and testing protocols
+• Client approval and feedback integration
+• Version control and prompt management
+• Performance monitoring and optimization
+
+Best Practices:
+• Prompt versioning and documentation
+• Testing across multiple AI models
+• Performance benchmarking and analysis
+• Continuous improvement processes
+• Knowledge sharing and team training`,
+               syntax: 'API Call: promptly.optimize(prompt="original prompt", model="target_model", optimization_level="enterprise")',
+               examples: [
+                 'Campaign Optimization:\n"Use Promptly AI to optimize marketing campaign prompts across DALL-E 3, Midjourney, and Stable Diffusion, ensuring consistent brand messaging while maximizing each platform\'s strengths"',
+                 'Batch Processing:\n"Implement Promptly AI for large-scale image generation projects, automatically optimizing prompts for different use cases while maintaining quality and brand consistency"',
+                 'Team Collaboration:\n"Set up enterprise Promptly AI workspace with shared prompt libraries, team templates, and collaborative optimization workflows for design teams"'
+               ]
+             }
+           ],
+           questions: [
+             {
+               id: 1,
+               question: 'What is the primary advantage of DALL-E 3 for enterprise applications?',
+               options: ['Free usage', 'Advanced prompt engineering for commercial-grade outputs', 'Fastest generation speed', 'Largest image size'],
+               correctAnswer: 1
+             },
+             {
+               id: 2,
+               question: 'Which Midjourney parameter controls artistic interpretation and style consistency?',
+               options: ['--chaos', '--style', '--quality', '--aspect'],
+               correctAnswer: 1
+             },
+             {
+               id: 3,
+               question: 'What is the main benefit of custom model training with Stable Diffusion for businesses?',
+               options: ['Lower cost', 'Complete control over training data and brand consistency', 'Faster processing', 'Simpler interface'],
+               correctAnswer: 1
+             },
+             {
+               id: 4,
+               question: 'What does Promptly AI primarily provide for enterprise workflows?',
+               options: ['Image generation', 'Intelligent prompt optimization and correction', 'Video editing', 'Audio processing'],
+               correctAnswer: 1
+             },
+             {
+               id: 5,
+               question: 'Which technique is best for maintaining brand consistency across AI-generated images?',
+               options: ['Random generation', 'Style reference and custom model training', 'Fastest settings', 'Default parameters'],
+               correctAnswer: 1
+             },
+             {
+               id: 6,
+               question: 'What is LoRA in the context of Stable Diffusion?',
+               options: ['A type of image format', 'Low-Rank Adaptation for efficient model fine-tuning', 'A rendering engine', 'A color space'],
+               correctAnswer: 1
+             },
+             {
+               id: 7,
+               question: 'Which is most important for enterprise AI image generation?',
+               options: ['Speed only', 'Copyright compliance and commercial licensing', 'File size', 'Color accuracy only'],
+               correctAnswer: 1
+             },
+             {
+               id: 8,
+               question: 'What should be included in a professional AI image generation prompt?',
+               options: ['Only the subject', 'Subject, style, composition, technical specs, and brand elements', 'Just colors', 'Only technical specifications'],
+               correctAnswer: 1
+             },
+             {
+               id: 9,
+               question: 'How should enterprise AI workflows handle version control?',
+               options: ['Ignore versioning', 'Document successful prompt patterns and maintain version control', 'Use random approaches', 'Focus only on final outputs'],
+               correctAnswer: 1
+             },
+             {
+               id: 10,
+               question: 'What is the recommended approach for client presentations of AI-generated content?',
+               options: ['Show only one option', 'Generate multiple variations for client selection with clear documentation', 'Use default settings', 'Avoid client feedback'],
+               correctAnswer: 1
+             },
+             {
+               id: 11,
+               question: 'Which AI tool provides the most control for on-premises deployment?',
+               options: ['DALL-E 3', 'Midjourney', 'Stable Diffusion', 'Promptly AI'],
+               correctAnswer: 2
+             },
+             {
+               id: 12,
+               question: 'What is the purpose of negative prompting in professional AI image generation?',
+               options: ['To create dark images', 'To avoid unwanted elements and improve output quality', 'To reduce file size', 'To speed up generation'],
+               correctAnswer: 1
+             },
+             {
+               id: 13,
+               question: 'How should enterprise teams approach AI model selection?',
+               options: ['Use only one model', 'Test across multiple models and choose based on specific use cases', 'Always use the newest model', 'Focus only on cost'],
+               correctAnswer: 1
+             },
+             {
+               id: 14,
+               question: 'What is essential for maintaining quality in large-scale AI image projects?',
+               options: ['Speed optimization only', 'Quality assurance protocols and testing procedures', 'Using default settings', 'Minimal oversight'],
+               correctAnswer: 1
+             },
+             {
+               id: 15,
+               question: 'Which aspect is crucial for enterprise AI image security?',
+               options: ['Public sharing', 'Data privacy, access control, and audit trails', 'Open source only', 'Minimal documentation'],
+               correctAnswer: 1
+             },
+             {
+               id: 16,
+               question: 'What is the best practice for prompt optimization in enterprise environments?',
+               options: ['Use random prompts', 'Implement systematic testing, documentation, and continuous improvement', 'Copy from competitors', 'Avoid optimization'],
+               correctAnswer: 1
+             },
+             {
+               id: 17,
+               question: 'How should enterprise AI workflows handle different output formats?',
+               options: ['Use only one format', 'Deliver final assets in required formats based on use case', 'Always use the largest size', 'Ignore format requirements'],
+               correctAnswer: 1
+             },
+             {
+               id: 18,
+               question: 'What is the recommended approach for AI-generated content approval processes?',
+               options: ['Skip approvals', 'Implement structured client approval and feedback integration', 'Use automated approval only', 'Avoid client input'],
+               correctAnswer: 1
+             },
+             {
+               id: 19,
+               question: 'Which factor is most important for enterprise AI image generation ROI?',
+               options: ['Lowest cost tools only', 'Balance of quality, efficiency, compliance, and business value', 'Fastest generation only', 'Most features'],
+               correctAnswer: 1
+             },
+             {
+               id: 20,
+               question: 'What should be the focus of enterprise AI image generation training programs?',
+               options: ['Basic features only', 'Comprehensive workflow mastery, quality standards, and business integration', 'Tool switching', 'Individual experimentation only'],
+               correctAnswer: 1
+             }
+           ]
+         },
+
+         // DevOps Beginner Assignment
+         'devops-beginner-1': {
+           id: 'devops-beginner-1',
+           title: 'DevOps Fundamentals & Introduction',
+           description: 'Learn the core concepts of DevOps, including culture, practices, and essential tools for modern software development and operations.',
+           topics: [
+             {
+               id: 'devops-introduction',
+               title: 'Introduction to DevOps',
+               content: `DevOps is a set of practices that combines software development (Dev) and IT operations (Ops). It aims to shorten the systems development life cycle and provide continuous delivery with high software quality.
+
+What is DevOps?
+• A cultural and professional movement
+• A set of practices and tools
+• A methodology for collaboration between development and operations teams
+• An approach to automate and integrate processes
+
+Core Principles:
+• Collaboration and communication
+• Automation and tooling
+• Continuous integration and delivery
+• Monitoring and feedback
+• Rapid iteration and improvement
+
+Benefits of DevOps:
+• Faster time to market
+• Improved collaboration
+• Higher quality software
+• Better customer satisfaction
+• Increased efficiency and productivity
+• Reduced costs and risks
+
+DevOps vs Traditional Approach:
+Traditional development often involves separate teams working in silos, leading to communication gaps, longer deployment cycles, and higher failure rates. DevOps breaks down these silos and creates a collaborative environment.
+
+Key Cultural Aspects:
+• Shared responsibility
+• Continuous learning
+• Blame-free post-mortems
+• Experimentation and innovation
+• Customer-centric approach`,
+               syntax: 'DevOps = Development + Operations + Culture + Automation + Monitoring',
+               examples: [
+                 'Traditional Workflow:\nDevelopment → Testing → Operations → Deployment (Weeks/Months)',
+                 'DevOps Workflow:\nDevelopment ↔ Testing ↔ Operations ↔ Deployment (Hours/Days)',
+                 'DevOps Tools Integration:\nGit → Jenkins → Docker → Kubernetes → Monitoring'
+               ]
+             },
+             {
+               id: 'version-control-git',
+               title: 'Version Control with Git',
+               content: `Git is a distributed version control system that tracks changes in source code during software development. It's essential for DevOps practices and team collaboration.
+
+Key Git Concepts:
+• Repository (repo): A directory containing your project files and Git metadata
+• Commit: A snapshot of your project at a specific point in time
+• Branch: A parallel version of your repository
+• Merge: Combining changes from different branches
+• Remote: A version of your repository hosted on a server
+
+Essential Git Commands:
+• git init: Initialize a new repository
+• git clone: Copy a repository from remote to local
+• git add: Stage changes for commit
+• git commit: Save changes to the repository
+• git push: Upload changes to remote repository
+• git pull: Download changes from remote repository
+
+Branching Strategy:
+• Main/Master branch: Production-ready code
+• Development branch: Integration branch for features
+• Feature branches: Individual feature development
+• Release branches: Preparing for production release
+• Hotfix branches: Quick fixes for production issues
+
+Best Practices:
+• Write clear, descriptive commit messages
+• Commit frequently with small, logical changes
+• Use branching for feature development
+• Review code before merging
+• Keep repositories clean and organized`,
+               syntax: 'git <command> [options] [arguments]',
+               examples: [
+                 'Basic Git Workflow:\ngit add .\ngit commit -m "Add new feature"\ngit push origin main',
+                 'Branching Workflow:\ngit checkout -b feature/new-login\ngit add .\ngit commit -m "Implement login feature"\ngit checkout main\ngit merge feature/new-login',
+                 'Collaboration Workflow:\ngit pull origin main\ngit checkout -b feature/user-profile\n# Make changes\ngit add .\ngit commit -m "Add user profile page"\ngit push origin feature/user-profile'
+               ]
+             },
+             {
+               id: 'ci-cd-fundamentals',
+               title: 'Continuous Integration and Continuous Deployment (CI/CD)',
+               content: `CI/CD is a method to frequently deliver apps to customers by introducing automation into the stages of app development. It's a core practice in DevOps.
+
+Continuous Integration (CI):
+• Developers integrate code changes frequently
+• Automated builds and tests run on each integration
+• Early detection of integration issues
+• Faster feedback to developers
+• Improved code quality
+
+Continuous Deployment (CD):
+• Automated deployment of code changes to production
+• Reduces manual errors and deployment time
+• Enables faster delivery of features
+• Consistent deployment process
+• Rollback capabilities for quick recovery
+
+CI/CD Pipeline Stages:
+1. Source: Code repository (Git)
+2. Build: Compile and package application
+3. Test: Automated testing (unit, integration, etc.)
+4. Deploy: Deploy to staging/production
+5. Monitor: Track application performance
+
+Popular CI/CD Tools:
+• Jenkins: Open-source automation server
+• GitLab CI/CD: Integrated with GitLab
+• GitHub Actions: Native to GitHub
+• Azure DevOps: Microsoft's DevOps platform
+• CircleCI: Cloud-based CI/CD platform
+
+Benefits:
+• Faster time to market
+• Reduced risk of deployment failures
+• Improved code quality
+• Better collaboration
+• Consistent deployment process`,
+               syntax: 'Pipeline: Source → Build → Test → Deploy → Monitor',
+               examples: [
+                 'Simple CI Pipeline:\n1. Developer pushes code to Git\n2. CI server detects changes\n3. Automated build starts\n4. Tests run automatically\n5. Results sent to team',
+                 'CD Pipeline:\n1. Code passes CI tests\n2. Automated deployment to staging\n3. Automated tests in staging\n4. Approval for production\n5. Automated production deployment',
+                 'Jenkins Pipeline Example:\npipeline {\n  agent any\n  stages {\n    stage(\'Build\') { steps { sh \'npm install\' } }\n    stage(\'Test\') { steps { sh \'npm test\' } }\n    stage(\'Deploy\') { steps { sh \'npm run deploy\' } }\n  }\n}'
+               ]
+             },
+             {
+               id: 'containerization-docker',
+               title: 'Containerization with Docker',
+               content: `Docker is a platform that uses containerization to package applications and their dependencies into lightweight, portable containers.
+
+What are Containers?
+• Lightweight, standalone packages that include everything needed to run an application
+• Isolated from the host system and other containers
+• Consistent across different environments
+• More efficient than virtual machines
+
+Docker Components:
+• Docker Engine: Runtime that manages containers
+• Docker Images: Read-only templates for creating containers
+• Docker Containers: Running instances of images
+• Dockerfile: Text file with instructions to build images
+• Docker Registry: Repository for storing and sharing images
+
+Key Docker Commands:
+• docker build: Create an image from Dockerfile
+• docker run: Create and start a container
+• docker ps: List running containers
+• docker images: List available images
+• docker stop: Stop a running container
+• docker rm: Remove a container
+
+Benefits of Containerization:
+• Consistency across environments
+• Improved resource utilization
+• Faster deployment and scaling
+• Simplified dependency management
+• Enhanced security through isolation
+
+Docker in DevOps:
+• Standardized development environments
+• Simplified deployment processes
+• Microservices architecture support
+• Integration with CI/CD pipelines
+• Cloud-native application development`,
+               syntax: 'docker <command> [options] [arguments]',
+               examples: [
+                 'Dockerfile Example:\nFROM node:14\nWORKDIR /app\nCOPY package*.json ./\nRUN npm install\nCOPY . .\nEXPOSE 3000\nCMD ["npm", "start"]',
+                 'Building and Running:\ndocker build -t my-app .\ndocker run -p 3000:3000 my-app',
+                 'Docker Compose Example:\nversion: \'3\'\nservices:\n  web:\n    build: .\n    ports:\n      - "3000:3000"\n  database:\n    image: postgres\n    environment:\n      POSTGRES_PASSWORD: password'
+               ]
+             }
+           ],
+           questions: [
+             {
+               id: 1,
+               question: 'What does DevOps primarily aim to achieve?',
+               options: ['Separate development and operations', 'Combine development and operations for faster, higher-quality delivery', 'Focus only on operations', 'Eliminate testing'],
+               correctAnswer: 1
+             },
+             {
+               id: 2,
+               question: 'Which Git command is used to save changes to the repository?',
+               options: ['git save', 'git commit', 'git push', 'git add'],
+               correctAnswer: 1
+             },
+             {
+               id: 3,
+               question: 'What does CI stand for in DevOps?',
+               options: ['Code Integration', 'Continuous Integration', 'Computer Intelligence', 'Central Installation'],
+               correctAnswer: 1
+             },
+             {
+               id: 4,
+               question: 'What is a Docker container?',
+               options: ['A virtual machine', 'A lightweight, standalone package that includes everything needed to run an application', 'A database', 'A web server'],
+               correctAnswer: 1
+             },
+             {
+               id: 5,
+               question: 'Which is a core principle of DevOps culture?',
+               options: ['Working in silos', 'Collaboration and communication', 'Manual processes only', 'Avoiding automation'],
+               correctAnswer: 1
+             },
+             {
+               id: 6,
+               question: 'What is the purpose of a Git branch?',
+               options: ['To delete code', 'To create a parallel version of the repository for development', 'To compress files', 'To backup data'],
+               correctAnswer: 1
+             },
+             {
+               id: 7,
+               question: 'What is the main benefit of Continuous Deployment?',
+               options: ['Manual deployment control', 'Automated deployment reducing errors and deployment time', 'Slower releases', 'More complex processes'],
+               correctAnswer: 1
+             },
+             {
+               id: 8,
+               question: 'Which file is used to define how to build a Docker image?',
+               options: ['docker.txt', 'Dockerfile', 'image.config', 'container.yml'],
+               correctAnswer: 1
+             },
+             {
+               id: 9,
+               question: 'What is the typical flow of a CI/CD pipeline?',
+               options: ['Deploy → Build → Test', 'Source → Build → Test → Deploy → Monitor', 'Test → Source → Deploy', 'Monitor → Build → Source'],
+               correctAnswer: 1
+             },
+             {
+               id: 10,
+               question: 'Which Git command downloads changes from a remote repository?',
+               options: ['git download', 'git pull', 'git fetch-all', 'git get'],
+               correctAnswer: 1
+             },
+             {
+               id: 11,
+               question: 'What is a key advantage of containers over virtual machines?',
+               options: ['Larger size', 'More resource consumption', 'Lightweight and more efficient resource utilization', 'Slower startup time'],
+               correctAnswer: 2
+             },
+             {
+               id: 12,
+               question: 'In DevOps, what should happen when a failure occurs?',
+               options: ['Blame individuals', 'Conduct blame-free post-mortems and learn from failures', 'Ignore the failure', 'Stop all development'],
+               correctAnswer: 1
+             },
+             {
+               id: 13,
+               question: 'What is the purpose of automated testing in CI/CD?',
+               options: ['To slow down development', 'To catch bugs early and ensure code quality', 'To replace developers', 'To increase costs'],
+               correctAnswer: 1
+             },
+             {
+               id: 14,
+               question: 'Which Docker command is used to create and start a container?',
+               options: ['docker create', 'docker start', 'docker run', 'docker launch'],
+               correctAnswer: 2
+             },
+             {
+               id: 15,
+               question: 'What is the main goal of DevOps monitoring?',
+               options: ['To spy on developers', 'To provide feedback and insights for continuous improvement', 'To slow down processes', 'To increase complexity'],
+               correctAnswer: 1
+             },
+             {
+               id: 16,
+               question: 'Which branching strategy is commonly used in Git workflows?',
+               options: ['Single branch only', 'Main/Master, Development, Feature, Release, and Hotfix branches', 'Random branching', 'No branching strategy'],
+               correctAnswer: 1
+             },
+             {
+               id: 17,
+               question: 'What does "Infrastructure as Code" mean in DevOps?',
+               options: ['Writing code for applications only', 'Managing and provisioning infrastructure through code and automation', 'Manual server setup', 'Avoiding documentation'],
+               correctAnswer: 1
+             },
+             {
+               id: 18,
+               question: 'Which is a popular CI/CD tool?',
+               options: ['Microsoft Word', 'Jenkins', 'Photoshop', 'Excel'],
+               correctAnswer: 1
+             },
+             {
+               id: 19,
+               question: 'What is the benefit of using Docker registries?',
+               options: ['To slow down deployment', 'To store and share Docker images across teams and environments', 'To increase security risks', 'To complicate workflows'],
+               correctAnswer: 1
+             },
+             {
+               id: 20,
+               question: 'In DevOps, what is the recommended approach to deployments?',
+               options: ['Large, infrequent deployments', 'Small, frequent deployments with automation', 'Manual deployments only', 'Avoiding deployments'],
+               correctAnswer: 1
+             }
+           ]
          }
      };
 
@@ -2268,9 +3080,32 @@ ES6 feature that allows extracting properties from objects into variables.`,
    }
 
    return (
-     <div className="min-h-screen bg-gray-900 text-white">
+     <div className="min-h-screen bg-gray-900 text-white relative overflow-hidden">
+       {/* MagnetLines Background - Only for frontend-beginner-1 */}
+       {assignmentId === 'frontend-beginner-1' && (
+         <div className="fixed inset-0 z-0">
+           <MagnetLines 
+             rows={12}
+             columns={12}
+             containerSize="100vw"
+             lineColor="#666666"
+             lineWidth="0.5vmin"
+             lineHeight="4vmin"
+             baseAngle={0}
+             style={{ 
+               position: 'absolute',
+               top: 0,
+               left: 0,
+               width: '100vw',
+               height: '100vh',
+               opacity: 0.3
+             }}
+           />
+         </div>
+       )}
+
        {/* Header */}
-       <div className="bg-gray-800 border-b border-gray-700 px-6 py-4">
+       <div className="relative z-10 bg-gray-800/90 backdrop-blur-sm border-b border-gray-700 px-6 py-4">
          <div className="flex items-center justify-between">
            <button
              onClick={() => navigate('/student-portal')}
@@ -2285,7 +3120,7 @@ ES6 feature that allows extracting properties from objects into variables.`,
        </div>
 
        {/* Navigation Tabs */}
-       <div className="bg-gray-800 border-b border-gray-700 px-6 py-3">
+       <div className="relative z-10 bg-gray-800/90 backdrop-blur-sm border-b border-gray-700 px-6 py-3">
          <div className="flex space-x-1">
            <button
              onClick={() => setCurrentView('study')}
@@ -2312,7 +3147,7 @@ ES6 feature that allows extracting properties from objects into variables.`,
          </div>
        </div>
 
-       <div className="flex h-[calc(100vh-120px)]">
+       <div className="relative z-10 flex h-[calc(100vh-120px)]">
          {/* Content */}
          {currentView === 'study' ? (
            <>

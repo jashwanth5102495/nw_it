@@ -7,22 +7,41 @@ const courseRoutes = require('./routes/courses');
 const paymentRoutes = require('./routes/payments');
 const facultyRoutes = require('./routes/faculty');
 const { router: authRoutes } = require('./routes/auth');
+const { 
+  securityHeaders, 
+  preventSQLInjection, 
+  preventXSS,
+  adminLimiter 
+} = require('./middleware/security');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// Security middleware (applied first)
+app.use(securityHeaders);
+app.use(preventSQLInjection);
+app.use(preventXSS);
 
-// Routes
+// Basic middleware
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://yourdomain.com'] // Replace with your production domain
+    : ['http://localhost:3000', 'http://localhost:5173'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Routes with rate limiting for sensitive endpoints
 app.use('/api/projects', projectRoutes);
-app.use('/api/students', studentRoutes);
-app.use('/api/courses', courseRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/faculty', facultyRoutes);
-app.use('/api/auth', authRoutes);
+app.use('/api/students', adminLimiter, studentRoutes); // Admin-only routes
+app.use('/api/courses', adminLimiter, courseRoutes); // Admin-only routes
+app.use('/api/payments', adminLimiter, paymentRoutes); // Admin-only routes
+app.use('/api/faculty', adminLimiter, facultyRoutes); // Admin-only routes
+app.use('/api/auth', authRoutes); // Auth routes have their own rate limiting
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
