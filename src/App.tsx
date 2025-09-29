@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Header from './components/Header';
+import ClickSpark from './components/ClickSpark';
 import Hero from './components/Hero';
 import ServicesSection from './components/ServicesSection';
 import TradingSection from './components/TradingSection';
@@ -29,9 +30,14 @@ import DevOpsProjectPage from './components/DevOpsProjectPage';
 
 function AppInner() {
   const location = useLocation();
-  const isHome = location.pathname === '/';
   return (
-      <div className="min-h-screen bg-black text-white font-sans relative">
+      <ClickSpark 
+        sparkColor="#60a5fa" 
+        sparkCount={8} 
+        sparkRadius={80} 
+        duration={800}
+        className="min-h-screen bg-black text-white font-sans relative"
+      >
         <Routes>
           <Route path="/" element={
             <>
@@ -76,7 +82,7 @@ function AppInner() {
           <Route path="/devops-project/:projectId" element={<DevOpsProjectPage />} />
 
         </Routes>
-      </div>
+      </ClickSpark>
   );
 }
 

@@ -22,9 +22,13 @@ interface Student {
   _id: string;
   firstName: string;
   lastName: string;
+  name?: string;
   email: string;
   phone: string;
   studentId: string;
+  paymentStatus?: string;
+  selectedCourse?: string;
+  amountPaid?: number;
   enrolledCourses: Array<{
     courseId: {
       _id: string;
@@ -57,6 +61,7 @@ interface Student {
       submittedAt: string;
       status?: string;
       score?: number;
+      gitUrl?: string;
     }>;
   }>;
   paymentHistory: Array<{
@@ -163,7 +168,7 @@ const AdminPanel: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Payment Status Update States
-  const [pendingPaymentChanges, setPendingPaymentChanges] = useState<{[key: string]: {studentId: string, paymentIndex: number, newStatus: string, paymentId?: string}}>({});
+  const [pendingPaymentChanges, setPendingPaymentChanges] = useState<{[key: string]: {studentId: string, paymentId: string, newStatus: string, courseId: string, isNewPayment: boolean}}>({});
   const [savingPayments, setSavingPayments] = useState<{[key: string]: boolean}>({});
 
   // Collapsible Sections States

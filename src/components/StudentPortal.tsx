@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import LaserFlow from './LaserFlow';
 import { 
   HomeIcon,
   AcademicCapIcon,
@@ -2615,9 +2616,19 @@ const StudentPortal = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 flex">
+    <div className="min-h-screen bg-gray-900 flex relative overflow-hidden">
+      {/* LaserFlow Background */}
+      <LaserFlow 
+        color="#00ff88"
+        horizontalBeamOffset={0.1}
+        verticalBeamOffset={0.0}
+        flowSpeed={0.8}
+        wispIntensity={0.4}
+        fogIntensity={0.3}
+        style={{ zIndex: 0 }}
+      />
       {/* Sidebar */}
-      <div className="w-64 bg-gray-800 border-r border-gray-700">
+      <div className="w-64 bg-gray-800 border-r border-gray-700 relative z-10">
         {/* Header */}
         <div className="p-4 border-b border-gray-700">
           <div className="flex items-center space-x-2">
@@ -2648,7 +2659,7 @@ const StudentPortal = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col relative z-10">
         {/* Top Header */}
         <header className="bg-gray-800 border-b border-gray-700 px-6 py-4">
           <div className="flex items-center justify-between">

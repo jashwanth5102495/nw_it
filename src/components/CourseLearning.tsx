@@ -5,6 +5,9 @@ import Header from './Header';
 import VideoPlaceholder from './VideoPlaceholder';
 
 import { ArrowLeft, Play, Book, Code, CheckCircle, XCircle, Lightbulb, Clock, Award, Users, Star, Monitor, Send, Sun, Moon, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
+import MagnetLines from './MagnetLines';
+import StarBorder from './StarBorder';
+import ClickSpark from './ClickSpark';
 
 interface Lesson {
   id: string;
@@ -7672,11 +7675,31 @@ app.listen(PORT, () => {
   }
 
   return (
-    <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+    <div className="h-screen bg-black relative overflow-hidden flex flex-col">
+      {/* MagnetLines Background */}
+      <div className="fixed inset-0 z-0">
+        <MagnetLines 
+          rows={12}
+          columns={12}
+          containerSize="100vw"
+          lineColor="#333333"
+          lineWidth="0.5vmin"
+          lineHeight="4vmin"
+          baseAngle={0}
+          style={{ 
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            opacity: 0.4
+          }}
+        />
+      </div>
       <Header hideDock={true} />
       
       {/* Top Navigation Bar */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 pt-4 flex-shrink-0">
+      <div className="relative z-10 bg-black/40 backdrop-blur-sm border-b border-gray-800/50 pt-4 flex-shrink-0">
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between py-4 gap-4">
              <div className="flex items-center space-x-2 lg:space-x-4">
@@ -7731,44 +7754,49 @@ app.listen(PORT, () => {
           />
         )}
         
-        {/* Sidebar Navigation */}
-        <div className={`${sidebarOpen ? 'w-80' : 'w-16'} bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-full overflow-y-auto transition-all duration-300 flex flex-col ${sidebarOpen ? 'fixed lg:relative z-50 lg:z-auto' : 'relative'} lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-          <div className="p-4">
-            <div className="flex items-center justify-between mb-4">
-              {sidebarOpen && <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Course Content</h2>}
+        {/* Sidebar Navigation - Glass Island */}
+        <div className={`${sidebarOpen ? 'w-80' : 'w-20'} relative z-20 m-4 rounded-2xl bg-black/20 backdrop-blur-md border border-gray-700/50 shadow-2xl transition-all duration-300 flex flex-col ${sidebarOpen ? 'fixed lg:relative z-50 lg:z-auto' : 'relative'} lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`} style={{height: 'calc(100vh - 2rem)'}}>
+          {/* Fixed Header */}
+          <div className="p-4 border-b border-gray-700/50 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              {sidebarOpen && <h2 className="text-lg font-semibold text-white">Course Content</h2>}
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ml-auto"
+                className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors ml-auto"
                 title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
               >
                 {sidebarOpen ? (
-                  <ChevronLeft className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                  <ChevronLeft className="h-5 w-5 text-gray-300" />
                 ) : (
-                  <ChevronRight className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                  <ChevronRight className="h-5 w-5 text-gray-300" />
                 )}
               </button>
             </div>
+          </div>
+          
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto p-4">
             
             {/* Module Navigation */}
             <div className="mb-6">
-              {sidebarOpen && <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Course Modules</h3>}
+              {sidebarOpen && <h3 className="text-sm font-semibold text-white mb-3">Course Modules</h3>}
               <div className="space-y-2 mb-4">
                 {courseModules.map((module, index) => (
-                  <button
-                    key={module.id}
-                    onClick={() => {
-                      const firstLesson = module.lessons[0];
-                      if (firstLesson) {
-                        navigate(`/course-learning/${courseId}/${module.id}/${firstLesson.id}`);
-                      }
-                    }}
-                    className={`w-full text-left ${sidebarOpen ? 'p-3' : 'p-2'} rounded-lg transition-all duration-200 ${
-                      module.id === moduleId
-                        ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 text-blue-900 dark:text-blue-100'
-                        : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300 border border-transparent'
-                    }`}
-                    title={!sidebarOpen ? module.title : undefined}
-                  >
+                  <ClickSpark key={module.id} sparkColor="#f59e0b" sparkSize={6} sparkRadius={10} sparkCount={5} duration={250}>
+                    <button
+                      onClick={() => {
+                        const firstLesson = module.lessons[0];
+                        if (firstLesson) {
+                          navigate(`/course-learning/${courseId}/${module.id}/${firstLesson.id}`);
+                        }
+                      }}
+                      className={`w-full text-left ${sidebarOpen ? 'p-3' : 'p-2'} rounded-lg transition-all duration-200 ${
+                        module.id === moduleId
+                          ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 text-blue-900 dark:text-blue-100'
+                          : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300 border border-transparent'
+                      }`}
+                      title={!sidebarOpen ? module.title : undefined}
+                    >
                     <div className={`flex items-center ${sidebarOpen ? 'space-x-3' : 'justify-center'}`}>
                       <div className={`${sidebarOpen ? 'w-6 h-6' : 'w-8 h-8'} rounded-full flex items-center justify-center text-xs font-medium ${
                         module.id === moduleId
@@ -7786,7 +7814,8 @@ app.listen(PORT, () => {
                         </div>
                       )}
                     </div>
-                  </button>
+                    </button>
+                  </ClickSpark>
                 ))}
               </div>
             </div>
@@ -7800,16 +7829,16 @@ app.listen(PORT, () => {
             
             <div className="space-y-2 flex-1">
               {currentModule.lessons.map((lesson, index) => (
-                <button
-                  key={lesson.id}
-                  onClick={() => navigate(`/course-learning/${courseId}/${moduleId}/${lesson.id}`)}
-                  className={`w-full text-left ${sidebarOpen ? 'p-4' : 'p-2'} rounded-lg transition-all duration-200 ${
-                    lesson.id === lessonId 
-                      ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-600 text-blue-900 dark:text-blue-100' 
-                      : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300'
-                  }`}
-                  title={!sidebarOpen ? lesson.title : undefined}
-                >
+                <ClickSpark key={lesson.id} sparkColor="#8b5cf6" sparkSize={6} sparkRadius={10} sparkCount={5} duration={250}>
+                  <button
+                    onClick={() => navigate(`/course-learning/${courseId}/${moduleId}/${lesson.id}`)}
+                    className={`w-full text-left ${sidebarOpen ? 'p-4' : 'p-2'} rounded-lg transition-all duration-200 ${
+                      lesson.id === lessonId 
+                        ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-600 text-blue-900 dark:text-blue-100' 
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300'
+                    }`}
+                    title={!sidebarOpen ? lesson.title : undefined}
+                  >
                   <div className={`flex items-center ${sidebarOpen ? 'space-x-3' : 'justify-center'}`}>
                     <div className={`${sidebarOpen ? 'w-8 h-8' : 'w-6 h-6'} rounded-full flex items-center justify-center text-sm font-medium ${
                       lesson.id === lessonId
@@ -7828,7 +7857,8 @@ app.listen(PORT, () => {
                       <Play className="h-4 w-4 text-blue-600" />
                     )}
                   </div>
-                </button>
+                  </button>
+                </ClickSpark>
               ))}
             </div>
           </div>
@@ -7836,28 +7866,28 @@ app.listen(PORT, () => {
 
         {/* Main Content Area */}
         <div className="flex-1 flex h-full">
-          {/* File Explorer Panel */}
+          {/* File Explorer Glass Island */}
           {showFileExplorer && (
-            <div className="w-80 bg-gray-100 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300">
+            <div className="w-80 relative z-20 m-4 mr-2 rounded-2xl bg-black/20 backdrop-blur-md border border-gray-700/50 shadow-2xl flex flex-col transition-all duration-300" style={{height: 'calc(100vh - 2rem)'}}>
               {/* Explorer Header */}
-              <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750">
+              <div className="px-4 py-3 border-b border-gray-700/50 bg-gray-800/60">
                 <div className="flex items-center space-x-2">
-                  <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                  <span className="text-sm font-medium text-white uppercase tracking-wide">
                     Explorer
                   </span>
                 </div>
               </div>
               
               {/* Project Name */}
-              <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+              <div className="px-4 py-2 border-b border-gray-700/50">
                 <div className="flex items-center space-x-2">
-                  <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                  <span className="text-sm font-semibold text-white">
                     frontend-course-project
                   </span>
                 </div>
@@ -7927,36 +7957,41 @@ app.listen(PORT, () => {
             </div>
           )}
 
-          {/* Left Panel - Content */}
-          <div className={`${showFileExplorer ? 'w-1/3' : 'w-1/2'} border-r border-gray-200 dark:border-gray-700 flex flex-col bg-white dark:bg-gray-800 h-full transition-all duration-300 min-w-0`}>
-            <div className="border-b border-gray-200 dark:border-gray-700 p-4 lg:p-6">
-              <div className="flex space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-                <button
-                  onClick={() => setActiveTab('theory')}
-                  className={`flex-1 px-2 lg:px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                    activeTab === 'theory'
-                      ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                  }`}
-                >
-                  <span className="flex items-center justify-center space-x-1 lg:space-x-2">
-                    <Book className="h-4 w-4 flex-shrink-0" />
-                    <span className="hidden sm:inline">Content</span>
-                  </span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('html')}
-                  className={`flex-1 px-2 lg:px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                    currentExerciseId
-                      ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                  }`}
-                >
-                  <span className="flex items-center justify-center space-x-1 lg:space-x-2">
-                    <Code className="h-4 w-4 flex-shrink-0" />
-                    <span className="hidden sm:inline">Exercise</span>
-                  </span>
-                </button>
+          {/* Left Panel - Content & Exercise Glass Island */}
+          <StarBorder className={`${showFileExplorer ? 'w-1/3' : 'w-1/2'} relative z-20 m-4 mr-2 transition-all duration-300 min-w-0`} color="#60a5fa" speed="4s">
+            <div className="h-full flex flex-col" style={{height: 'calc(100vh - 2rem)'}}>
+            <div className="border-b border-gray-700/50 p-4 lg:p-6">
+              <div className="flex space-x-1 bg-gray-800/60 rounded-lg p-1">
+                <ClickSpark sparkColor="#60a5fa" sparkSize={8} sparkRadius={12} sparkCount={6} duration={300}>
+                  <button
+                    onClick={() => setActiveTab('theory')}
+                    className={`flex-1 px-2 lg:px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                      activeTab === 'theory'
+                        ? 'bg-gray-700/80 text-white shadow-sm'
+                        : 'text-gray-300 hover:text-white'
+                    }`}
+                  >
+                    <span className="flex items-center justify-center space-x-1 lg:space-x-2">
+                      <Book className="h-4 w-4 flex-shrink-0" />
+                      <span className="hidden sm:inline">Content</span>
+                    </span>
+                  </button>
+                </ClickSpark>
+                <ClickSpark sparkColor="#10b981" sparkSize={8} sparkRadius={12} sparkCount={6} duration={300}>
+                  <button
+                    onClick={() => setActiveTab('html')}
+                    className={`flex-1 px-2 lg:px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                      currentExerciseId
+                        ? 'bg-gray-700/80 text-white shadow-sm'
+                        : 'text-gray-300 hover:text-white'
+                    }`}
+                  >
+                    <span className="flex items-center justify-center space-x-1 lg:space-x-2">
+                      <Code className="h-4 w-4 flex-shrink-0" />
+                      <span className="hidden sm:inline">Exercise</span>
+                    </span>
+                  </button>
+                </ClickSpark>
               </div>
             </div>
             
@@ -8084,10 +8119,11 @@ app.listen(PORT, () => {
                 </div>
               )}
             </div>
-          </div>
+            </div>
+          </StarBorder>
 
-          {/* Right Panel - Code Editor with Flip Effect */}
-          <div className={`${showFileExplorer ? 'w-1/3' : 'w-1/2'} flex flex-col bg-gray-900 relative h-full transition-all duration-300`}>
+          {/* Right Panel - Code Editor Glass Island */}
+          <div className={`${showFileExplorer ? 'w-1/3' : 'w-1/2'} relative z-20 m-4 ml-2 rounded-2xl bg-black backdrop-blur-md border border-gray-700/50 shadow-2xl flex flex-col transition-all duration-300`} style={{height: 'calc(100vh - 2rem)'}}>
             <div className="bg-gray-800 px-4 py-3 border-b border-gray-700">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
