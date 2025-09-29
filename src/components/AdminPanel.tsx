@@ -186,8 +186,8 @@ const AdminPanel: React.FC = () => {
   };
 
   // Helper function to get payments for a specific student
-  const getStudentPayments = (studentId: string): Payment[] => {
-    return payments.filter(payment => payment.studentId._id === studentId);
+  const getStudentPayments = (studentId: string) => {
+    return payments.filter(payment => payment.studentId && payment.studentId._id === studentId);
   };
 
   const projectPhases = [
@@ -413,13 +413,33 @@ const AdminPanel: React.FC = () => {
     }
   };
 
-  const handleDeleteFaculty = (facultyId: string) => {
+  const handleDeleteFaculty = async (facultyId: string) => {
     if (confirm('Are you sure you want to delete this faculty member?')) {
-      // Note: Backend doesn't have delete endpoint, so we'll just mark as inactive
-      // For now, we'll just remove from local state
-      setFacultyList(facultyList.filter(faculty => faculty._id !== facultyId));
-      if (selectedFaculty && selectedFaculty._id === facultyId) {
-        setSelectedFaculty(null);
+      try {
+        const response = await fetch(`http://localhost:5000/api/faculty/${facultyId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Remove faculty from local state
+          setFacultyList(facultyList.filter(faculty => faculty._id !== facultyId));
+          if (selectedFaculty && selectedFaculty._id === facultyId) {
+            setSelectedFaculty(null);
+          }
+          
+          // Show success message
+          alert(data.message);
+        } else {
+          alert(data.message || 'Failed to delete faculty member');
+        }
+      } catch (error) {
+        console.error('Error deleting faculty:', error);
+        alert('Error deleting faculty member. Please try again.');
       }
     }
   };

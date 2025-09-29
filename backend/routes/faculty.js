@@ -256,4 +256,59 @@ router.patch('/commission/:paymentId/mark-paid', async (req, res) => {
   }
 });
 
+// Delete faculty member (Admin only)
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find the faculty member first
+    const faculty = await Faculty.findById(id);
+    if (!faculty) {
+      return res.status(404).json({
+        success: false,
+        message: 'Faculty member not found'
+      });
+    }
+
+    // Check if faculty has any associated payments/commissions
+    const hasPayments = await Payment.findOne({ facultyId: id });
+    
+    if (hasPayments) {
+      // If faculty has payments, mark as inactive instead of deleting
+      faculty.isActive = false;
+      await faculty.save();
+      
+      res.json({
+        success: true,
+        message: 'Faculty member deactivated successfully (has payment history)',
+        data: {
+          id: faculty._id,
+          name: faculty.name,
+          status: 'deactivated'
+        }
+      });
+    } else {
+      // If no payments, safe to delete completely
+      await Faculty.findByIdAndDelete(id);
+      
+      res.json({
+        success: true,
+        message: 'Faculty member deleted successfully',
+        data: {
+          id: id,
+          name: faculty.name,
+          status: 'deleted'
+        }
+      });
+    }
+
+  } catch (error) {
+    console.error('Error deleting faculty:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while deleting faculty'
+    });
+  }
+});
+
 module.exports = router;
