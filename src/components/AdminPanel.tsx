@@ -175,6 +175,11 @@ const AdminPanel: React.FC = () => {
   // Collapsible Sections States
   const [expandedStudents, setExpandedStudents] = useState<{[key: string]: {courses: boolean, payments: boolean}}>({});
 
+  // Student Submissions States
+  const [studentSubmissions, setStudentSubmissions] = useState<any[]>([]);
+  const [showSubmissions, setShowSubmissions] = useState(false);
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
+
   // Toggle functions for collapsible sections
   const toggleStudentSection = (studentId: string, section: 'courses' | 'payments') => {
     setExpandedStudents(prev => ({
@@ -207,6 +212,32 @@ const AdminPanel: React.FC = () => {
     fetchPayments();
     fetchFaculty();
   }, []);
+
+  // Function to fetch student submissions
+  const fetchStudentSubmissions = async () => {
+    setSubmissionsLoading(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/students/admin/submissions');
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setStudentSubmissions(result.data || []);
+          console.log('Fetched submissions:', result.data);
+        } else {
+          console.error('Failed to fetch submissions:', result.message);
+          setStudentSubmissions([]);
+        }
+      } else {
+        console.error('Failed to fetch submissions:', response.status);
+        setStudentSubmissions([]);
+      }
+    } catch (error) {
+      console.error('Error fetching student submissions:', error);
+      setStudentSubmissions([]);
+    } finally {
+      setSubmissionsLoading(false);
+    }
+  };
 
   const refreshAllData = async () => {
     console.log('🔄 Refreshing all data...');
@@ -1151,18 +1182,145 @@ const AdminPanel: React.FC = () => {
           <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-white">Student Enrollments ({students.length})</h2>
-              <button
-                onClick={() => {
-                  fetchStudents();
-                  fetchPayments();
-                }}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200"
-                title="Refresh student and payment data"
-              >
-                <span>🔄</span>
-                <span>Refresh</span>
-              </button>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => {
+                    setShowSubmissions(!showSubmissions);
+                    if (!showSubmissions) {
+                      fetchStudentSubmissions();
+                    }
+                  }}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
+                    showSubmissions 
+                      ? 'bg-orange-600 hover:bg-orange-700 text-white' 
+                      : 'bg-green-600 hover:bg-green-700 text-white'
+                  }`}
+                  title="View all student project submissions"
+                >
+                  <span>📋</span>
+                  <span>{showSubmissions ? 'Hide Submissions' : 'View All Submissions'}</span>
+                </button>
+                <button
+                  onClick={() => {
+                    fetchStudents();
+                    fetchPayments();
+                  }}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200"
+                  title="Refresh student and payment data"
+                >
+                  <span>🔄</span>
+                  <span>Refresh</span>
+                </button>
+              </div>
             </div>
+
+            {/* Student Submissions View */}
+            {showSubmissions && (
+              <div className="mb-8 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-2xl p-6 border border-purple-500/30">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-white flex items-center space-x-2">
+                    <span>📋</span>
+                    <span>All Student Project Submissions ({studentSubmissions.length})</span>
+                  </h3>
+                  <button
+                    onClick={fetchStudentSubmissions}
+                    disabled={submissionsLoading}
+                    className="flex items-center space-x-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 text-white rounded-lg text-sm font-medium transition-colors duration-200"
+                  >
+                    <span>🔄</span>
+                    <span>{submissionsLoading ? 'Loading...' : 'Refresh'}</span>
+                  </button>
+                </div>
+                
+                {submissionsLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span className="text-white/70">Loading submissions...</span>
+                    </div>
+                  </div>
+                ) : studentSubmissions.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-6xl mb-4">📝</div>
+                    <p className="text-white/60 text-lg">No project submissions yet</p>
+                    <p className="text-white/40 text-sm">Student project submissions will appear here</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {studentSubmissions.map((submission, index) => (
+                      <div key={`${submission.studentId}-${submission.moduleId}-${index}`} className="bg-black/30 rounded-lg p-4 border border-white/20">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-2">
+                              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                <span className="text-white font-bold text-sm">
+                                  {submission.studentName.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                              <div>
+                                <div className="text-white font-medium">{submission.studentName}</div>
+                                <div className="text-white/60 text-sm">{submission.studentEmail}</div>
+                                <div className="text-white/40 text-xs">ID: {submission.studentCode}</div>
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                              <div className="bg-blue-500/20 rounded-lg p-3 border border-blue-500/30">
+                                <div className="text-blue-300 text-sm font-medium mb-1">Course</div>
+                                <div className="text-white text-sm">{submission.courseTitle}</div>
+                                <div className="text-white/60 text-xs">{submission.courseName}</div>
+                              </div>
+                              
+                              <div className="bg-green-500/20 rounded-lg p-3 border border-green-500/30">
+                                <div className="text-green-300 text-sm font-medium mb-1">Module</div>
+                                <div className="text-white text-sm">{submission.moduleTitle}</div>
+                                <div className="text-white/60 text-xs">
+                                  Submitted: {new Date(submission.submittedAt).toLocaleDateString('en-IN', {
+                                    day: '2-digit',
+                                    month: '2-digit', 
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-col items-end space-y-2 ml-4">
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              submission.status === 'approved' ? 'bg-green-600 text-white' :
+                              submission.status === 'reviewed' ? 'bg-blue-600 text-white' :
+                              submission.status === 'needs_revision' ? 'bg-yellow-600 text-white' :
+                              'bg-gray-600 text-white'
+                            }`}>
+                              {submission.status || 'submitted'}
+                            </span>
+                            
+                            <a
+                              href={submission.submissionUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg text-sm font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
+                            >
+                              <span>🔗</span>
+                              <span>View Submission</span>
+                            </a>
+                          </div>
+                        </div>
+                        
+                        {submission.feedback && (
+                          <div className="mt-3 bg-yellow-500/20 rounded-lg p-3 border border-yellow-500/30">
+                            <div className="text-yellow-300 text-sm font-medium mb-1">Feedback</div>
+                            <div className="text-white text-sm">{submission.feedback}</div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             
             {students.length === 0 ? (
               <div className="text-center py-12">
@@ -1320,38 +1478,71 @@ const AdminPanel: React.FC = () => {
                                     )}
                                   </div>
                                 </div>
+                              </div>
 
-                                <div className="bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-lg p-3 border border-orange-500/30">
+                              {/* Module Submissions - Enhanced Display */}
+                              {enrollment.completedModules && enrollment.completedModules.length > 0 && (
+                                <div className="mt-3 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-lg p-3 border border-green-500/30">
                                   <h5 className="text-white font-medium mb-2 flex items-center">
-                                    💾 Git/Drives
-                                    <span className="ml-2 px-2 py-1 bg-orange-600 text-white text-xs rounded-full">
-                                      0/0
+                                    🚀 Module Submissions
+                                    <span className="ml-2 px-2 py-1 bg-green-600 text-white text-xs rounded-full">
+                                      {enrollment.completedModules.length}
                                     </span>
                                   </h5>
                                   <div className="space-y-2">
-                                    <div className="flex items-center justify-between text-sm">
-                                      <span className="text-white/80">Git Repository</span>
-                                      <button className="px-2 py-1 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded-lg transition-colors duration-200">
-                                        Connect Git
-                                      </button>
-                                    </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                      <span className="text-white/80">Google Drive</span>
-                                      <button className="px-2 py-1 bg-blue-700 hover:bg-blue-600 text-white text-xs rounded-lg transition-colors duration-200">
-                                        Connect Drive
-                                      </button>
-                                    </div>
-                                    <p className="text-white/60 text-sm">No repositories connected</p>
+                                    {enrollment.completedModules.map((module, idx) => (
+                                      <div key={idx} className="bg-black/30 rounded-lg p-3 border border-white/10">
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex-1">
+                                            <div className="text-white/80 text-sm font-medium mb-1">
+                                              Module {idx + 1}
+                                            </div>
+                                            <div className="text-white/60 text-xs">
+                                              Submitted: {new Date(module.submittedAt).toLocaleDateString('en-IN', {
+                                                day: '2-digit',
+                                                month: '2-digit',
+                                                year: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                              })}
+                                            </div>
+                                            {module.feedback && (
+                                              <div className="text-yellow-300 text-xs mt-1">
+                                                Feedback: {module.feedback}
+                                              </div>
+                                            )}
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            <a
+                                              href={module.submissionUrl}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="px-3 py-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-xs rounded-lg transition-all duration-200 font-medium shadow-md hover:shadow-lg"
+                                            >
+                                              🔗 View Link
+                                            </a>
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                              module.status === 'approved' ? 'bg-green-600 text-white' :
+                                              module.status === 'reviewed' ? 'bg-blue-600 text-white' :
+                                              module.status === 'needs_revision' ? 'bg-yellow-600 text-white' :
+                                              'bg-gray-600 text-white'
+                                            }`}>
+                                              {module.status || 'submitted'}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
                                   </div>
                                 </div>
-                              </div>
-
-                              {/* Project Submissions */}
+                              )}
+                              
+                              {/* Legacy Project Submissions (if any) */}
                               {enrollment.projects && enrollment.projects.length > 0 && (
-                                <div className="mt-3 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-lg p-3 border border-green-500/30">
+                                <div className="mt-3 bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-lg p-3 border border-orange-500/30">
                                   <h5 className="text-white font-medium mb-2 flex items-center">
-                                    🚀 Project Submissions
-                                    <span className="ml-2 px-2 py-1 bg-green-600 text-white text-xs rounded-full">
+                                    � Legacy Project Submissions
+                                    <span className="ml-2 px-2 py-1 bg-orange-600 text-white text-xs rounded-full">
                                       {enrollment.projects.length}
                                     </span>
                                   </h5>

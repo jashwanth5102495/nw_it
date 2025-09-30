@@ -1220,6 +1220,73 @@ router.get('/:id/module-submissions/:courseId', authenticateStudent, authorizeOw
   }
 });
 
+// Get all student submissions for admin (no authentication required - admin only)
+router.get('/admin/submissions', async (req, res) => {
+  try {
+    console.log('Admin submissions endpoint called');
+    
+    const students = await Student.find({ isActive: true })
+      .populate('enrolledCourses.courseId', 'title courseId modules')
+      .select('firstName lastName email studentId enrolledCourses')
+      .sort({ createdAt: -1 });
+
+    console.log(`Found ${students.length} students`);
+
+    const submissionsData = [];
+
+    for (const student of students) {
+      for (const enrollment of student.enrolledCourses) {
+        if (enrollment.completedModules && enrollment.completedModules.length > 0) {
+          for (const submission of enrollment.completedModules) {
+            // Get module title from course data
+            let moduleTitle = 'Unknown Module';
+            if (enrollment.courseId && enrollment.courseId.modules) {
+              const moduleIndex = enrollment.courseId.modules.findIndex(
+                module => module._id.toString() === submission.moduleId.toString()
+              );
+              if (moduleIndex !== -1) {
+                moduleTitle = enrollment.courseId.modules[moduleIndex].title;
+              }
+            }
+
+            submissionsData.push({
+              studentId: student._id,
+              studentName: `${student.firstName} ${student.lastName}`,
+              studentEmail: student.email,
+              studentCode: student.studentId,
+              courseId: enrollment.courseId._id,
+              courseTitle: enrollment.courseId.title,
+              courseName: enrollment.courseId.courseId,
+              moduleId: submission.moduleId,
+              moduleTitle: moduleTitle,
+              submissionUrl: submission.submissionUrl,
+              submittedAt: submission.submittedAt,
+              status: submission.status,
+              feedback: submission.feedback || ''
+            });
+          }
+        }
+      }
+    }
+
+    console.log(`Found ${submissionsData.length} total submissions`);
+
+    res.json({
+      success: true,
+      data: submissionsData,
+      count: submissionsData.length
+    });
+
+  } catch (error) {
+    console.error('Error fetching admin submissions:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching student submissions',
+      error: error.message
+    });
+  }
+});
+
 // Get students by referral code with course information
 router.get('/by-referral/:referralCode', async (req, res) => {
   try {
