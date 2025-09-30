@@ -1,5 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const Student = require('../models/Student');
 const Course = require('../models/Course');
 const User = require('../models/User'); // Add User model
@@ -1074,6 +1075,146 @@ router.get('/:id/analytics', authenticateStudent, authorizeOwnProfile, async (re
     res.status(500).json({
       success: false,
       message: 'Error fetching analytics',
+      error: error.message
+    });
+  }
+});
+
+// Submit module with URL using real module ID from course data
+router.post('/:id/submit-module', authenticateStudent, authorizeOwnProfile, async (req, res) => {
+  try {
+    const studentId = req.params.id;
+    const { courseId, moduleId, submissionUrl } = req.body;
+
+    console.log("Request body when clicked SubmissionURL", {courseId, moduleId, submissionUrl});
+
+    console.log('Submission request:', { studentId, courseId, moduleId, submissionUrl });
+
+    if (!courseId || !moduleId || !submissionUrl) {
+      return res.status(400).json({
+        success: false,
+        message: 'Course ID, Module ID, and submission URL are required'
+      });
+    }
+
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    // Find the enrollment for this course
+    const enrollment = student.enrolledCourses.find(
+      enrollment => enrollment.courseId.toString() === courseId.toString()
+    );
+
+    if (!enrollment) {
+      return res.status(400).json({
+        success: false,
+        message: 'Student is not enrolled in this course'
+      });
+    }
+
+    // Check if module is already submitted
+    const existingSubmission = enrollment.completedModules.find(
+      module => module.moduleId.toString() === moduleId.toString()
+    );
+
+    console.log("Existing Submissions: ", existingSubmission);
+
+    if (existingSubmission) {
+      // Update existing submission
+      existingSubmission.submissionUrl = submissionUrl;
+      existingSubmission.submittedAt = new Date();
+      existingSubmission.status = 'submitted';
+    } else {
+      // Add new submission
+      enrollment.completedModules.push({
+        moduleId: new mongoose.Types.ObjectId(moduleId),
+        submissionUrl: submissionUrl,
+        submittedAt: new Date(),
+        status: 'submitted'
+      });
+    }
+
+    // Update progress based on completed modules
+    // Get course data to determine total modules
+    const course = await Course.findById(courseId);
+    const totalModules = course ? course.modules.length : 6;
+    const progress = Math.round((enrollment.completedModules.length / totalModules) * 100);
+    enrollment.progress = Math.min(progress, 100);
+
+    if (enrollment.progress >= 100) {
+      enrollment.status = 'completed';
+    }
+
+    await student.save();
+
+    console.log('Module submitted successfully:', {
+      courseId,
+      moduleId,
+      submissionUrl,
+      progress: enrollment.progress,
+      totalSubmissions: enrollment.completedModules.length
+    });
+
+    res.json({
+      success: true,
+      message: 'Module submitted successfully',
+      data: {
+        courseId,
+        moduleId,
+        submissionUrl,
+        submittedAt: new Date(),
+        progress: enrollment.progress,
+        totalSubmissions: enrollment.completedModules.length
+      }
+    });
+  } catch (error) {
+    console.error('Error submitting module:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error submitting module',
+      error: error.message
+    });
+  }
+});
+
+// Get module submissions for a student in a specific course
+router.get('/:id/module-submissions/:courseId', authenticateStudent, authorizeOwnProfile, async (req, res) => {
+  try {
+    const { id: studentId, courseId } = req.params;
+
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    const enrollment = student.enrolledCourses.find(
+      enrollment => enrollment.courseId.toString() === courseId.toString()
+    );
+
+    if (!enrollment) {
+      return res.json({
+        success: true,
+        data: []
+      });
+    }
+
+    res.json({
+      success: true,
+      data: enrollment.completedModules
+    });
+  } catch (error) {
+    console.error('Error fetching module submissions:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching module submissions',
       error: error.message
     });
   }

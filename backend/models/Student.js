@@ -98,8 +98,28 @@ const studentSchema = new mongoose.Schema({
       max: 100
     },
     completedModules: [{
-      type: Number,
-      default: []
+      moduleId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true
+      },
+      submissionUrl: {
+        type: String,
+        required: true,
+        trim: true
+      },
+      submittedAt: {
+        type: Date,
+        default: Date.now
+      },
+      status: {
+        type: String,
+        enum: ['submitted', 'reviewed', 'approved', 'needs_revision'],
+        default: 'submitted'
+      },
+      feedback: {
+        type: String,
+        default: ''
+      }
     }],
     status: {
       type: String,
@@ -208,6 +228,60 @@ studentSchema.methods.updateCourseProgress = function(courseId, progress, comple
   }
   
   return this.save();
+};
+
+// Method to submit module with URL
+studentSchema.methods.submitModule = function(courseId, moduleIndex, moduleId, submissionUrl, submissionType) {
+  const enrollment = this.enrolledCourses.find(
+    enrollment => enrollment.courseId.toString() === courseId.toString()
+  );
+  
+  if (!enrollment) {
+    throw new Error('Student is not enrolled in this course');
+  }
+
+  // Check if module is already submitted
+  const existingSubmission = enrollment.completedModules.find(
+    module => module.moduleIndex === moduleIndex
+  );
+
+  if (existingSubmission) {
+    // Update existing submission
+    existingSubmission.submissionUrl = submissionUrl;
+    existingSubmission.submissionType = submissionType;
+    existingSubmission.submittedAt = new Date();
+    existingSubmission.status = 'submitted';
+  } else {
+    // Add new submission
+    enrollment.completedModules.push({
+      moduleId: moduleId,
+      moduleIndex: moduleIndex,
+      submissionUrl: submissionUrl,
+      submissionType: submissionType,
+      submittedAt: new Date(),
+      status: 'submitted'
+    });
+  }
+
+  // Update progress based on completed modules
+  const totalModules = 6; // This should be dynamic based on course
+  const progress = Math.round((enrollment.completedModules.length / totalModules) * 100);
+  enrollment.progress = Math.min(progress, 100);
+
+  if (enrollment.progress >= 100) {
+    enrollment.status = 'completed';
+  }
+  
+  return this.save();
+};
+
+// Method to get module submissions for a course
+studentSchema.methods.getModuleSubmissions = function(courseId) {
+  const enrollment = this.enrolledCourses.find(
+    enrollment => enrollment.courseId.toString() === courseId.toString()
+  );
+  
+  return enrollment ? enrollment.completedModules : [];
 };
 
 const Student = mongoose.model('Student', studentSchema);

@@ -167,6 +167,9 @@ const StudentPortal = () => {
   // Assignment tracking state
   const [assignmentStatuses, setAssignmentStatuses] = useState<{ [assignmentId: string]: Assignment['status'] }>({});
   const [assignmentSubmissions, setAssignmentSubmissions] = useState<{ [assignmentId: string]: { type: 'file' | 'git', content: string, submittedAt: string } }>({});
+  
+  // Module submission tracking state
+  const [moduleSubmissions, setModuleSubmissions] = useState<{ [courseId: string]: { [moduleId: string]: { submissionUrl: string; submittedAt: string } } }>({});
 
   // Course ID mapping function to handle inconsistent courseId values
   const getCourseIdMapping = (courseId: string): string[] => {
@@ -179,7 +182,7 @@ const StudentPortal = () => {
       'mobile-core': ['5', 'mobile-core', 'Mobile Development - Core'],
       // Reverse mappings for backend course IDs
       '1': ['ai-tools-mastery', 'AI-TOOLS-MASTERY', 'AI Tools Mastery'],
-      'AI-TOOLS-MASTERY': ['ai-tools-mastery', '1', 'AI Tools Mastery'],
+      'AI-TOOLS-MASTERY': ['ai-tools-mastery', '1', 'AI-TOOLS-MASTERY'],
       'AI Tools Mastery': ['ai-tools-mastery', '1', 'AI-TOOLS-MASTERY'],
       'Frontend Development - Beginner': ['frontend-beginner', 'FRONTEND-BEGINNER'],
       'FRONTEND-BEGINNER': ['frontend-beginner', 'Frontend Development - Beginner'],
@@ -187,6 +190,147 @@ const StudentPortal = () => {
       'DEVOPS-BEGINNER': ['devops-beginner', 'DevOps - Beginner']
     };
     return mappings[courseId] || [courseId];
+  };
+
+  // Helper function to get module ID from enrolled course data
+  const getModuleIdForProject = (projectId: string, courseData: any): string | null => {
+    if (!courseData || !courseData.modules) return null;
+    
+    // Map project IDs to module indexes
+    const projectToModuleIndex: { [courseType: string]: { [projectId: string]: number } } = {
+      'ai-tools-mastery': {
+        'ai-tools-project-1': 0, // AI Fundamentals
+        'ai-tools-project-2': 1, // ChatGPT & Language Models
+        'ai-tools-project-3': 2, // AI Image & Video Tools
+        'ai-tools-project-4': 3, // AI Automation & Workflows
+        'ai-tools-project-5': 0, // Fallback to first module
+        'ai-tools-project-6': 1  // Fallback to second module
+      },
+      'frontend-beginner': {
+        'project-1': 0, // HTML Fundamentals
+        'project-2': 1, // CSS Styling
+        'project-3': 2, // JavaScript Basics
+        'project-4': 3  // Project Development
+      },
+      'devops-beginner': {
+        'devops-project-1': 0, // DevOps Fundamentals
+        'devops-project-2': 1, // Containerization
+        'devops-project-3': 2, // CI/CD Pipelines
+        'devops-project-4': 3  // Cloud Platforms
+      }
+    };
+    
+    // Determine course type from courseData
+    let courseType = '';
+    if (courseData.courseId === 'AI-TOOLS-MASTERY' || courseData.title?.includes('AI Tools')) {
+      courseType = 'ai-tools-mastery';
+    } else if (courseData.title?.includes('Frontend') && courseData.level === 'Beginner') {
+      courseType = 'frontend-beginner';
+    } else if (courseData.title?.includes('DevOps') && courseData.level === 'Beginner') {
+      courseType = 'devops-beginner';
+    }
+    
+    const moduleIndex = projectToModuleIndex[courseType]?.[projectId];
+    if (moduleIndex !== undefined && courseData.modules[moduleIndex]) {
+      return courseData.modules[moduleIndex]._id;
+    }
+    
+    return null;
+  };
+
+  // Function to fetch module submissions for a course
+  const fetchModuleSubmissions = async (studentId: string, courseId: string) => {
+    try {
+      const currentUser = localStorage.getItem('currentUser');
+      const userData = JSON.parse(currentUser);
+      const token = userData.token;
+      console.log(`Token fetch modules: ${token}`);
+      const response = await fetch(`http://localhost:5000/api/students/${studentId}/module-submissions/${courseId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          const submissionsMap: { [moduleId: string]: { submissionUrl: string; submittedAt: string } } = {};
+          
+          result.data.forEach((submission: any) => {
+            submissionsMap[submission.moduleId] = {
+              submissionUrl: submission.submissionUrl,
+              submittedAt: submission.submittedAt
+            };
+          });
+          
+          setModuleSubmissions(prev => ({
+            ...prev,
+            [courseId]: submissionsMap
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching module submissions:', error);
+    }
+  };
+
+  // Function to submit module with URL
+  const submitModuleUrl = async (courseId: string, moduleId: string, submissionUrl: string) => {
+    try {
+      const currentUser = localStorage.getItem('currentUser');
+
+      if (!currentUser) {
+        alert('Please log in to submit projects');
+        return false;
+      }
+
+      const userData = JSON.parse(currentUser);
+      console.log('User data for submission:', userData);
+      const token = userData.token;
+      console.log("The Current User TOken",token);
+
+      console.log('Submitting module:', { courseId, moduleId, submissionUrl });
+      console.log('Using student ID:', userData.id); // Log the ID being used
+
+      const response = await fetch(`http://localhost:5000/api/students/${userData.id}/submit-module`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          courseId,
+          moduleId,
+          submissionUrl
+        })
+      });
+
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        console.log('Module submitted successfully:', result);
+        // Update local state
+        setModuleSubmissions(prev => ({
+          ...prev,
+          [courseId]: {
+            ...prev[courseId],
+            [moduleId]: {
+              submissionUrl,
+              submittedAt: new Date().toISOString()
+            }
+          }
+        }));
+        return true;
+      } else {
+        console.error('Submission failed:', result);
+        alert(`Failed to submit: ${result.message}`);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error submitting module:', error);
+      alert('Error submitting module. Please try again.');
+      return false;
+    }
   };
 
   // Helper function to check if a course is accessible (either purchased or confirmed payment)
@@ -1314,6 +1458,7 @@ const StudentPortal = () => {
               
               // Set the full course data for display
               setEnrolledCoursesData(enrolledCoursesData);
+              console.log("Enrolled Course Data", enrolledCoursesData);
               
 
               
@@ -1334,6 +1479,12 @@ const StudentPortal = () => {
               
               setCourseProgress(progressData);
               console.log('Set course progress:', progressData);
+              
+              // Fetch module submissions for each enrolled course
+              for (const course of enrolledCoursesData) {
+                const courseId = course.id; // Use the MongoDB _id
+                await fetchModuleSubmissions(userData.id, courseId);
+              }
             } else {
               console.log('No courses found in backend response');
               setPurchasedCourses([]);
@@ -1364,6 +1515,7 @@ const StudentPortal = () => {
           
           if (response.ok) {
             const result = await response.json();
+            console.log("Result Data IN student portal: ", result.data);
             if (result.success) {
               studentData = { ...userData, ...result.data };
             }
@@ -2454,118 +2606,218 @@ const StudentPortal = () => {
                     </div>
                   </div>
                   
-                  {project.status !== 'completed' && (
-                    <div className="space-y-3">
-                      {/* URL Upload Field - Conditional based on course */}
-                      <div className="space-y-3">
-                        <div>
-                          {project.courseId === 'ai-tools-mastery' ? (
-                            <>
-                              <label className="block text-sm font-medium text-gray-300 mb-2">
-                                Google Drive Folder URL
-                              </label>
-                              <input
-                                type="url"
-                                value={projectGoogleDriveUrl}
-                                onChange={(e) => setProjectGoogleDriveUrl(e.target.value)}
-                                placeholder="https://drive.google.com/drive/folders/your-folder-id"
-                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              />
-                              <p className="text-gray-400 text-xs mt-1">
-                                Share your Google Drive folder containing your AI tools project files
-                              </p>
-                            </>
-                          ) : (
-                            <>
-                              <label className="block text-sm font-medium text-gray-300 mb-2">
-                                Git Repository URL
-                              </label>
-                              <input
-                                type="url"
-                                value={projectGitUrl}
-                                onChange={(e) => setProjectGitUrl(e.target.value)}
-                                placeholder="https://github.com/username/project-name"
-                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              />
-                              <p className="text-gray-400 text-xs mt-1">
-                                Enter your GitHub repository URL to submit your project
-                              </p>
-                            </>
-                          )}
+                  {(() => {
+                    // Get the course data for this project
+                    const courseData = enrolledCoursesData.find((course: any) => {
+                      const courseId = course.courseId || course.id;
+                      return getCourseIdMapping(courseId).includes(project.courseId);
+                    });
+                    
+                    if (!courseData) {
+                      return (
+                        <div className="text-red-400 text-sm">
+                          Course data not found. Please refresh the page.
                         </div>
-                        
-                        <div className="flex gap-3">
-                          {/* View Details Button */}
-                          <button 
-                            onClick={() => {
-                              // Navigate to specific project page based on course type
-                              if (project.courseId === 'ai-tools-mastery') {
-                                navigate(`/ai-tools-project/${project.id}`);
-                              } else if (project.courseId === 'devops-beginner' || project.courseId === 'devops-advanced') {
-                                navigate(`/devops-project/${project.id}`);
-                              } else {
-                                // For other courses, show alert for now
-                                alert('Project details page coming soon for this course!');
-                              }
-                            }}
-                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
-                          >
-                            View Details
-                          </button>
+                      );
+                    }
+                    
+                    // Get the module ID for this project
+                    const moduleId = getModuleIdForProject(project.id, courseData);
+                    
+                    if (!moduleId) {
+                      return (
+                        <div className="text-yellow-400 text-sm">
+                          Module mapping not found for this project.
+                        </div>
+                      );
+                    }
+                    
+                    // Check if this module is already submitted
+                    const isSubmitted = moduleSubmissions[courseData.id]?.[moduleId];
+                    const isAIToolsProject = project.courseId === 'ai-tools-mastery';
+                    
+                    if (isSubmitted) {
+                      // Show submitted status
+                      return (
+                        <div className="space-y-3">
+                          <div className="bg-green-900/30 border border-green-700 rounded-lg p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center mt-0.5">
+                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="text-green-400 font-medium mb-2">Project Submitted Successfully!</h4>
+                                <p className="text-gray-300 text-sm mb-3">
+                                  Submitted on {new Date(isSubmitted.submittedAt).toLocaleDateString()}
+                                </p>
+                                <div className="bg-gray-800 rounded-lg p-3">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex-1">
+                                      <p className="text-gray-400 text-xs mb-1">
+                                        {isAIToolsProject ? 'Google Drive Folder' : 'Git Repository'}
+                                      </p>
+                                      <a 
+                                        href={isSubmitted.submissionUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-400 hover:text-blue-300 underline break-all text-sm"
+                                      >
+                                        {isSubmitted.submissionUrl}
+                                      </a>
+                                    </div>
+                                    <button
+                                      onClick={() => window.open(isSubmitted.submissionUrl, '_blank')}
+                                      className="ml-3 text-blue-400 hover:text-blue-300 transition-colors"
+                                      title="Open submission link"
+                                    >
+                                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                      </svg>
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                           
-                          <button 
-                            onClick={() => {
-                              const isAIToolsProject = project.courseId === 'ai-tools-mastery';
-                              const submissionUrl = isAIToolsProject ? projectGoogleDriveUrl.trim() : projectGitUrl.trim();
-                              
-                              if (submissionUrl) {
-                                console.log('Starting project with URL:', submissionUrl, 'for project:', project.id, 'Type:', isAIToolsProject ? 'Google Drive' : 'Git');
-                                alert(`Project started with ${isAIToolsProject ? 'Google Drive folder' : 'repository'}: ${submissionUrl}`);
-                                if (isAIToolsProject) {
-                                  setProjectGoogleDriveUrl('');
-                                } else {
-                                  setProjectGitUrl('');
-                                }
-                              } else {
-                                alert(`Please enter a valid ${isAIToolsProject ? 'Google Drive folder URL' : 'Git repository URL'}`);
-                              }
-                            }}
-                            disabled={project.courseId === 'ai-tools-mastery' ? !projectGoogleDriveUrl.trim() : !projectGitUrl.trim()}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-colors"
-                          >
-                            {project.status === 'not_started' ? 'Start Project' : (project.courseId === 'ai-tools-mastery' ? 'Update Folder' : 'Update Repository')}
-                          </button>
-                          {project.status === 'in_progress' && (
+                          {/* View Details Button */}
+                          <div className="flex gap-3">
                             <button 
                               onClick={() => {
-                                setSelectedProjectId(project.id);
-                                setShowProjectSubmissionModal(true);
+                                // Navigate to specific project page based on course type
+                                if (project.courseId === 'ai-tools-mastery') {
+                                  navigate(`/ai-tools-project/${project.id}`);
+                                } else if (project.courseId === 'devops-beginner' || project.courseId === 'devops-advanced') {
+                                  navigate(`/devops-project/${project.id}`);
+                                } else {
+                                  // For other courses, show alert for now
+                                  alert('Project details page coming soon for this course!');
+                                }
                               }}
-                              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+                              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+                            >
+                              View Details
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // Show submission form if not submitted
+                    return (
+                      <div className="space-y-3">
+                        {/* URL Upload Field - Conditional based on course */}
+                        <div className="space-y-3">
+                          <div>
+                            {isAIToolsProject ? (
+                              <>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                  Google Drive Folder URL
+                                </label>
+                                <input
+                                  type="url"
+                                  value={projectGoogleDriveUrl}
+                                  onChange={(e) => setProjectGoogleDriveUrl(e.target.value)}
+                                  placeholder="https://drive.google.com/drive/folders/your-folder-id"
+                                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                                <p className="text-gray-400 text-xs mt-1">
+                                  Share your Google Drive folder containing your AI tools project files
+                                </p>
+                              </>
+                            ) : (
+                              <>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                  Git Repository URL
+                                </label>
+                                <input
+                                  type="url"
+                                  value={projectGitUrl}
+                                  onChange={(e) => setProjectGitUrl(e.target.value)}
+                                  placeholder="https://github.com/username/project-name"
+                                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                                <p className="text-gray-400 text-xs mt-1">
+                                  Enter your GitHub repository URL to submit your project
+                                </p>
+                              </>
+                            )}
+                          </div>
+                          
+                          <div className="flex gap-3">
+                            {/* View Details Button */}
+                            <button 
+                              onClick={() => {
+                                // Navigate to specific project page based on course type
+                                if (project.courseId === 'ai-tools-mastery') {
+                                  navigate(`/ai-tools-project/${project.id}`);
+                                } else if (project.courseId === 'devops-beginner' || project.courseId === 'devops-advanced') {
+                                  navigate(`/devops-project/${project.id}`);
+                                } else {
+                                  // For other courses, show alert for now
+                                  alert('Project details page coming soon for this course!');
+                                }
+                              }}
+                              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+                            >
+                              View Details
+                            </button>
+                            
+                            <button 
+                              onClick={async () => {
+                                const submissionUrl = isAIToolsProject ? projectGoogleDriveUrl.trim() : projectGitUrl.trim();
+                                
+                                if (submissionUrl) {
+                                  console.log('Submitting with data:', {
+                                    courseId: courseData.id,
+                                    moduleId: moduleId,
+                                    submissionUrl: submissionUrl,
+                                    projectId: project.id
+                                  });
+                                  
+                                  const success = await submitModuleUrl(courseData.id, moduleId, submissionUrl);
+                                  
+                                  if (success) {
+                                    alert(`✅ Project submitted successfully! Your ${isAIToolsProject ? 'Google Drive folder' : 'Git repository'} has been saved.`);
+                                    // Clear the input field
+                                    if (isAIToolsProject) {
+                                      setProjectGoogleDriveUrl('');
+                                    } else {
+                                      setProjectGitUrl('');
+                                    }
+                                  }
+                                } else {
+                                  alert(`Please enter a valid ${isAIToolsProject ? 'Google Drive folder URL' : 'Git repository URL'}`);
+                                }
+                              }}
+                              disabled={isAIToolsProject ? !projectGoogleDriveUrl.trim() : !projectGitUrl.trim()}
+                              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-colors"
                             >
                               Submit Project
                             </button>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {/* Git Learning Section */}
-                      <div className="bg-gray-700/50 rounded-lg p-3 border border-gray-600">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-white text-sm font-medium">Need help with Git?</p>
-                            <p className="text-gray-400 text-xs">Learn how to create repositories and submit your projects</p>
                           </div>
-                          <button
-                            onClick={() => setShowGitTutorialModal(true)}
-                            className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm transition-colors"
-                          >
-                            Learn Git
-                          </button>
+                        </div>
+                        
+                        {/* Git Learning Section */}
+                        <div className="bg-gray-700/50 rounded-lg p-3 border border-gray-600">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-white text-sm font-medium">Need help with Git?</p>
+                              <p className="text-gray-400 text-xs">Learn how to create repositories and submit your projects</p>
+                            </div>
+                            <button
+                              onClick={() => setShowGitTutorialModal(true)}
+                              className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                            >
+                              Learn Git
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                   
                   {project.status === 'completed' && project.grade && (
                     <div className="bg-green-600/20 border border-green-600/30 rounded-lg p-3">
@@ -2833,6 +3085,7 @@ const StudentPortal = () => {
                   </div>
                 </div>
               </div>
+
 
               {/* My Enrolled Courses */}
               <div>

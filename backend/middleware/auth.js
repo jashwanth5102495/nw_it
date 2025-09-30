@@ -14,7 +14,7 @@ const authenticateStudent = async (req, res, next) => {
     }
 
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-    console.log(token);
+    console.log("Token: ", token);
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
 
