@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LaserFlow from './LaserFlow';
+import React from 'react';
 import { 
   HomeIcon,
   AcademicCapIcon,
@@ -37,7 +38,11 @@ interface Course {
   rating: number;
   students: number;
   maxStudents: number;
-  instructor: string;
+  instructor: string | { name: string };
+  paymentMethod?: string;
+  adminConfirmedBy?: string;
+  adminConfirmedAt?: string;
+  courseId?: string;
 }
 
 interface CourseProgress {
@@ -48,6 +53,8 @@ interface CourseProgress {
   lastAccessedAt: string;
   nextLesson: string;
   isStarted: boolean;
+  totalModules?: number;
+  completedModules?: number;
 }
 
 interface Assignment {
@@ -114,7 +121,7 @@ interface PaymentModalData {
   referralCode: string;
 }
 
-const StudentPortal = () => {
+const StudentPortal: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
@@ -242,7 +249,7 @@ const StudentPortal = () => {
   const fetchModuleSubmissions = async (studentId: string, courseId: string) => {
     try {
       const currentUser = localStorage.getItem('currentUser');
-      const userData = JSON.parse(currentUser);
+      const userData = JSON.parse(currentUser!);
       const token = userData.token;
       console.log(`Token fetch modules: ${token}`);
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/students/${studentId}/module-submissions/${courseId}`, {
@@ -796,14 +803,20 @@ const StudentPortal = () => {
 
   // Generate enrolled courses summary from backend data
   console.log('enrolledCoursesData:', enrolledCoursesData);
-  const enrolledCourses: EnrolledCourseSummary[] = enrolledCoursesData.map((course: any) => {
-    const progress = courseProgress[course.courseId] || courseProgress[course.id];
+  const enrolledCourses: EnrolledCourseSummary[] = enrolledCoursesData.map((course: Course & { 
+    courseId?: string;
+    paymentMethod?: string;
+    adminConfirmedBy?: string;
+    adminConfirmedAt?: string;
+    instructor: string | { name: string };
+  }) => {
+    const progress = courseProgress[course.courseId || course.id];
 
     
     return {
       id: course.courseId || course.id,
       title: course.title,
-      instructor: course.instructor?.name || course.instructor || 'Unknown Instructor',
+      instructor: (course.instructor as any)?.name || course.instructor as string || 'Unknown Instructor',
       progress: progress?.progress || 0,
       totalLessons: progress?.totalLessons || 20,
       completedLessons: progress?.completedLessons || 0,
@@ -822,7 +835,7 @@ const StudentPortal = () => {
   console.log('Final enrolledCourses:', enrolledCourses);
 
   // Available courses for browsing (using allCourses data)
-  const availableCourses = allCourses.filter(course => 
+  const _availableCourses = allCourses.filter(course => 
     !enrolledCourses.some(enrolledCourse => enrolledCourse.id === course.id)
   );
 
@@ -1488,19 +1501,19 @@ const StudentPortal = () => {
             } else {
               console.log('No courses found in backend response');
               setPurchasedCourses([]);
-              setCourses([]);
+              setEnrolledCoursesData([]);
               setCourseProgress({});
             }
           } else {
             console.error('Backend request failed:', response.status);
             setPurchasedCourses([]);
-            setCourses([]);
+            setEnrolledCoursesData([]);
           }
         } catch (error) {
           console.error('Error fetching purchased courses:', error);
           // Set empty data if backend fails
           setPurchasedCourses([]);
-          setCourses([]);
+          setEnrolledCoursesData([]);
           setCourseProgress({});
         }
 
@@ -2897,13 +2910,15 @@ const StudentPortal = () => {
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
+              aria-label={item.label || item.id}
+              title={item.label || item.id}
               className={`w-full flex items-center space-x-3 px-4 py-3 text-left transition-colors ${
                 activeTab === item.id 
                   ? 'bg-green-600 text-white' 
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white'
               }`}
             >
-              <item.icon className="w-5 h-5" />
+              <item.icon className="w-5 h-5" aria-hidden="true" />
               <span>{item.label}</span>
             </button>
           ))}
@@ -3185,8 +3200,11 @@ const StudentPortal = () => {
                   setReferralCode('');
                 }}
                 className="text-gray-400 hover:text-white"
+                aria-label="Close payment modal"
+                title="Close"
               >
-                <XMarkIcon className="h-6 w-6" />
+                <span className="sr-only">Close</span>
+                <XMarkIcon className="h-6 w-6" aria-hidden="true" />
               </button>
             </div>
 
@@ -3294,9 +3312,9 @@ const StudentPortal = () => {
         
         return (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-white">Submit Project</h3>
+            <div className="bg-gray-900 rounded-lg p-6 max-w-md w-full mx-4 border border-gray-700">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-white">Submit Project</h3>
                 <button
                   onClick={() => {
                     setShowProjectSubmissionModal(false);
@@ -3305,18 +3323,19 @@ const StudentPortal = () => {
                     setProjectGoogleDriveUrl('');
                   }}
                   className="text-gray-400 hover:text-white"
+                  aria-label="Close project submission modal"
+                  title="Close"
                 >
-                  <XMarkIcon className="h-6 w-6" />
+                  <span className="sr-only">Close</span>
+                  <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                 </button>
               </div>
-
               <div className="mb-4">
                 {isAIToolsProject ? (
                   <>
                     <p className="text-gray-300 text-sm mb-4">
                       Submit your AI Tools project by providing a Google Drive URL. Make sure your folder is shared with view access so instructors can review your work.
                     </p>
-                    
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Google Drive Folder URL *
                     </label>
@@ -3337,7 +3356,6 @@ const StudentPortal = () => {
                     <p className="text-gray-300 text-sm mb-4">
                       Submit your project by providing the Git repository URL. Make sure your repository is public so instructors can review your code.
                     </p>
-                    
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Git Repository URL *
                     </label>
@@ -3372,278 +3390,274 @@ const StudentPortal = () => {
                 </div>
               )}
 
-               <div className="flex gap-3">
-                 <button
-                   onClick={() => {
-                     setShowProjectSubmissionModal(false);
-                     setSelectedProjectId(null);
-                     setProjectGitUrl('');
-                     setProjectGoogleDriveUrl('');
-                   }}
-                   className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
-                 >
-                   Cancel
-                 </button>
-                 <button
-                   onClick={() => {
-                     const submissionUrl = isAIToolsProject ? projectGoogleDriveUrl.trim() : projectGitUrl.trim();
-                     if (submissionUrl) {
-                       // Here you would typically send the submission to your backend
-                       console.log('Submitting project:', selectedProjectId, 'with URL:', submissionUrl, 'Type:', isAIToolsProject ? 'Google Drive' : 'Git');
-                       alert(`Project submitted successfully! Your instructor will review your ${isAIToolsProject ? 'Google Drive folder' : 'Git repository'} soon.`);
-                       setShowProjectSubmissionModal(false);
-                       setSelectedProjectId(null);
-                       setProjectGitUrl('');
-                       setProjectGoogleDriveUrl('');
-                     }
-                   }}
-                   disabled={isAIToolsProject ? !projectGoogleDriveUrl.trim() : !projectGitUrl.trim()}
-                   className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
-                 >
-                   Submit Project
-                 </button>
-               </div>
-             </div>
-           </div>
-         );
-       })()}
-
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowProjectSubmissionModal(false);
+                    setSelectedProjectId(null);
+                    setProjectGitUrl('');
+                    setProjectGoogleDriveUrl('');
+                  }}
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    const submissionUrl = isAIToolsProject ? projectGoogleDriveUrl.trim() : projectGitUrl.trim();
+                    if (submissionUrl) {
+                      // Here you would typically send the submission to your backend
+                      console.log('Submitting project:', selectedProjectId, 'with URL:', submissionUrl, 'Type:', isAIToolsProject ? 'Google Drive' : 'Git');
+                      alert(`Project submitted successfully! Your instructor will review your ${isAIToolsProject ? 'Google Drive folder' : 'Git repository'} soon.`);
+                      setShowProjectSubmissionModal(false);
+                      setSelectedProjectId(null);
+                      setProjectGitUrl('');
+                      setProjectGoogleDriveUrl('');
+                    }
+                  }}
+                  disabled={isAIToolsProject ? !projectGoogleDriveUrl.trim() : !projectGitUrl.trim()}
+                  className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  Submit Project
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+            
       {/* Git Tutorial Modal */}
       {showGitTutorialModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-white">Learn Git - Complete Guide</h3>
-              <button
-                onClick={() => setShowGitTutorialModal(false)}
-                className="text-gray-400 hover:text-white"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
+        <div>
+          <button
+            onClick={() => setShowGitTutorialModal(false)}
+            className="absolute top-4 right-4 text-gray-400 hover:text-white"
+            aria-label="Close Git tutorial modal"
+            title="Close"
+          >
+            <span className="sr-only">Close</span>
+            <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+          </button>
+          <div className="space-y-6">
+            {/* Introduction */}
+            <div className="bg-gray-700/50 rounded-lg p-4">
+              <h4 className="text-lg font-semibold text-white mb-2">What is Git?</h4>
+              <p className="text-gray-300 text-sm">
+                Git is a version control system that helps you track changes in your code and collaborate with others. 
+                GitHub is a platform that hosts Git repositories online.
+              </p>
             </div>
 
-            <div className="space-y-6">
-              {/* Introduction */}
-              <div className="bg-gray-700/50 rounded-lg p-4">
-                <h4 className="text-lg font-semibold text-white mb-2">What is Git?</h4>
-                <p className="text-gray-300 text-sm">
-                  Git is a version control system that helps you track changes in your code and collaborate with others. 
-                  GitHub is a platform that hosts Git repositories online.
-                </p>
+            {/* Step 1: Install Git */}
+            <div className="bg-gray-700/50 rounded-lg p-4">
+              <h4 className="text-lg font-semibold text-white mb-3">Step 1: Install Git</h4>
+              <p className="text-gray-300 text-sm mb-2">Download and install Git from:</p>
+              <div className="bg-gray-800 rounded p-2 mb-2">
+                <code className="text-green-400">https://git-scm.com/downloads</code>
               </div>
+              <p className="text-gray-300 text-sm">Verify installation by running:</p>
+              <div className="bg-gray-800 rounded p-2">
+                <code className="text-green-400">git --version</code>
+              </div>
+            </div>
 
-              {/* Step 1: Install Git */}
-              <div className="bg-gray-700/50 rounded-lg p-4">
-                <h4 className="text-lg font-semibold text-white mb-3">Step 1: Install Git</h4>
-                <p className="text-gray-300 text-sm mb-2">Download and install Git from:</p>
-                <div className="bg-gray-800 rounded p-2 mb-2">
-                  <code className="text-green-400">https://git-scm.com/downloads</code>
-                </div>
-                <p className="text-gray-300 text-sm">Verify installation by running:</p>
+            {/* Step 2: Configure Git */}
+            <div className="bg-gray-700/50 rounded-lg p-4">
+              <h4 className="text-lg font-semibold text-white mb-3">Step 2: Configure Git (First Time Setup)</h4>
+              <p className="text-gray-300 text-sm mb-2">Set your name and email:</p>
+              <div className="space-y-2">
                 <div className="bg-gray-800 rounded p-2">
-                  <code className="text-green-400">git --version</code>
-                </div>
-              </div>
-
-              {/* Step 2: Configure Git */}
-              <div className="bg-gray-700/50 rounded-lg p-4">
-                <h4 className="text-lg font-semibold text-white mb-3">Step 2: Configure Git (First Time Setup)</h4>
-                <p className="text-gray-300 text-sm mb-2">Set your name and email:</p>
-                <div className="space-y-2">
-                  <div className="bg-gray-800 rounded p-2">
-                    <code className="text-green-400">git config --global user.name "Your Name"</code>
-                  </div>
-                  <div className="bg-gray-800 rounded p-2">
-                    <code className="text-green-400">git config --global user.email "your.email@example.com"</code>
-                  </div>
-                </div>
-                <p className="text-gray-300 text-sm mt-2">Check your configuration:</p>
-                <div className="bg-gray-800 rounded p-2">
-                  <code className="text-green-400">git config --list</code>
-                </div>
-              </div>
-
-              {/* Step 3: Create Repository */}
-              <div className="bg-gray-700/50 rounded-lg p-4">
-                <h4 className="text-lg font-semibold text-white mb-3">Step 3: Create a Repository</h4>
-                
-                <div className="mb-4">
-                  <h5 className="text-white font-medium mb-2">Option A: Create on GitHub first (Recommended)</h5>
-                  <ol className="text-gray-300 text-sm space-y-1 list-decimal list-inside">
-                    <li>Go to <span className="text-blue-400">github.com</span> and sign in</li>
-                    <li>Click "New repository" or the "+" icon</li>
-                    <li>Enter repository name (e.g., "my-project")</li>
-                    <li>Make it <strong>Public</strong> so instructors can see it</li>
-                    <li>Check "Add a README file"</li>
-                    <li>Click "Create repository"</li>
-                  </ol>
-                </div>
-
-                <div>
-                  <h5 className="text-white font-medium mb-2">Option B: Create locally first</h5>
-                  <div className="space-y-2">
-                    <div className="bg-gray-800 rounded p-2">
-                      <code className="text-green-400">mkdir my-project</code>
-                    </div>
-                    <div className="bg-gray-800 rounded p-2">
-                      <code className="text-green-400">cd my-project</code>
-                    </div>
-                    <div className="bg-gray-800 rounded p-2">
-                      <code className="text-green-400">git init</code>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Step 4: Clone Repository */}
-              <div className="bg-gray-700/50 rounded-lg p-4">
-                <h4 className="text-lg font-semibold text-white mb-3">Step 4: Clone Repository (If created on GitHub)</h4>
-                <p className="text-gray-300 text-sm mb-2">Copy the repository to your computer:</p>
-                <div className="bg-gray-800 rounded p-2 mb-2">
-                  <code className="text-green-400">git clone https://github.com/username/repository-name.git</code>
+                  <code className="text-green-400">git config --global user.name "Your Name"</code>
                 </div>
                 <div className="bg-gray-800 rounded p-2">
-                  <code className="text-green-400">cd repository-name</code>
+                  <code className="text-green-400">git config --global user.email "your.email@example.com"</code>
                 </div>
               </div>
-
-              {/* Step 5: Basic Git Workflow */}
-              <div className="bg-gray-700/50 rounded-lg p-4">
-                <h4 className="text-lg font-semibold text-white mb-3">Step 5: Basic Git Workflow</h4>
-                
-                <div className="space-y-4">
-                  <div>
-                    <h5 className="text-white font-medium mb-2">1. Check status of your files:</h5>
-                    <div className="bg-gray-800 rounded p-2">
-                      <code className="text-green-400">git status</code>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h5 className="text-white font-medium mb-2">2. Add files to staging area:</h5>
-                    <div className="space-y-2">
-                      <div className="bg-gray-800 rounded p-2">
-                        <code className="text-green-400">git add filename.txt</code>
-                        <span className="text-gray-400 ml-2"># Add specific file</span>
-                      </div>
-                      <div className="bg-gray-800 rounded p-2">
-                        <code className="text-green-400">git add .</code>
-                        <span className="text-gray-400 ml-2"># Add all files</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h5 className="text-white font-medium mb-2">3. Commit your changes:</h5>
-                    <div className="bg-gray-800 rounded p-2">
-                      <code className="text-green-400">git commit -m "Your commit message"</code>
-                    </div>
-                    <p className="text-gray-300 text-xs mt-1">Example: "Add project files" or "Fix login bug"</p>
-                  </div>
-
-                  <div>
-                    <h5 className="text-white font-medium mb-2">4. Push to GitHub:</h5>
-                    <div className="bg-gray-800 rounded p-2">
-                      <code className="text-green-400">git push origin main</code>
-                    </div>
-                  </div>
-                </div>
+              <p className="text-gray-300 text-sm mt-2">Check your configuration:</p>
+              <div className="bg-gray-800 rounded p-2">
+                <code className="text-green-400">git config --list</code>
               </div>
+            </div>
 
-              {/* Step 6: Connect Local to Remote */}
-              <div className="bg-gray-700/50 rounded-lg p-4">
-                <h4 className="text-lg font-semibold text-white mb-3">Step 6: Connect Local Repository to GitHub</h4>
-                <p className="text-gray-300 text-sm mb-2">If you created the repository locally first:</p>
-                <div className="space-y-2">
-                  <div className="bg-gray-800 rounded p-2">
-                    <code className="text-green-400">git remote add origin https://github.com/username/repository-name.git</code>
-                  </div>
-                  <div className="bg-gray-800 rounded p-2">
-                    <code className="text-green-400">git branch -M main</code>
-                  </div>
-                  <div className="bg-gray-800 rounded p-2">
-                    <code className="text-green-400">git push -u origin main</code>
-                  </div>
-                </div>
-              </div>
-
-              {/* Common Commands */}
-              <div className="bg-gray-700/50 rounded-lg p-4">
-                <h4 className="text-lg font-semibold text-white mb-3">Common Git Commands</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <h5 className="text-white font-medium mb-2">View Information:</h5>
-                    <div className="space-y-1 text-sm">
-                      <div className="bg-gray-800 rounded p-2">
-                        <code className="text-green-400">git status</code>
-                        <span className="text-gray-400 block text-xs">Check file status</span>
-                      </div>
-                      <div className="bg-gray-800 rounded p-2">
-                        <code className="text-green-400">git log</code>
-                        <span className="text-gray-400 block text-xs">View commit history</span>
-                      </div>
-                      <div className="bg-gray-800 rounded p-2">
-                        <code className="text-green-400">git diff</code>
-                        <span className="text-gray-400 block text-xs">See changes</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h5 className="text-white font-medium mb-2">Undo Changes:</h5>
-                    <div className="space-y-1 text-sm">
-                      <div className="bg-gray-800 rounded p-2">
-                        <code className="text-green-400">git reset filename</code>
-                        <span className="text-gray-400 block text-xs">Unstage file</span>
-                      </div>
-                      <div className="bg-gray-800 rounded p-2">
-                        <code className="text-green-400">git checkout -- filename</code>
-                        <span className="text-gray-400 block text-xs">Discard changes</span>
-                      </div>
-                      <div className="bg-gray-800 rounded p-2">
-                        <code className="text-green-400">git pull</code>
-                        <span className="text-gray-400 block text-xs">Get latest changes</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick Start Guide */}
-              <div className="bg-blue-600/20 border border-blue-600/30 rounded-lg p-4">
-                <h4 className="text-lg font-semibold text-blue-400 mb-3">🚀 Quick Start for Your Project</h4>
-                <ol className="text-gray-300 text-sm space-y-2 list-decimal list-inside">
-                  <li>Create a new repository on GitHub (make it <strong>public</strong>)</li>
-                  <li>Clone it: <code className="bg-gray-800 px-1 rounded text-green-400">git clone [your-repo-url]</code></li>
-                  <li>Add your project files to the folder</li>
-                  <li>Stage files: <code className="bg-gray-800 px-1 rounded text-green-400">git add .</code></li>
-                  <li>Commit: <code className="bg-gray-800 px-1 rounded text-green-400">git commit -m "Initial project submission"</code></li>
-                  <li>Push: <code className="bg-gray-800 px-1 rounded text-green-400">git push origin main</code></li>
-                  <li>Copy the repository URL and submit it in your project!</li>
+            {/* Step 3: Create Repository */}
+            <div className="bg-gray-700/50 rounded-lg p-4">
+              <h4 className="text-lg font-semibold text-white mb-3">Step 3: Create a Repository</h4>
+              
+              <div className="mb-4">
+                <h5 className="text-white font-medium mb-2">Option A: Create on GitHub first (Recommended)</h5>
+                <ol className="text-gray-300 text-sm space-y-1 list-decimal list-inside">
+                  <li>Go to <span className="text-blue-400">github.com</span> and sign in</li>
+                  <li>Click "New repository" or the "+" icon</li>
+                  <li>Enter repository name (e.g., "my-project")</li>
+                  <li>Make it <strong>Public</strong> so instructors can see it</li>
+                  <li>Check "Add a README file"</li>
+                  <li>Click "Create repository"</li>
                 </ol>
               </div>
 
-              {/* Tips */}
-              <div className="bg-yellow-600/20 border border-yellow-600/30 rounded-lg p-4">
-                <h4 className="text-lg font-semibold text-yellow-400 mb-3">💡 Important Tips</h4>
-                <ul className="text-gray-300 text-sm space-y-1 list-disc list-inside">
-                  <li>Always make your repository <strong>public</strong> so instructors can access it</li>
-                  <li>Write clear commit messages describing what you changed</li>
-                  <li>Include a README.md file explaining your project</li>
-                  <li>Don't commit sensitive information (passwords, API keys)</li>
-                  <li>Commit frequently with small, logical changes</li>
-                </ul>
+              <div>
+                <h5 className="text-white font-medium mb-2">Option B: Create locally first</h5>
+                <div className="space-y-2">
+                  <div className="bg-gray-800 rounded p-2">
+                    <code className="text-green-400">mkdir my-project</code>
+                  </div>
+                  <div className="bg-gray-800 rounded p-2">
+                    <code className="text-green-400">cd my-project</code>
+                  </div>
+                  <div className="bg-gray-800 rounded p-2">
+                    <code className="text-green-400">git init</code>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="mt-6 text-center">
-              <button
-                onClick={() => setShowGitTutorialModal(false)}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors"
-              >
-                Got it! Close Tutorial
-              </button>
+            {/* Step 4: Clone Repository */}
+            <div className="bg-gray-700/50 rounded-lg p-4">
+              <h4 className="text-lg font-semibold text-white mb-3">Step 4: Clone Repository (If created on GitHub)</h4>
+              <p className="text-gray-300 text-sm mb-2">Copy the repository to your computer:</p>
+              <div className="bg-gray-800 rounded p-2 mb-2">
+                <code className="text-green-400">git clone https://github.com/username/repository-name.git</code>
+              </div>
+              <div className="bg-gray-800 rounded p-2">
+                <code className="text-green-400">cd repository-name</code>
+              </div>
             </div>
+
+            {/* Step 5: Basic Git Workflow */}
+            <div className="bg-gray-700/50 rounded-lg p-4">
+              <h4 className="text-lg font-semibold text-white mb-3">Step 5: Basic Git Workflow</h4>
+              
+              <div className="space-y-4">
+                <div>
+                  <h5 className="text-white font-medium mb-2">1. Check status of your files:</h5>
+                  <div className="bg-gray-800 rounded p-2">
+                    <code className="text-green-400">git status</code>
+                  </div>
+                </div>
+
+                <div>
+                  <h5 className="text-white font-medium mb-2">2. Add files to staging area:</h5>
+                  <div className="space-y-2">
+                    <div className="bg-gray-800 rounded p-2">
+                      <code className="text-green-400">git add filename.txt</code>
+                      <span className="text-gray-400 ml-2"># Add specific file</span>
+                    </div>
+                    <div className="bg-gray-800 rounded p-2">
+                      <code className="text-green-400">git add .</code>
+                      <span className="text-gray-400 ml-2"># Add all files</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h5 className="text-white font-medium mb-2">3. Commit your changes:</h5>
+                  <div className="bg-gray-800 rounded p-2">
+                    <code className="text-green-400">git commit -m "Your commit message"</code>
+                  </div>
+                  <p className="text-gray-300 text-xs mt-1">Example: "Add project files" or "Fix login bug"</p>
+                </div>
+
+                <div>
+                  <h5 className="text-white font-medium mb-2">4. Push to GitHub:</h5>
+                  <div className="bg-gray-800 rounded p-2">
+                    <code className="text-green-400">git push origin main</code>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 6: Connect Local to Remote */}
+            <div className="bg-gray-700/50 rounded-lg p-4">
+              <h4 className="text-lg font-semibold text-white mb-3">Step 6: Connect Local Repository to GitHub</h4>
+              <p className="text-gray-300 text-sm mb-2">If you created the repository locally first:</p>
+              <div className="space-y-2">
+                <div className="bg-gray-800 rounded p-2">
+                  <code className="text-green-400">git remote add origin https://github.com/username/repository-name.git</code>
+                </div>
+                <div className="bg-gray-800 rounded p-2">
+                  <code className="text-green-400">git branch -M main</code>
+                </div>
+                <div className="bg-gray-800 rounded p-2">
+                  <code className="text-green-400">git push -u origin main</code>
+                </div>
+              </div>
+            </div>
+
+            {/* Common Commands */}
+            <div className="bg-gray-700/50 rounded-lg p-4">
+              <h4 className="text-lg font-semibold text-white mb-3">Common Git Commands</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h5 className="text-white font-medium mb-2">View Information:</h5>
+                  <div className="space-y-1 text-sm">
+                    <div className="bg-gray-800 rounded p-2">
+                      <code className="text-green-400">git status</code>
+                      <span className="text-gray-400 block text-xs">Check file status</span>
+                    </div>
+                    <div className="bg-gray-800 rounded p-2">
+                      <code className="text-green-400">git log</code>
+                      <span className="text-gray-400 block text-xs">View commit history</span>
+                    </div>
+                    <div className="bg-gray-800 rounded p-2">
+                      <code className="text-green-400">git diff</code>
+                      <span className="text-gray-400 block text-xs">See changes</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h5 className="text-white font-medium mb-2">Undo Changes:</h5>
+                  <div className="space-y-1 text-sm">
+                    <div className="bg-gray-800 rounded p-2">
+                      <code className="text-green-400">git reset filename</code>
+                      <span className="text-gray-400 block text-xs">Unstage file</span>
+                    </div>
+                    <div className="bg-gray-800 rounded p-2">
+                      <code className="text-green-400">git checkout -- filename</code>
+                      <span className="text-gray-400 block text-xs">Discard changes</span>
+                    </div>
+                    <div className="bg-gray-800 rounded p-2">
+                      <code className="text-green-400">git pull</code>
+                      <span className="text-gray-400 block text-xs">Get latest changes</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Start Guide */}
+            <div className="bg-blue-600/20 border border-blue-600/30 rounded-lg p-4">
+              <h4 className="text-lg font-semibold text-blue-400 mb-3">🚀 Quick Start for Your Project</h4>
+              <ol className="text-gray-300 text-sm space-y-2 list-decimal list-inside">
+                <li>Create a new repository on GitHub (make it <strong>public</strong>)</li>
+                <li>Clone it: <code className="bg-gray-800 px-1 rounded text-green-400">git clone [your-repo-url]</code></li>
+                <li>Add your project files to the folder</li>
+                <li>Stage files: <code className="bg-gray-800 px-1 rounded text-green-400">git add .</code></li>
+                <li>Commit: <code className="bg-gray-800 px-1 rounded text-green-400">git commit -m "Initial project submission"</code></li>
+                <li>Push: <code className="bg-gray-800 px-1 rounded text-green-400">git push origin main</code></li>
+                <li>Copy the repository URL and submit it in your project!</li>
+              </ol>
+            </div>
+
+            {/* Tips */}
+            <div className="bg-yellow-600/20 border border-yellow-600/30 rounded-lg p-4">
+              <h4 className="text-lg font-semibold text-yellow-400 mb-3">💡 Important Tips</h4>
+              <ul className="text-gray-300 text-sm space-y-1 list-disc list-inside">
+                <li>Always make your repository <strong>public</strong> so instructors can access it</li>
+                <li>Write clear commit messages describing what you changed</li>
+                <li>Include a README.md file explaining your project</li>
+                <li>Don't commit sensitive information (passwords, API keys)</li>
+                <li>Commit frequently with small, logical changes</li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => setShowGitTutorialModal(false)}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors"
+            >
+              Got it! Close Tutorial
+            </button>
           </div>
         </div>
       )}
@@ -3993,20 +4007,3 @@ const StudentPortal = () => {
 };
 
 export default StudentPortal;
-
-// Sets the enrolled courses data (used for compatibility with legacy code)
-function setCourses(courses: Course[]) {
-  setEnrolledCoursesData(courses);
-}
-
-function setEnrolledCoursesData(courses: Course[]) {
-  // This function updates the enrolled courses state.
-  // In the component, setEnrolledCoursesData is a useState setter, so just call the setter.
-  // If you want to keep compatibility with legacy code, you can update the state here.
-  // But since setEnrolledCoursesData is already a useState setter, this is a no-op.
-  // You can remove this function and use setEnrolledCoursesData directly, or keep it for compatibility.
-  // For now, just call the setter.
-  // @ts-ignore
-  setEnrolledCoursesData(courses);
-}
-

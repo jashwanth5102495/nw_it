@@ -266,6 +266,7 @@ const StudentRegistration = () => {
           className={`w-full px-4 py-3 bg-gray-800/50 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${
             errors.dateOfBirth ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-600 focus:border-blue-500 focus:ring-blue-500'
           }`}
+          placeholder="Select your date of birth"
         />
         {errors.dateOfBirth && <p className="mt-1 text-sm text-red-400">{errors.dateOfBirth}</p>}
       </div>
@@ -281,10 +282,11 @@ const StudentRegistration = () => {
       transition={{ duration: 0.3 }}
     >
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
+        <label htmlFor="education-select" className="block text-sm font-medium text-gray-300 mb-2">
           Education *
         </label>
         <select
+          id="education-select"
           value={studentDetails.education}
           onChange={(e) => handleInputChange('education', e.target.value)}
           className={`w-full px-4 py-3 bg-gray-800/50 border rounded-lg text-white focus:outline-none focus:ring-1 transition-colors ${
@@ -307,6 +309,8 @@ const StudentRegistration = () => {
           Experience Level
         </label>
         <select
+          id="experience-select"
+          aria-label="Experience Level"
           value={studentDetails.experience}
           onChange={(e) => handleInputChange('experience', e.target.value)}
           className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"

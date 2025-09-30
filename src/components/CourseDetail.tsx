@@ -9,6 +9,24 @@ interface CourseModule {
   topics: string[];
 }
 
+interface CourseAddonModule {
+  title: string;
+  duration: string;
+  topics: string[];
+}
+
+interface CourseAddon {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  duration: string;
+  features: string[];
+  modules: CourseAddonModule[];
+  prerequisites: string[];
+  note: string;
+}
+
 interface Course {
   id: string;
   title: string;
@@ -18,11 +36,15 @@ interface Course {
   detailedDescription: string;
   technologies: string[];
   price: number;
+  originalPrice?: number;
   duration: string;
   projects: number;
   modules: CourseModule[];
   prerequisites: string[];
   whatYouWillLearn: string[];
+  certification?: string;
+  premiumFeatures?: string[];
+  addons?: CourseAddon[];
 }
 
 const CourseDetail = () => {
@@ -328,7 +350,7 @@ const CourseDetail = () => {
   };
 
   const validateReferralCode = async () => {
-    if (!referralCode.trim()) return;
+    if (!referralCode.trim() || !course) return;
     
     setIsValidatingCode(true);
     

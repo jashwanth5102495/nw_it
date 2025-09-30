@@ -21,8 +21,11 @@ interface Course {
   detailedDescription: string;
   technologies: string[];
   price: number;
+  originalPrice?: number;
   duration: string;
   projects: number;
+  certification?: string;
+  premiumFeatures?: string[];
   modules: CourseModule[];
   prerequisites: string[];
   whatYouWillLearn: string[];
