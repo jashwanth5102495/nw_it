@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const Student = require('../models/Student');
 const Course = require('../models/Course');
 const User = require('../models/User'); // Add User model
+const StudentProgress = require('../models/StudentProgress');
 const { authenticateStudent, authorizeOwnProfile } = require('../middleware/auth');
 const router = express.Router();
 
@@ -477,6 +478,562 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error deleting student',
+      error: error.message
+    });
+  }
+});
+
+// ===== STUDENT PROGRESS TRACKING ROUTES =====
+
+// Get comprehensive progress for a student across all courses
+router.get('/:id/progress', authenticateStudent, authorizeOwnProfile, async (req, res) => {
+  try {
+    const studentId = req.params.id;
+    
+    const progressRecords = await StudentProgress.getProgressByStudent(studentId);
+    
+    if (!progressRecords || progressRecords.length === 0) {
+      return res.json({
+        success: true,
+        message: 'No progress records found',
+        data: []
+      });
+    }
+
+    // Calculate overall statistics
+    const overallStats = {
+      totalCourses: progressRecords.length,
+      completedCourses: progressRecords.filter(p => p.status === 'completed').length,
+      inProgressCourses: progressRecords.filter(p => p.status === 'in-progress').length,
+      totalTimeSpent: progressRecords.reduce((sum, p) => sum + p.totalTimeSpent, 0),
+      averageProgress: Math.round(progressRecords.reduce((sum, p) => sum + p.overallProgress, 0) / progressRecords.length),
+      totalMilestones: progressRecords.reduce((sum, p) => sum + p.milestones.length, 0)
+    };
+
+    res.json({
+      success: true,
+      data: {
+        progressRecords,
+        overallStats
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching student progress:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching student progress',
+      error: error.message
+    });
+  }
+});
+
+// Get detailed progress for a specific course
+router.get('/:id/progress/course/:courseId', authenticateStudent, authorizeOwnProfile, async (req, res) => {
+  try {
+    const { id: studentId, courseId } = req.params;
+    
+    const progress = await StudentProgress.findOne({ 
+      studentId, 
+      courseId 
+    }).populate('courseId', 'title courseId category level modules');
+
+    if (!progress) {
+      return res.status(404).json({
+        success: false,
+        message: 'Progress record not found for this course'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: progress
+    });
+  } catch (error) {
+    console.error('Error fetching course progress:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching course progress',
+      error: error.message
+    });
+  }
+});
+
+// Initialize or create progress tracking for a course
+router.post('/:id/progress/initialize', authenticateStudent, authorizeOwnProfile, async (req, res) => {
+  try {
+    const studentId = req.params.id;
+    const { courseId } = req.body;
+
+    // Check if progress already exists
+    let progress = await StudentProgress.findOne({ studentId, courseId });
+    
+    if (progress) {
+      return res.json({
+        success: true,
+        message: 'Progress already exists',
+        data: progress
+      });
+    }
+
+    // Get course details to initialize modules
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found'
+      });
+    }
+
+    // Create new progress record
+    progress = new StudentProgress({
+      studentId,
+      courseId,
+      enrollmentDate: new Date(),
+      modules: course.modules.map((module, index) => ({
+        moduleId: `module_${index + 1}`,
+        moduleTitle: module.title,
+        lessons: module.topics.map((topic, topicIndex) => ({
+          lessonId: `lesson_${index + 1}_${topicIndex + 1}`,
+          lessonTitle: topic
+        }))
+      }))
+    });
+
+    await progress.save();
+
+    // Add first milestone
+    progress.addMilestone('first_lesson', 'Started learning journey');
+    await progress.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Progress tracking initialized successfully',
+      data: progress
+    });
+  } catch (error) {
+    console.error('Error initializing progress:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error initializing progress',
+      error: error.message
+    });
+  }
+});
+
+// Start a learning session
+router.post('/:id/progress/session/start', authenticateStudent, authorizeOwnProfile, async (req, res) => {
+  try {
+    const studentId = req.params.id;
+    const { courseId } = req.body;
+
+    const progress = await StudentProgress.findOne({ studentId, courseId });
+    if (!progress) {
+      return res.status(404).json({
+        success: false,
+        message: 'Progress record not found'
+      });
+    }
+
+    progress.startSession();
+    await progress.save();
+
+    res.json({
+      success: true,
+      message: 'Learning session started',
+      data: {
+        sessionStartTime: progress.currentSession.startTime,
+        isActive: progress.currentSession.isActive
+      }
+    });
+  } catch (error) {
+    console.error('Error starting session:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error starting session',
+      error: error.message
+    });
+  }
+});
+
+// End a learning session
+router.post('/:id/progress/session/end', authenticateStudent, authorizeOwnProfile, async (req, res) => {
+  try {
+    const studentId = req.params.id;
+    const { courseId } = req.body;
+
+    const progress = await StudentProgress.findOne({ studentId, courseId });
+    if (!progress) {
+      return res.status(404).json({
+        success: false,
+        message: 'Progress record not found'
+      });
+    }
+
+    progress.endSession();
+    await progress.save();
+
+    res.json({
+      success: true,
+      message: 'Learning session ended',
+      data: {
+        totalTimeSpent: progress.totalTimeSpent,
+        averageSessionTime: progress.averageSessionTime
+      }
+    });
+  } catch (error) {
+    console.error('Error ending session:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error ending session',
+      error: error.message
+    });
+  }
+});
+
+// Update lesson progress
+router.put('/:id/progress/lesson', authenticateStudent, authorizeOwnProfile, async (req, res) => {
+  try {
+    const studentId = req.params.id;
+    const { 
+      courseId, 
+      moduleId, 
+      lessonId, 
+      status, 
+      watchProgress, 
+      timeSpent, 
+      notes 
+    } = req.body;
+
+    const progress = await StudentProgress.findOne({ studentId, courseId });
+    if (!progress) {
+      return res.status(404).json({
+        success: false,
+        message: 'Progress record not found'
+      });
+    }
+
+    const module = progress.modules.find(m => m.moduleId === moduleId);
+    if (!module) {
+      return res.status(404).json({
+        success: false,
+        message: 'Module not found'
+      });
+    }
+
+    const lesson = module.lessons.find(l => l.lessonId === lessonId);
+    if (!lesson) {
+      return res.status(404).json({
+        success: false,
+        message: 'Lesson not found'
+      });
+    }
+
+    // Update lesson progress
+    if (status) lesson.status = status;
+    if (watchProgress !== undefined) lesson.watchProgress = watchProgress;
+    if (timeSpent !== undefined) {
+      lesson.timeSpent += timeSpent;
+      module.totalTimeSpent += timeSpent;
+    }
+    if (notes) {
+      lesson.notes.push({ content: notes });
+    }
+
+    lesson.lastAccessedAt = new Date();
+
+    // Mark as started if not already
+    if (lesson.status !== 'not-started' && !lesson.startedAt) {
+      lesson.startedAt = new Date();
+    }
+
+    // Mark as completed if status is completed
+    if (lesson.status === 'completed' && !lesson.completedAt) {
+      lesson.completedAt = new Date();
+      progress.activityLog.push({
+        type: 'lesson_completed',
+        details: { moduleId, lessonId, lessonTitle: lesson.lessonTitle }
+      });
+    }
+
+    // Update module progress
+    const completedLessons = module.lessons.filter(l => l.status === 'completed').length;
+    module.progressPercentage = Math.round((completedLessons / module.lessons.length) * 100);
+
+    if (module.progressPercentage > 0 && !module.startedAt) {
+      module.startedAt = new Date();
+    }
+
+    if (module.progressPercentage === 100 && !module.completedAt) {
+      module.completedAt = new Date();
+      module.status = 'completed';
+      progress.addMilestone('first_module', `Completed module: ${module.moduleTitle}`);
+    }
+
+    progress.lastActivityAt = new Date();
+    await progress.save();
+
+    res.json({
+      success: true,
+      message: 'Lesson progress updated successfully',
+      data: {
+        lesson,
+        moduleProgress: module.progressPercentage,
+        overallProgress: progress.overallProgress
+      }
+    });
+  } catch (error) {
+    console.error('Error updating lesson progress:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating lesson progress',
+      error: error.message
+    });
+  }
+});
+
+// Update assignment progress
+router.put('/:id/progress/assignment', authenticateStudent, authorizeOwnProfile, async (req, res) => {
+  try {
+    const studentId = req.params.id;
+    const { 
+      courseId, 
+      moduleId, 
+      assignmentId, 
+      status, 
+      score,
+      maxScore,
+      timeSpent,
+      feedback 
+    } = req.body;
+
+    const progress = await StudentProgress.findOne({ studentId, courseId });
+    if (!progress) {
+      return res.status(404).json({
+        success: false,
+        message: 'Progress record not found'
+      });
+    }
+
+    const module = progress.modules.find(m => m.moduleId === moduleId);
+    if (!module) {
+      return res.status(404).json({
+        success: false,
+        message: 'Module not found'
+      });
+    }
+
+    let assignment = module.assignments.find(a => a.assignmentId === assignmentId);
+    if (!assignment) {
+      // Create new assignment if it doesn't exist
+      assignment = {
+        assignmentId,
+        assignmentTitle: req.body.assignmentTitle || 'Assignment',
+        status: 'not-started',
+        attempts: []
+      };
+      module.assignments.push(assignment);
+      assignment = module.assignments[module.assignments.length - 1];
+    }
+
+    // Update assignment progress
+    if (status) assignment.status = status;
+    if (score !== undefined) assignment.score = score;
+    if (maxScore !== undefined) assignment.maxScore = maxScore;
+    if (timeSpent !== undefined) assignment.timeSpent += timeSpent;
+    if (feedback) assignment.feedback = feedback;
+
+    // Handle submission
+    if (status === 'submitted' && !assignment.submittedAt) {
+      assignment.submittedAt = new Date();
+      
+      // Add attempt record
+      assignment.attempts.push({
+        attemptNumber: assignment.attempts.length + 1,
+        submittedAt: new Date(),
+        score: score || 0,
+        timeSpent: timeSpent || 0
+      });
+
+      progress.activityLog.push({
+        type: 'assignment_submitted',
+        details: { moduleId, assignmentId, assignmentTitle: assignment.assignmentTitle }
+      });
+    }
+
+    progress.lastActivityAt = new Date();
+    await progress.save();
+
+    res.json({
+      success: true,
+      message: 'Assignment progress updated successfully',
+      data: {
+        assignment,
+        overallProgress: progress.overallProgress
+      }
+    });
+  } catch (error) {
+    console.error('Error updating assignment progress:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating assignment progress',
+      error: error.message
+    });
+  }
+});
+
+// Update quiz progress
+router.put('/:id/progress/quiz', authenticateStudent, authorizeOwnProfile, async (req, res) => {
+  try {
+    const studentId = req.params.id;
+    const { 
+      courseId, 
+      moduleId, 
+      quizId, 
+      score,
+      maxScore,
+      timeSpent,
+      answers
+    } = req.body;
+
+    const progress = await StudentProgress.findOne({ studentId, courseId });
+    if (!progress) {
+      return res.status(404).json({
+        success: false,
+        message: 'Progress record not found'
+      });
+    }
+
+    const module = progress.modules.find(m => m.moduleId === moduleId);
+    if (!module) {
+      return res.status(404).json({
+        success: false,
+        message: 'Module not found'
+      });
+    }
+
+    let quiz = module.quizzes.find(q => q.quizId === quizId);
+    if (!quiz) {
+      // Create new quiz if it doesn't exist
+      quiz = {
+        quizId,
+        quizTitle: req.body.quizTitle || 'Quiz',
+        status: 'not-started',
+        attempts: [],
+        bestScore: 0,
+        totalAttempts: 0,
+        averageScore: 0
+      };
+      module.quizzes.push(quiz);
+      quiz = module.quizzes[module.quizzes.length - 1];
+    }
+
+    // Add attempt
+    const attempt = {
+      attemptNumber: quiz.attempts.length + 1,
+      startedAt: new Date(Date.now() - (timeSpent * 60000)), // Calculate start time
+      completedAt: new Date(),
+      score: score || 0,
+      maxScore: maxScore || 100,
+      timeSpent: timeSpent || 0,
+      answers: answers || []
+    };
+
+    quiz.attempts.push(attempt);
+    quiz.totalAttempts++;
+    quiz.status = 'completed';
+
+    // Update best score and average
+    quiz.bestScore = Math.max(quiz.bestScore, score || 0);
+    quiz.averageScore = Math.round(quiz.attempts.reduce((sum, att) => sum + att.score, 0) / quiz.attempts.length);
+
+    progress.activityLog.push({
+      type: 'quiz_taken',
+      details: { 
+        moduleId, 
+        quizId, 
+        quizTitle: quiz.quizTitle,
+        score,
+        attemptNumber: attempt.attemptNumber
+      }
+    });
+
+    progress.lastActivityAt = new Date();
+    await progress.save();
+
+    res.json({
+      success: true,
+      message: 'Quiz progress updated successfully',
+      data: {
+        quiz,
+        attempt,
+        overallProgress: progress.overallProgress
+      }
+    });
+  } catch (error) {
+    console.error('Error updating quiz progress:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating quiz progress',
+      error: error.message
+    });
+  }
+});
+
+// Get learning analytics for a student
+router.get('/:id/analytics', authenticateStudent, authorizeOwnProfile, async (req, res) => {
+  try {
+    const studentId = req.params.id;
+    const { courseId, timeframe = '30d' } = req.query;
+
+    let query = { studentId };
+    if (courseId) query.courseId = courseId;
+
+    const progressRecords = await StudentProgress.find(query)
+      .populate('courseId', 'title category level');
+
+    if (!progressRecords.length) {
+      return res.json({
+        success: true,
+        message: 'No data available for analytics',
+        data: null
+      });
+    }
+
+    // Calculate analytics
+    const analytics = {
+      summary: {
+        totalCourses: progressRecords.length,
+        completedCourses: progressRecords.filter(p => p.status === 'completed').length,
+        totalTimeSpent: progressRecords.reduce((sum, p) => sum + p.totalTimeSpent, 0),
+        averageEngagement: Math.round(progressRecords.reduce((sum, p) => sum + p.performanceMetrics.engagementScore, 0) / progressRecords.length)
+      },
+      performance: {
+        averageQuizScore: Math.round(progressRecords.reduce((sum, p) => sum + p.performanceMetrics.averageQuizScore, 0) / progressRecords.length),
+        averageAssignmentScore: Math.round(progressRecords.reduce((sum, p) => sum + p.performanceMetrics.averageAssignmentScore, 0) / progressRecords.length),
+        completionRate: Math.round(progressRecords.reduce((sum, p) => sum + p.performanceMetrics.completionRate, 0) / progressRecords.length)
+      },
+      streaks: {
+        currentStreak: Math.max(...progressRecords.map(p => p.performanceMetrics.streakDays), 0),
+        longestStreak: Math.max(...progressRecords.map(p => p.performanceMetrics.longestStreak), 0)
+      },
+      recentActivity: progressRecords
+        .flatMap(p => p.activityLog.map(log => ({ ...log.toObject(), courseTitle: p.courseId?.title })))
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+        .slice(0, 20),
+      milestones: progressRecords
+        .flatMap(p => p.milestones.map(m => ({ ...m.toObject(), courseTitle: p.courseId?.title })))
+        .sort((a, b) => new Date(b.achievedAt) - new Date(a.achievedAt))
+    };
+
+    res.json({
+      success: true,
+      data: analytics
+    });
+  } catch (error) {
+    console.error('Error fetching analytics:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching analytics',
       error: error.message
     });
   }
