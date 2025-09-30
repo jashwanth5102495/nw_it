@@ -2883,6 +2883,43 @@ const StudentPortal = () => {
                   ))}
                 </div>
               </div>
+
+              {/* Dashboard Boxes - Assignments, Test Results */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                {/* Assignments Box */}
+                <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <span className="text-white text-lg">📝</span>
+                      </div>
+                      <div>
+                        <h3 className="text-white font-semibold">Assignments</h3>
+                        <p className="text-gray-400 text-sm">0/0</p>
+                      </div>
+                    </div>
+                    <span className="text-gray-500 text-sm">0.0</span>
+                  </div>
+                  <p className="text-gray-400 text-sm">No assignments available</p>
+                </div>
+
+                {/* Test Results Box */}
+                <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                        <span className="text-white text-lg">🧪</span>
+                      </div>
+                      <div>
+                        <h3 className="text-white font-semibold">Test Results</h3>
+                        <p className="text-gray-400 text-sm">0.0</p>
+                      </div>
+                    </div>
+                    <span className="text-gray-500 text-sm">0.0</span>
+                  </div>
+                  <p className="text-gray-400 text-sm">No tests available</p>
+                </div>
+              </div>
             </>
           ) : (
             renderTabContent()

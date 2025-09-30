@@ -1258,7 +1258,7 @@ const AdminPanel: React.FC = () => {
                               </div>
 
                               {/* Assignments Section */}
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
                                 <div className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-lg p-3 border border-blue-500/30">
                                   <h5 className="text-white font-medium mb-2 flex items-center">
                                     📝 Assignments
@@ -1316,6 +1316,30 @@ const AdminPanel: React.FC = () => {
                                     )) || (
                                       <p className="text-white/60 text-sm">No tests available</p>
                                     )}
+                                  </div>
+                                </div>
+
+                                <div className="bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-lg p-3 border border-orange-500/30">
+                                  <h5 className="text-white font-medium mb-2 flex items-center">
+                                    💾 Git/Drives
+                                    <span className="ml-2 px-2 py-1 bg-orange-600 text-white text-xs rounded-full">
+                                      0/0
+                                    </span>
+                                  </h5>
+                                  <div className="space-y-2">
+                                    <div className="flex items-center justify-between text-sm">
+                                      <span className="text-white/80">Git Repository</span>
+                                      <button className="px-2 py-1 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded-lg transition-colors duration-200">
+                                        Connect Git
+                                      </button>
+                                    </div>
+                                    <div className="flex items-center justify-between text-sm">
+                                      <span className="text-white/80">Google Drive</span>
+                                      <button className="px-2 py-1 bg-blue-700 hover:bg-blue-600 text-white text-xs rounded-lg transition-colors duration-200">
+                                        Connect Drive
+                                      </button>
+                                    </div>
+                                    <p className="text-white/60 text-sm">No repositories connected</p>
                                   </div>
                                 </div>
                               </div>
