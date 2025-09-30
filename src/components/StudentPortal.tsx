@@ -1861,7 +1861,7 @@ const StudentPortal: React.FC = () => {
                       if (!currentUser) return;
                       
                       const userData = JSON.parse(currentUser);
-                      const response = await fetch(`http://localhost:5000/api/courses/purchased/${userData.email}`);
+                      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/courses/purchased/${userData.email}`);
                       if (response.ok) {
                         const result = await response.json();
                         console.log("Enrolled data: ", result.data);
