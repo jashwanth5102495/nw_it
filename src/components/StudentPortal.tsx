@@ -2834,14 +2834,6 @@ const StudentPortal = () => {
                 </div>
               </div>
 
-              {/* Success Message */}
-              <div className="bg-green-600 text-white p-4 rounded-lg mb-6 flex items-center space-x-2">
-                <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center">
-                  <span className="text-green-600 text-sm">✓</span>
-                </div>
-                <span>I am currently enrolled in {studentProfile?.enrolledCourses || 2} courses and actively learning new skills.</span>
-              </div>
-
               {/* My Enrolled Courses */}
               <div>
                 <h3 className="text-white text-2xl font-bold mb-6">My Enrolled Courses</h3>

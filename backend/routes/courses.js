@@ -230,13 +230,12 @@ router.post('/purchase', async (req, res) => {
   try {
     const { courseId, studentId, paymentId, referralCode } = req.body;
 
-    // Verify course exists - try to find by courseId string first, then by ObjectId
+    console.log("Courses Purchase: ", { courseId, studentId, paymentId, referralCode });
+
+    // Verify course exists
     let course = await Course.findOne({ courseId: courseId });
-    if (!course) {
-      // Try to find by ObjectId if the courseId looks like a valid ObjectId
-      if (courseId && courseId.match(/^[0-9a-fA-F]{24}$/)) {
-        course = await Course.findById(courseId);
-      }
+    if (!course && courseId.match(/^[0-9a-fA-F]{24}$/)) {
+      course = await Course.findById(courseId);
     }
     
     if (!course) {
@@ -246,32 +245,16 @@ router.post('/purchase', async (req, res) => {
       });
     }
 
-    // Handle email to studentId conversion
+    // Get student details
     const Student = require('../models/Student');
-    let actualStudentId = studentId;
+    let student;
 
-    if (studentId && studentId.includes('@')) {
-      const student = await Student.findOne({ email: studentId });
-      if (!student) {
-        return res.status(404).json({
-          success: false,
-          message: 'Student not found with this email'
-        });
-      }
-      actualStudentId = student.studentId;
+    if (studentId.includes('@')) {
+      student = await Student.findOne({ email: studentId });
+    } else {
+      student = await Student.findOne({ studentId: studentId });
     }
 
-    // Calculate price with referral discount
-    let finalPrice = course.price;
-    let discount = 0;
-
-    if (referralCode === 'REFER60') {
-      discount = 60;
-      finalPrice = course.price * 0.4; // 60% discount
-    }
-
-    // Get student details for payment record
-    const student = await Student.findOne({ studentId: actualStudentId });
     if (!student) {
       return res.status(404).json({
         success: false,
@@ -279,42 +262,62 @@ router.post('/purchase', async (req, res) => {
       });
     }
 
-    // Create purchase record
-    const Purchase = require('../models/Purchase');
-    const purchase = new Purchase({
-      studentId: student._id, // Use student ObjectId for consistency
-      courseId: course._id, // Use the course's ObjectId, not the string
-      originalPrice: course.price,
-      finalPrice,
-      discount,
-      referralCode: referralCode || null,
-      paymentId,
-      status: 'completed',
-      purchaseDate: new Date()
-    });
+    // Handle referral code and calculate pricing
+    let facultyId = null;
+    let discountAmount = 0;
+    let finalPrice = course.price;
+    let commissionAmount = 0;
 
-    await purchase.save();
+    if (referralCode && referralCode.trim()) {
+      const Faculty = require('../models/Faculty');
+      const faculty = await Faculty.findByReferralCode(referralCode.trim());
+      if (faculty) {
+        facultyId = faculty._id;
+        const commissionDetails = faculty.calculateCommission(course.price);
+        discountAmount = commissionDetails.discountAmount;
+        finalPrice = commissionDetails.finalPrice;
+        commissionAmount = commissionDetails.commission;
+      }
+    }
 
-    // Create payment record for admin confirmation
+    // Create payment record
     const generatedPaymentId = paymentId || `PAY_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const payment = new Payment({
       paymentId: generatedPaymentId,
-      studentId: student._id, // Use student ObjectId, not studentId string
+      studentId: student._id,
       courseId: course._id,
       courseName: course.title,
       amount: finalPrice,
       originalAmount: course.price,
       transactionId: generatedPaymentId,
-      studentName: student.name,
+      studentName: `${student.firstName} ${student.lastName}`,
       studentEmail: student.email,
       status: 'completed',
       confirmationStatus: 'waiting_for_confirmation',
       paymentMethod: 'online',
-      referralCode: referralCode || null,
-      discountAmount: discount > 0 ? (course.price - finalPrice) : 0
+      referralCode: referralCode?.trim()?.toUpperCase() || null,
+      facultyId: facultyId,
+      discountAmount: discountAmount,
+      commissionAmount: commissionAmount
     });
 
     await payment.save();
+
+    // Create purchase record for backward compatibility
+    const Purchase = require('../models/Purchase');
+    const purchase = new Purchase({
+      studentId: student._id,
+      courseId: course._id,
+      originalPrice: course.price,
+      finalPrice,
+      discount: Math.round((discountAmount / course.price) * 100),
+      referralCode: referralCode?.trim()?.toUpperCase() || null,
+      paymentId: generatedPaymentId,
+      status: 'completed',
+      purchaseDate: new Date()
+    });
+
+    await purchase.save();
 
     res.json({
       success: true,

@@ -277,7 +277,7 @@ router.put('/profile/:id', authenticateStudent, authorizeOwnProfile, async (req,
 router.post('/:id/enroll', authenticateStudent, authorizeOwnProfile, async (req, res) => {
   try {
     const { courseId, paymentDetails, referralCode } = req.body;
-
+    
     const student = await Student.findById(req.params.id);
     if (!student) {
       return res.status(404).json({
@@ -312,19 +312,54 @@ router.post('/:id/enroll', authenticateStudent, authorizeOwnProfile, async (req,
       });
     }
 
-    // Add payment history
-    student.paymentHistory.push({
+    // Create proper payment record instead of just payment history
+    const Payment = require('../models/Payment');
+    let facultyId = null;
+    let discountAmount = 0;
+    let finalPrice = paymentDetails.amount;
+
+    // Handle referral code if provided
+    if (referralCode && referralCode.trim()) {
+      const Faculty = require('../models/Faculty');
+      const faculty = await Faculty.findByReferralCode(referralCode.trim());
+      if (faculty) {
+        facultyId = faculty._id;
+        const commissionDetails = faculty.calculateCommission(paymentDetails.amount);
+        discountAmount = commissionDetails.discountAmount;
+        finalPrice = commissionDetails.finalPrice;
+      }
+    }
+
+    // Create payment record
+    const payment = new Payment({
+      paymentId: paymentDetails.transactionId || `PAY_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      studentId: student._id,
       courseId: course._id,
-      amount: paymentDetails.amount,
-      paymentMethod: paymentDetails.method,
+      courseName: course.title,
+      amount: finalPrice,
+      originalAmount: paymentDetails.amount,
+      paymentMethod: paymentDetails.method || 'online',
+      status: 'completed',
+      confirmationStatus: 'confirmed',
       transactionId: paymentDetails.transactionId || `TXN-${Date.now()}`,
-      status: 'completed'
+      studentName: `${student.firstName} ${student.lastName}`,
+      studentEmail: student.email,
+      referralCode: referralCode?.trim()?.toUpperCase() || null,
+      facultyId: facultyId,
+      discountAmount: discountAmount,
+      commissionAmount: discountAmount // Commission equals discount amount
     });
 
-    // Store referral code if provided
-    if (referralCode && referralCode.trim()) {
-      student.referralCode = referralCode.trim().toUpperCase();
-    }
+    await payment.save();
+
+    // Add to student payment historyohan for backward compatibility
+    student.paymentHistory.push({
+      courseId: course._id,
+      amount: finalPrice,
+      paymentMethod: paymentDetails.method || 'online',
+      transactionId: payment.transactionId,
+      status: 'completed'
+    });
 
     // Enroll in course
     await student.enrollInCourse(course._id);
@@ -335,7 +370,12 @@ router.post('/:id/enroll', authenticateStudent, authorizeOwnProfile, async (req,
       data: {
         courseId: course.courseId || course._id,
         courseTitle: course.title,
-        enrollmentDate: new Date()
+        enrollmentDate: new Date(),
+        paymentId: payment.paymentId,
+        finalPrice: finalPrice,
+        originalPrice: paymentDetails.amount,
+        discountApplied: discountAmount > 0,
+        discountAmount: discountAmount
       }
     });
   } catch (error) {
@@ -1044,40 +1084,63 @@ router.get('/by-referral/:referralCode', async (req, res) => {
   try {
     const { referralCode } = req.params;
     
+    // Find faculty by referral code to get faculty info
+    const Faculty = require('../models/Faculty');
+    const faculty = await Faculty.findByReferralCode(referralCode);
+    
+    if (!faculty) {
+      return res.status(404).json({
+        success: false,
+        message: 'Invalid referral code'
+      });
+    }
+
     // Find all payments with the specified referral code
     const Payment = require('../models/Payment');
     const payments = await Payment.find({ 
-      referralCode: referralCode.toUpperCase() 
+      referralCode: referralCode.toUpperCase(),
+      status: 'completed'
     })
     .populate('studentId', 'firstName lastName email phone studentId')
-    .populate('courseId', 'title courseId')
+    .populate('courseId', 'title courseId price')
     .sort({ createdAt: -1 });
 
-    // Filter out payments where population failed
-    const validPayments = payments.filter(payment => 
-      payment.studentId && typeof payment.studentId === 'object'
-    );
-
-    // Transform the data to match the expected format
-    const studentsWithReferral = validPayments.map(payment => ({
+    // Transform the data with better structure
+    const studentsWithReferral = payments.map(payment => ({
       _id: payment.studentId._id,
       name: `${payment.studentId.firstName} ${payment.studentId.lastName}`,
       email: payment.studentId.email,
       phone: payment.studentId.phone,
       studentId: payment.studentId.studentId,
-      selectedCourse: payment.courseName || payment.courseId?.title || 'Unknown Course',
-      courseId: payment.courseId?._id,
-      amountPaid: payment.amount,
+      selectedCourse: payment.courseName,
+      courseId: payment.courseId._id,
+      originalPrice: payment.originalAmount,
+      finalPrice: payment.amount,
+      discountAmount: payment.discountAmount,
+      commissionAmount: payment.commissionAmount,
       paymentStatus: payment.status,
       confirmationStatus: payment.confirmationStatus,
       referralCode: payment.referralCode,
       transactionId: payment.transactionId,
-      createdAt: payment.createdAt
+      paymentDate: payment.createdAt,
+      commissionPaid: payment.commissionPaid
     }));
+
+    // Calculate summary for the faculty
+    const summary = {
+      facultyName: faculty.name,
+      facultyEmail: faculty.email,
+      totalStudents: studentsWithReferral.length,
+      totalRevenue: studentsWithReferral.reduce((sum, student) => sum + student.finalPrice, 0),
+      totalCommissions: studentsWithReferral.reduce((sum, student) => sum + student.commissionAmount, 0),
+      paidCommissions: studentsWithReferral.filter(s => s.commissionPaid).reduce((sum, student) => sum + student.commissionAmount, 0),
+      unpaidCommissions: studentsWithReferral.filter(s => !s.commissionPaid).reduce((sum, student) => sum + student.commissionAmount, 0)
+    };
 
     res.json({
       success: true,
       data: studentsWithReferral,
+      summary: summary,
       count: studentsWithReferral.length
     });
 

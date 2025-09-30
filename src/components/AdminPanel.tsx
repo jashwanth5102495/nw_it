@@ -25,6 +25,7 @@ interface Student {
   name?: string;
   email: string;
   phone: string;
+  finalPrice:string;
   studentId: string;
   paymentStatus?: string;
   selectedCourse?: string;
@@ -452,6 +453,7 @@ const AdminPanel: React.FC = () => {
         const result = await response.json();
         if (result.success) {
           setReferredStudents(result.data);
+          console.log("Response from Refered Students: ", result.data);
         } else {
           console.error('Failed to fetch referred students:', result.message);
           setReferredStudents([]);
@@ -1816,7 +1818,7 @@ const AdminPanel: React.FC = () => {
                             <p>📧 {student.email}</p>
                             <p>📱 {student.phone}</p>
                             <p>📚 {student.selectedCourse}</p>
-                            <p>💰 ₹{student.amountPaid.toLocaleString()}</p>
+                            <p>💰 ₹{student.finalPrice.toLocaleString()}</p>
                             <p>📅 Enrolled: {new Date(student.createdAt).toLocaleDateString()}</p>
                             <p>🔗 Used code: {student.referralCode}</p>
                           </div>
