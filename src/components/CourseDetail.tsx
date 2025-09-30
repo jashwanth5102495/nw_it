@@ -333,7 +333,7 @@ const CourseDetail = () => {
     setIsValidatingCode(true);
     
     try {
-      const response = await fetch('http://localhost:5000/api/faculty/validate-referral', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/faculty/validate-referral`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -902,7 +902,7 @@ const CourseDetail = () => {
                     setIsValidatingCode(true);
 
                     // Submit payment details to backend
-                    const paymentResponse = await fetch('http://localhost:5000/api/payments', {
+                    const paymentResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/payments`, {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',

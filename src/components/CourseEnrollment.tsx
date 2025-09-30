@@ -308,7 +308,7 @@ const CourseEnrollment: React.FC = () => {
     try {
       // First try faculty referral codes
       console.log('Calling faculty API...');
-      const facultyResponse = await fetch('http://localhost:5000/api/faculty/validate-referral', {
+      const facultyResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/faculty/validate-referral`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -336,7 +336,7 @@ const CourseEnrollment: React.FC = () => {
       
       // If faculty code fails, try general referral codes
       console.log('Faculty code failed, trying general referral codes...');
-      const generalResponse = await fetch('http://localhost:5000/api/courses/verify-referral', {
+      const generalResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/courses/verify-referral`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -426,7 +426,7 @@ const CourseEnrollment: React.FC = () => {
       // Send enrollment to backend
       const token = JSON.parse(localStorage.getItem('currentUser') || '{}').token;
 
-        const enrollResponse = await fetch(`http://localhost:5000/api/students/${currentUser.id}/enroll`, {
+        const enrollResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/students/${currentUser.id}/enroll`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

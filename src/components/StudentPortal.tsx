@@ -245,7 +245,7 @@ const StudentPortal = () => {
       const userData = JSON.parse(currentUser);
       const token = userData.token;
       console.log(`Token fetch modules: ${token}`);
-      const response = await fetch(`http://localhost:5000/api/students/${studentId}/module-submissions/${courseId}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/students/${studentId}/module-submissions/${courseId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -292,7 +292,7 @@ const StudentPortal = () => {
       console.log('Submitting module:', { courseId, moduleId, submissionUrl });
       console.log('Using student ID:', userData.id); // Log the ID being used
 
-      const response = await fetch(`http://localhost:5000/api/students/${userData.id}/submit-module`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/students/${userData.id}/submit-module`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1445,7 +1445,7 @@ const StudentPortal = () => {
         // Fetch purchased courses from backend
         try {
           console.log('Fetching courses from backend for:', userData.email);
-          const response = await fetch(`http://localhost:5000/api/courses/purchased/${userData.email}`);
+          const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/courses/purchased/${userData.email}`);
           if (response.ok) {
             const result = await response.json();
             console.log('Backend response:', result);
@@ -1507,7 +1507,7 @@ const StudentPortal = () => {
         // Try to fetch additional student data from backend
         let studentData = userData;
         try {
-          const response = await fetch(`http://localhost:5000/api/students/${userData.id}`, {
+          const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/students/${userData.id}`, {
             headers: {
               'Authorization': `Bearer ${userData.token}`
             }
@@ -1650,7 +1650,7 @@ const StudentPortal = () => {
 
       try {
         // Verify referral code with backend
-        const response = await fetch('http://localhost:5000/api/courses/verify-referral', {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/courses/verify-referral`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1713,7 +1713,7 @@ const StudentPortal = () => {
       const userData = JSON.parse(currentUser);
       
       // Submit payment with transaction ID
-      const paymentResponse = await fetch('http://localhost:5000/api/payments', {
+      const paymentResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/payments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
