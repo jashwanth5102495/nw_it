@@ -676,7 +676,30 @@ const CourseEnrollment: React.FC = () => {
               )}
 
               {/* Payment Button */}
-
+              <StarBorder
+                as="button"
+                onClick={handlePayment}
+                disabled={isProcessingPayment}
+                className="w-full"
+                color="cyan"
+                speed="5s"
+                style={{
+                  opacity: isProcessingPayment ? 0.7 : 1,
+                  cursor: isProcessingPayment ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {isProcessingPayment ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    Enrolling...
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-2">
+                    <Zap size={20} />
+                    Enroll Now
+                  </div>
+                )}
+              </StarBorder>
 
               {/* QR Payment Interface */}
               {showQRPayment && (
