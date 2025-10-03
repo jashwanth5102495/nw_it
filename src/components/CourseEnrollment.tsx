@@ -6,6 +6,8 @@ import StarBorder from './StarBorder';
 import PaymentStatusModal from './PaymentStatusModal';
 import { ArrowLeft, Clock, Award, CheckCircle, BookOpen, Target, Zap } from 'lucide-react';
 
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+
 interface CourseModule {
   title: string;
   duration: string;
@@ -31,7 +33,6 @@ interface Course {
   whatYouWillLearn: string[];
 }
 
-// RAZORPAY DECLARATION COMMENTED OUT FOR TESTING
 /*
 declare global {
   interface Window {
@@ -311,7 +312,7 @@ const CourseEnrollment: React.FC = () => {
     try {
       // First try faculty referral codes
       console.log('Calling faculty API...');
-      const facultyResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/faculty/validate-referral`, {
+      const facultyResponse = await fetch(`${BASE_URL}/api/faculty/validate-referral`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -322,11 +323,17 @@ const CourseEnrollment: React.FC = () => {
         }),
       });
       
+      let facultyData: any = null;
+      let facultyText = '';
+      try {
+        facultyData = await facultyResponse.json();
+      } catch (e) {
+        facultyText = await facultyResponse.text();
+      }
       console.log('Faculty response status:', facultyResponse.status);
-      const facultyData = await facultyResponse.json();
-      console.log('Faculty response data:', facultyData);
+      console.log('Faculty response data:', facultyData || facultyText);
       
-      if (facultyData.success && facultyData.data) {
+      if (facultyResponse.ok && facultyData && facultyData.success && facultyData.data) {
         const discountValue = course.price - facultyData.data.finalPrice;
         setDiscountAmount(discountValue);
         setFinalPrice(facultyData.data.finalPrice);
@@ -339,7 +346,7 @@ const CourseEnrollment: React.FC = () => {
       
       // If faculty code fails, try general referral codes
       console.log('Faculty code failed, trying general referral codes...');
-      const generalResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/courses/verify-referral`, {
+      const generalResponse = await fetch(`${BASE_URL}/api/courses/verify-referral`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -349,11 +356,17 @@ const CourseEnrollment: React.FC = () => {
         })
       });
       
+      let generalData: any = null;
+      let generalText = '';
+      try {
+        generalData = await generalResponse.json();
+      } catch (e) {
+        generalText = await generalResponse.text();
+      }
       console.log('General response status:', generalResponse.status);
-      const generalData = await generalResponse.json();
-      console.log('General response data:', generalData);
+      console.log('General response data:', generalData || generalText);
       
-      if (generalData.success && generalData.valid) {
+      if (generalResponse.ok && generalData && generalData.success && generalData.valid) {
         const discount = generalData.discount;
         const discountValue = (course.price * discount) / 100;
         setDiscountAmount(discountValue);
@@ -428,27 +441,35 @@ const CourseEnrollment: React.FC = () => {
 
       // Send enrollment to backend
       const token = JSON.parse(localStorage.getItem('currentUser') || '{}').token;
+      const enrollResponse = await fetch(`${BASE_URL}/api/students/${currentUser.id}/enroll`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(enrollmentData)
+      });
+        
+      const enrollResult = await enrollResponse.json();
+      console.log('Backend enrollment response:', enrollResult);
 
-        const enrollResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/students/${currentUser.id}/enroll`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(enrollmentData)
-        });
-
-        const enrollResult = await enrollResponse.json();
-        console.log('Backend enrollment response:', enrollResult);
-
-        if (enrollResult.success) {
-          setIsSubmittingPayment(false);
+      if (enrollResponse.ok && enrollResult.success) {
+        setIsSubmittingPayment(false);
+        setShowQRPayment(false);
+        setPaymentStatus('waiting_for_confirmation');
+        setShowStatusModal(true);
+      } else {
+        // Gracefully handle already-enrolled case
+        const msg = (enrollResult?.message || '').toLowerCase();
+        if (msg.includes('already enrolled')) {
+          alert('You are already enrolled in this course. Please check the Student Portal → My Courses to continue learning.');
+          navigate('/student-portal');
           setShowQRPayment(false);
-          setPaymentStatus('waiting_for_confirmation');
-          setShowStatusModal(true);
-        } else {
-          throw new Error(enrollResult.message || 'Failed to submit payment details');
+          setIsSubmittingPayment(false);
+          return;
         }
+        throw new Error(enrollResult.message || 'Failed to submit payment details');
+      }
     } catch (error) {
       console.error('Error submitting payment:', error);
       setIsSubmittingPayment(false);
@@ -624,59 +645,38 @@ const CourseEnrollment: React.FC = () => {
                 )}
               </div>
 
-              {/* Referral Code */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium mb-2">Referral Code (Optional)</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={referralCode}
-                    onChange={(e) => setReferralCode(e.target.value)}
-                    placeholder="Enter code"
-                    className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-                    disabled={discountApplied}
-                  />
-                  <button
-                    onClick={applyReferralCode}
-                    disabled={discountApplied || !referralCode.trim()}
-                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed px-4 py-2 rounded-lg transition-colors"
-                  >
-                    Apply
-                  </button>
-                </div>
-                {discountApplied && (
-                  <div className="mt-2 text-green-400 text-sm flex items-center gap-1">
-                    <CheckCircle size={16} />
-                    Referral code applied successfully!
+              {/* Referral Code - Conditional Display */}
+              {course.id !== 'ai-tools-mastery' && (
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-2">Referral Code (Optional)</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={referralCode}
+                      onChange={(e) => setReferralCode(e.target.value)}
+                      placeholder="Enter code"
+                      className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+                      disabled={discountApplied}
+                    />
+                    <button
+                      onClick={applyReferralCode}
+                      disabled={discountApplied || !referralCode.trim()}
+                      className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed px-4 py-2 rounded-lg transition-colors"
+                    >
+                      Apply
+                    </button>
                   </div>
-                )}
-              </div>
+                  {discountApplied && (
+                    <div className="mt-2 text-green-400 text-sm flex items-center gap-1">
+                      <CheckCircle size={16} />
+                      Referral code applied successfully!
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Payment Button */}
-              <StarBorder
-                as="button"
-                onClick={handlePayment}
-                disabled={isProcessingPayment}
-                className="w-full"
-                color="cyan"
-                speed="5s"
-                style={{
-                  opacity: isProcessingPayment ? 0.7 : 1,
-                  cursor: isProcessingPayment ? 'not-allowed' : 'pointer'
-                }}
-              >
-                {isProcessingPayment ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    Enrolling...
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-2">
-                    <Zap size={20} />
-                    Enroll Now
-                  </div>
-                )}
-              </StarBorder>
+
 
               {/* QR Payment Interface */}
               {showQRPayment && (

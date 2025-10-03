@@ -8,6 +8,8 @@ import { ArrowLeft, Play, Book, Code, CheckCircle, XCircle, Lightbulb, Clock, Aw
 import MagnetLines from './MagnetLines';
 import StarBorder from './StarBorder';
 import ClickSpark from './ClickSpark';
+import htmlpart1 from '../../video-explanations/topics/html/htmlpart1.mp4';
+import htmlpart2 from '../../video-explanations/topics/html/htmlpart2.mp4';
 
 interface Lesson {
   id: string;
@@ -239,8 +241,34 @@ window.addEventListener('load', addInteractivity);`
     return content.replace(videoPlaceholderRegex, '[VIDEO_PLACEHOLDER]');
   };
 
+  // HTML Intro dedicated carousel component
+  const HtmlIntroVideoCarousel: React.FC = () => {
+    const [showSecond, setShowSecond] = useState(false);
+    return (
+      <div className="relative w-full max-w-3xl mx-auto">
+        {!showSecond ? (
+          <video className="w-full h-auto bg-black rounded-lg border border-gray-700" controls preload="metadata" src={htmlpart1} />
+        ) : (
+          <video className="w-full h-auto bg-black rounded-lg border border-gray-700" controls preload="metadata" src={htmlpart2} />
+        )}
+        {!showSecond && (
+          <button onClick={() => setShowSecond(true)} className="absolute top-1/2 -translate-y-1/2 right-2 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-md flex items-center gap-1" title="Play Part 2">
+            <span className="text-sm">Next</span>
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        )}
+        {showSecond && (
+          <button onClick={() => setShowSecond(false)} className="absolute top-1/2 -translate-y-1/2 left-2 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-md flex items-center gap-1" title="Back to Part 1">
+            <ChevronLeft className="h-4 w-4" />
+            <span className="text-sm">Back</span>
+          </button>
+        )}
+      </div>
+    );
+  };
+
   // Function to render content with video placeholders
-  const renderContentWithVideos = (content: string) => {
+  const renderContentWithVideos = (content: string, useHtmlIntro?: boolean) => {
     const processedContent = processContent(content);
     const parts = processedContent.split('[VIDEO_PLACEHOLDER]');
     
@@ -252,13 +280,19 @@ window.addEventListener('load', addInteractivity);`
         );
       }
       if (i < parts.length - 1) {
-        elements.push(
-          <VideoPlaceholder 
-            key={`video-${i}`} 
-            title="📹 Video Explanation Coming Soon"
-            subtitle="Video explanation coming soon - stay tuned!"
-          />
-        );
+        if (useHtmlIntro) {
+          elements.push(
+            <HtmlIntroVideoCarousel key={`video-${i}`} />
+          );
+        } else {
+          elements.push(
+            <VideoPlaceholder 
+              key={`video-${i}`} 
+              title="📹 Video Explanation Coming Soon"
+              subtitle="Video explanation coming soon - stay tuned!"
+            />
+          );
+        }
       }
     }
     
@@ -7263,44 +7297,43 @@ app.listen(PORT, () => {
    ];
 
   useEffect(() => {
-    // Load course data based on URL parameters
-    let targetModuleId = moduleId;
-    let targetLessonId = lessonId;
-    
-    // If no parameters provided, use defaults for frontend-development-beginner
+    const firstModule = courseModules[0];
+    const firstLesson = firstModule?.lessons[0];
+
+    // If params are missing, normalize to first valid module/lesson
     if (!moduleId || !lessonId) {
-      targetModuleId = 'html-module';
-      targetLessonId = 'html-intro';
-    }
-    
-    const module = courseModules.find(m => m.id === targetModuleId);
-    if (module) {
-      setCurrentModule(module);
-      const lesson = module.lessons.find(l => l.id === targetLessonId);
-      if (lesson) {
-        setCurrentLesson(lesson);
-        setCode(lesson.codeExample);
-      } else {
-        // If lesson not found, use first lesson in module
-        const firstLesson = module.lessons[0];
-        if (firstLesson) {
-          setCurrentLesson(firstLesson);
-          setCode(firstLesson.codeExample);
-        }
-      }
-    } else {
-      // If module not found, use first module and first lesson
-      const firstModule = courseModules[0];
-      if (firstModule) {
+      if (firstModule && firstLesson) {
         setCurrentModule(firstModule);
-        const firstLesson = firstModule.lessons[0];
-        if (firstLesson) {
-          setCurrentLesson(firstLesson);
-          setCode(firstLesson.codeExample);
+        setCurrentLesson(firstLesson);
+        setCode(firstLesson.codeExample);
+        if (courseId) {
+          navigate(`/course-learning/${courseId}/${firstModule.id}/${firstLesson.id}`, { replace: true });
         }
       }
+      return;
     }
-  }, [moduleId, lessonId]);
+
+    // Try to find the requested module
+    const module = courseModules.find(m => m.id === moduleId);
+    if (!module) {
+      // Invalid moduleId, normalize URL to first valid module/lesson
+      if (firstModule && firstLesson && courseId) {
+        setCurrentModule(firstModule);
+        setCurrentLesson(firstLesson);
+        setCode(firstLesson.codeExample);
+        navigate(`/course-learning/${courseId}/${firstModule.id}/${firstLesson.id}`, { replace: true });
+      }
+      return;
+    }
+
+    // Valid module
+    setCurrentModule(module);
+    const lesson = module.lessons.find(l => l.id === lessonId) || module.lessons[0];
+    if (lesson) {
+      setCurrentLesson(lesson);
+      setCode(lesson.codeExample);
+    }
+  }, [moduleId, lessonId, courseId, navigate]);
 
   const runCode = () => {
     setIsFlipping(true);
@@ -7831,7 +7864,7 @@ app.listen(PORT, () => {
               {currentModule.lessons.map((lesson, index) => (
                 <ClickSpark key={lesson.id} sparkColor="#8b5cf6" sparkSize={6} sparkRadius={10} sparkCount={5} duration={250}>
                   <button
-                    onClick={() => navigate(`/course-learning/${courseId}/${moduleId}/${lesson.id}`)}
+                    onClick={() => navigate(`/course-learning/${courseId}/${currentModule.id}/${lesson.id}`)}
                     className={`w-full text-left ${sidebarOpen ? 'p-4' : 'p-2'} rounded-lg transition-all duration-200 ${
                       lesson.id === lessonId 
                         ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-600 text-blue-900 dark:text-blue-100' 
@@ -8027,7 +8060,7 @@ app.listen(PORT, () => {
                   </div>
                   <div className="bg-white dark:bg-gray-700 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-600">
                     <div className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-                      {renderContentWithVideos(currentLesson.content)}
+                      {renderContentWithVideos(currentLesson.content, currentLesson.id === 'html-intro')}
                       
                       {/* Enhanced Learning Tips */}
                       <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border-l-4 border-blue-500">

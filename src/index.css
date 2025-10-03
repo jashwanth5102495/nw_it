@@ -17,6 +17,64 @@ body {
   overflow-x: hidden;
 }
 
+/* Glassmorphism Theme Variables */
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-bg-hover: rgba(255, 255, 255, 0.15);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-radius: 16px;
+  --glass-blur: 12px;
+  --glass-blur-hover: 16px;
+  --glass-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  --accent-1: #00ffe0; /* soft neon cyan */
+  --accent-2: #ff7bff; /* soft neon pink */
+  --text-primary: #ffffff;
+  --text-secondary: #e0e0e0;
+}
+
+/* Glassmorphism Base */
+.glass-effect {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-radius: var(--glass-radius);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Hover enhancement for glass panels - disabled (no glow) */
+.glass-hover:hover {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+/* Optional button styling to match glass theme */
+.btn-glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  transition: all 0.25s ease;
+}
+.btn-glass:hover {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Accent utilities */
+.accent-cyan { color: var(--accent-1); }
+.accent-pink { color: var(--accent-2); }
+.text-secondary { color: var(--text-secondary); }
+
+/* Ensure dark surfaces under glass panels appear pure black */
+.bg-black-surface { background-color: #000000 !important; }
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

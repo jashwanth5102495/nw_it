@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Header from './Header';
 
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+
 interface CourseModule {
   title: string;
   duration: string;
@@ -351,42 +353,46 @@ const CourseDetail = () => {
 
   const validateReferralCode = async () => {
     if (!referralCode.trim() || !course) return;
-    
-    setIsValidatingCode(true);
-    
+
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/faculty/validate-referral`, {
+      // Validate via faculty referral first
+      const facRes = await fetch(`${BASE_URL}/api/faculty/validate-referral`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          referralCode: referralCode.trim(),
-          coursePrice: course.price
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referralCode: referralCode.trim(), coursePrice: course.price })
       });
+      let facData: any = null; let facText = '';
+      try { facData = await facRes.json(); } catch { facText = await facRes.text(); }
       
-      const data = await response.json();
-      
-      if (data.success && data.data) {
+      if (facRes.ok && facData && facData.success && facData.data) {
+        const savings = course.price - facData.data.finalPrice;
+        setDiscountedPrice(facData.data.finalPrice);
         setDiscountApplied(true);
-        setDiscountedPrice(data.data.finalPrice);
-        // Show success message with discount details
-        const savings = course.price - data.data.finalPrice;
-        const discountPercent = Math.round((savings / course.price) * 100);
-        alert(`Referral code applied successfully! You saved ₹${savings.toLocaleString()} (${discountPercent}% off)`);
+        alert(`Referral code applied successfully! You saved ₹${savings.toLocaleString()} (${Math.round((savings / course.price) * 100)}% off)`);
+        return;
+      }
+
+      // Fallback to general referral
+      const genRes = await fetch(`${BASE_URL}/api/courses/verify-referral`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referralCode: referralCode.toUpperCase() })
+      });
+      let genData: any = null; let genText = '';
+      try { genData = await genRes.json(); } catch { genText = await genRes.text(); }
+      
+      if (genRes.ok && genData && genData.success && genData.valid) {
+        const discount = genData.discount;
+        const discountValue = (course.price * discount) / 100;
+        setDiscountedPrice(course.price - discountValue);
+        setDiscountApplied(true);
+        alert(`Referral code applied successfully! You saved ₹${discountValue.toLocaleString()} (${discount}% off)`);
       } else {
-        alert(data.message || 'Invalid referral code');
-        setDiscountApplied(false);
-        setDiscountedPrice(0);
+        alert('Invalid referral code');
       }
     } catch (error) {
       console.error('Error validating referral code:', error);
       alert('Error validating referral code. Please try again.');
-      setDiscountApplied(false);
-      setDiscountedPrice(0);
-    } finally {
-      setIsValidatingCode(false);
     }
   };
 
@@ -768,8 +774,8 @@ const CourseDetail = () => {
                 )}
               </div>
 
-              {/* Referral Code Section - Hidden for A.I Tools Mastery */}
-              {course.id !== 'ai-tools-mastery' && (
+              {/* Referral Code Section - Hidden for A.I Tools Mastery; show no-offer note instead */}
+              {course.id !== 'ai-tools-mastery' ? (
                 <div className="bg-gray-800 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
                     <label className="text-white font-medium">Have a referral code?</label>
@@ -809,6 +815,12 @@ const CourseDetail = () => {
                       </button>
                     </div>
                   )}
+                </div>
+              ) : (
+                <div className="bg-yellow-600/20 border border-yellow-600/30 rounded-lg p-4">
+                  <p className="text-yellow-300 text-sm">
+                    No offers available for A.I Tools Mastery - Professional Certification Program.
+                  </p>
                 </div>
               )}
 
@@ -924,7 +936,7 @@ const CourseDetail = () => {
                     setIsValidatingCode(true);
 
                     // Submit payment details to backend
-                    const paymentResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/payments`, {
+                    const paymentResponse = await fetch(`${BASE_URL}/api/payments`, {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',

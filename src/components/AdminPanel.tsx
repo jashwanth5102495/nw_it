@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import StudentDetailModal from './StudentDetailModal';
 import { PaymentStatusBadge, PaymentStatusType } from './PaymentStatus';
 
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+
 interface Project {
   id: string;
   businessName: string;
@@ -217,7 +219,7 @@ const AdminPanel: React.FC = () => {
   const fetchStudentSubmissions = async () => {
     setSubmissionsLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/students/admin/submissions`);
+      const response = await fetch(`${BASE_URL}/api/students/admin/submissions`);
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
@@ -252,7 +254,7 @@ const AdminPanel: React.FC = () => {
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/projects`);
+      const response = await fetch(`${BASE_URL}/api/projects`);
       if (response.ok) {
         const result = await response.json();
         const data = result.data || result;
@@ -270,7 +272,7 @@ const AdminPanel: React.FC = () => {
   const fetchStudents = async () => {
     try {
       console.log('🔍 Fetching students...');
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/students`);
+      const response = await fetch(`${BASE_URL}/api/students`);
       if (response.ok) {
         const result = await response.json();
         const data = result.data || result;
@@ -300,7 +302,7 @@ const AdminPanel: React.FC = () => {
 
   const fetchPayments = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/payments`);
+      const response = await fetch(`${BASE_URL}/api/payments`);
       if (response.ok) {
         const data = await response.json();
         console.log('Payments API response:', data); // Debug log
@@ -320,7 +322,7 @@ const AdminPanel: React.FC = () => {
         createdAt: new Date().toISOString()
       };
 
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/projects`, {
+      const response = await fetch(`${BASE_URL}/api/projects`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -350,7 +352,7 @@ const AdminPanel: React.FC = () => {
 
   const updateProjectStatus = async (projectId: string, newStatus: string) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/projects/${projectId}`, {
+      const response = await fetch(`${BASE_URL}/api/projects/${projectId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -383,7 +385,7 @@ const AdminPanel: React.FC = () => {
   // Faculty Management Functions
   const fetchFaculty = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/faculty/all`);
+      const response = await fetch(`${BASE_URL}/api/faculty/all`);
       const data = await response.json();
       
       if (data.success) {
@@ -412,7 +414,7 @@ const AdminPanel: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/faculty/create`, {
+      const response = await fetch(`${BASE_URL}/api/faculty/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -420,14 +422,16 @@ const AdminPanel: React.FC = () => {
         body: JSON.stringify({
           name: newFaculty.name,
           email: newFaculty.email,
-          referralCode: newFaculty.referralCode,
-          commissionRate: 0.60 // Set to 60% as per your requirement
+          referralCode: newFaculty.referralCode.toUpperCase().trim(),
+          commissionRate: 0.60
         }),
       });
 
-      const data = await response.json();
+      const text = await response.text();
+      let data = null;
+      try { data = JSON.parse(text); } catch {}
 
-      if (data.success) {
+      if (response.ok && data?.success) {
         alert('Faculty member created successfully!');
         setNewFaculty({
            name: '',
@@ -437,18 +441,19 @@ const AdminPanel: React.FC = () => {
         setShowAddFaculty(false);
         fetchFaculty(); // Refresh the faculty list
       } else {
-        alert(data.message || 'Failed to create faculty member');
+        const message = (data && data.message) || text || 'Failed to create faculty member';
+        alert(message);
       }
     } catch (error) {
       console.error('Error creating faculty:', error);
-      alert('Error creating faculty member');
+      alert(error?.message || 'Error creating faculty member');
     }
   };
 
   const handleDeleteFaculty = async (facultyId: string) => {
     if (confirm('Are you sure you want to delete this faculty member?')) {
       try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/faculty/${facultyId}`, {
+        const response = await fetch(`${BASE_URL}/api/faculty/${facultyId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -479,7 +484,7 @@ const AdminPanel: React.FC = () => {
   const fetchReferredStudents = async (referralCode: string) => {
     try {
       // Fetch students who used this referral code from the backend
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/students/by-referral/${referralCode}`);
+      const response = await fetch(`${BASE_URL}/api/students/by-referral/${referralCode}`);
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
@@ -521,7 +526,7 @@ const AdminPanel: React.FC = () => {
 
     setIsDeleting(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/students/${studentToDelete._id}`, {
+      const response = await fetch(`${BASE_URL}/api/students/${studentToDelete._id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -677,7 +682,7 @@ const AdminPanel: React.FC = () => {
 
         console.log('Creating new payment with data:', paymentData);
         
-        response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/payments`, {
+        response = await fetch(`${BASE_URL}/api/payments`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -690,7 +695,7 @@ const AdminPanel: React.FC = () => {
 
         if (response.ok && responseData.data) {
           // Now update the confirmation status
-          const confirmResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/payments/${responseData.data.paymentId}/confirm`, {
+          const confirmResponse = await fetch(`${BASE_URL}/api/payments/${responseData.data.paymentId}/confirm`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -711,13 +716,13 @@ const AdminPanel: React.FC = () => {
         }
       } else {
         // Update existing payment
-        console.log('Making API call to:', `${import.meta.env.VITE_BACKEND_URL}/api/payments/${change.paymentId}/confirm`);
+        console.log('Making API call to:', `${BASE_URL}/api/payments/${change.paymentId}/confirm`);
         console.log('Request body:', {
           confirmationStatus: change.newStatus,
           adminEmail: 'admin@jasnav.com'
         });
         
-        response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/payments/${change.paymentId}/confirm`, {
+        response = await fetch(`${BASE_URL}/api/payments/${change.paymentId}/confirm`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

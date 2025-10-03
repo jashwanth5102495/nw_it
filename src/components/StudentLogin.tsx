@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
 
 const StudentLogin = () => {
@@ -32,12 +33,9 @@ const StudentLogin = () => {
     setError('');
 
     try {
-      console.log(`Sending request:
-          username: ${loginData.username}
-          password: ${loginData.password}
-        `);
+      console.log(`Sending request:\n          username: ${loginData.username}\n          password: ${loginData.password}\n        `);
       // Call backend API for authentication
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/students/login`, {
+      const response = await fetch(`${BASE_URL}/api/students/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -48,9 +46,15 @@ const StudentLogin = () => {
         })
       });
 
-      const result = await response.json();
-      console.log(result);
-      if (result.success) {
+      let result: any = null;
+      let rawText = '';
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        rawText = await response.text();
+      }
+      console.log(result || rawText);
+      if (response.ok && result && result.success) {
         // Set authentication flag and store user data
         const userData = {
           ...result.data.student,
@@ -63,7 +67,8 @@ const StudentLogin = () => {
         // Redirect to student portal
         navigate('/student-portal');
       } else {
-        setError(result.message || 'Invalid credentials. Please check your username and password.');
+        const errMsg = (result && (result.message || result.error)) || rawText || 'Invalid credentials. Please check your username and password.';
+        setError(errMsg);
       }
     } catch (err) {
       console.error('Login error:', err);

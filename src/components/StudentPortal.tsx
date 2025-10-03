@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import LaserFlow from './LaserFlow';
-import React from 'react';
+import MagnetLines from './MagnetLines';
+import Lightning from './Lightning';
+import Sidebar from './Sidebar';
+import MagicBento from './MagicBento';
 import { 
   HomeIcon,
   AcademicCapIcon,
@@ -16,6 +18,8 @@ import {
   LinkIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
+
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
 interface CourseModule {
   title: string;
@@ -145,12 +149,40 @@ const StudentPortal: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Logout handler: clear session and go to company landing page
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('authToken');
+      sessionStorage.clear();
+      navigate('/');
+    } catch (e) {
+      console.error('Logout error:', e);
+      // Hard redirect as fallback
+      window.location.href = '/';
+    }
+  };
+
+  // Dashboard background rotation: Lightning <-> Magnet Lines every 10s
+  const [showLightningBG, setShowLightningBG] = useState(true);
+  useEffect(() => {
+    const id = setInterval(() => setShowLightningBG((s) => !s), 10000);
+    return () => clearInterval(id);
+  }, []);
+
   // Git functionality state
   const [showGitTutorialModal, setShowGitTutorialModal] = useState(false);
   const [showProjectSubmissionModal, setShowProjectSubmissionModal] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [projectGitUrl, setProjectGitUrl] = useState('');
   const [projectGoogleDriveUrl, setProjectGoogleDriveUrl] = useState('');
+
+  // Derived flag: selected course in payment modal is AI Tools Mastery (no discounts allowed)
+  const isAIToolsMasterySelected = !!paymentModalData && (
+    paymentModalData.course?.id === 'ai-tools-mastery' ||
+    (paymentModalData.course as any)?.courseId === 'AI-TOOLS-MASTERY' ||
+    (paymentModalData.course?.title || '').toLowerCase().includes('ai tools')
+  );
 
   // Assignment course selection state
   const [selectedCourseForAssignments, setSelectedCourseForAssignments] = useState<string | null>(null);
@@ -197,6 +229,127 @@ const StudentPortal: React.FC = () => {
       'DEVOPS-BEGINNER': ['devops-beginner', 'DevOps - Beginner']
     };
     return mappings[courseId] || [courseId];
+  };
+
+  // Helper to render Project Submission Modal (refactored from inline IIFE)
+  const renderProjectSubmissionModal = () => {
+    if (!(showProjectSubmissionModal && selectedProjectId)) return null;
+    const selectedProject = projects.find(p => p.id === selectedProjectId);
+    const isAIToolsProject = selectedProject?.courseId === 'ai-tools-mastery';
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-gray-900 rounded-lg p-6 max-w-md w-full mx-4 border border-gray-700">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-bold text-white">Submit Project</h3>
+            <button
+              onClick={() => {
+                setShowProjectSubmissionModal(false);
+                setSelectedProjectId(null);
+                setProjectGitUrl('');
+                setProjectGoogleDriveUrl('');
+              }}
+              className="text-gray-400 hover:text-white"
+              aria-label="Close project submission modal"
+              title="Close"
+            >
+              <span className="sr-only">Close</span>
+              <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+            </button>
+          </div>
+          <div className="mb-4">
+            {isAIToolsProject ? (
+              <>
+                <p className="text-gray-300 text-sm mb-4">
+                  Submit your AI Tools project by providing a Google Drive URL. Make sure your folder is shared with view access so instructors can review your work.
+                </p>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Google Drive Folder URL *
+                </label>
+                <input
+                  type="url"
+                  value={projectGoogleDriveUrl}
+                  onChange={(e) => setProjectGoogleDriveUrl(e.target.value)}
+                  placeholder="https://drive.google.com/drive/folders/your-folder-id"
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  required
+                />
+                <p className="text-gray-400 text-xs mt-1">
+                  Example: https://drive.google.com/drive/folders/1ABC123xyz...
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-gray-300 text-sm mb-4">
+                  Submit your project by providing the Git repository URL. Make sure your repository is public so instructors can review your code.
+                </p>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Git Repository URL *
+                </label>
+                <input
+                  type="url"
+                  value={projectGitUrl}
+                  onChange={(e) => setProjectGitUrl(e.target.value)}
+                  placeholder="https://github.com/username/project-name"
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  required
+                />
+                <p className="text-gray-400 text-xs mt-1">
+                  Example: https://github.com/yourusername/your-project
+                </p>
+              </>
+            )}
+          </div>
+
+          {!isAIToolsProject && (
+            <div className="bg-blue-600/20 border border-blue-600/30 rounded-lg p-3 mb-4">
+              <p className="text-blue-400 text-sm">
+                💡 <strong>Tip:</strong> Don't know how to use Git? Click the "Learn Git" button in your project to get started with step-by-step instructions!
+              </p>
+            </div>
+          )}
+
+          {isAIToolsProject && (
+            <div className="bg-purple-600/20 border border-purple-600/30 rounded-lg p-3 mb-4">
+              <p className="text-purple-400 text-sm">
+                📁 <strong>Tip:</strong> Create a well-organized folder structure with your AI-generated content, prompts used, and documentation. Make sure to set sharing permissions to "Anyone with the link can view".
+              </p>
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                setShowProjectSubmissionModal(false);
+                setSelectedProjectId(null);
+                setProjectGitUrl('');
+                setProjectGoogleDriveUrl('');
+              }}
+              className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                const submissionUrl = isAIToolsProject ? projectGoogleDriveUrl.trim() : projectGitUrl.trim();
+                if (submissionUrl) {
+                  console.log('Submitting project:', selectedProjectId, 'with URL:', submissionUrl, 'Type:', isAIToolsProject ? 'Google Drive' : 'Git');
+                  alert(`Project submitted successfully! Your instructor will review your ${isAIToolsProject ? 'Google Drive folder' : 'Git repository'} soon.`);
+                  setShowProjectSubmissionModal(false);
+                  setSelectedProjectId(null);
+                  setProjectGitUrl('');
+                  setProjectGoogleDriveUrl('');
+                }
+              }}
+              disabled={isAIToolsProject ? !projectGoogleDriveUrl.trim() : !projectGitUrl.trim()}
+              className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Submit Project
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // Helper function to get module ID from enrolled course data
@@ -252,7 +405,7 @@ const StudentPortal: React.FC = () => {
       const userData = JSON.parse(currentUser!);
       const token = userData.token;
       console.log(`Token fetch modules: ${token}`);
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/students/${studentId}/module-submissions/${courseId}`, {
+      const response = await fetch(`${BASE_URL}/api/students/${studentId}/module-submissions/${courseId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -299,7 +452,7 @@ const StudentPortal: React.FC = () => {
       console.log('Submitting module:', { courseId, moduleId, submissionUrl });
       console.log('Using student ID:', userData.id); // Log the ID being used
 
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/students/${userData.id}/submit-module`, {
+      const response = await fetch(`${BASE_URL}/api/students/${userData.id}/submit-module`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1429,7 +1582,7 @@ const StudentPortal: React.FC = () => {
   ];
 
   const sidebarItems = [
-    { id: 'dashboard', label: 'vStudent Manager', icon: HomeIcon, isActive: true },
+    { id: 'dashboard', label: 'Home', icon: HomeIcon, isActive: true },
     { id: 'courses', label: 'My Courses', icon: BookOpenIcon },
     { id: 'projects', label: 'Projects', icon: ClipboardDocumentListIcon },
     { id: 'assignments', label: 'Assignments', icon: ClipboardDocumentListIcon },
@@ -1438,6 +1591,12 @@ const StudentPortal: React.FC = () => {
     { id: 'history', label: 'History', icon: ClipboardDocumentListIcon },
     { id: 'support', label: 'Support', icon: QuestionMarkCircleIcon },
   ];
+
+  // Maintain active tab locally; no BubbleMenu hashes
+  useEffect(() => {
+    // Default to dashboard
+    if (!activeTab) setActiveTab('dashboard');
+  }, []);
 
   useEffect(() => {
     const currentUser = localStorage.getItem('currentUser');
@@ -1458,7 +1617,11 @@ const StudentPortal: React.FC = () => {
         // Fetch purchased courses from backend
         try {
           console.log('Fetching courses from backend for:', userData.email);
-          const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/courses/purchased/${userData.email}`);
+          const response = await fetch(`${BASE_URL}/api/courses/purchased/${userData.email}`, {
+            headers: {
+              Authorization: `Bearer ${userData.token}`
+            }
+          });
           if (response.ok) {
             const result = await response.json();
             console.log('Backend response:', result);
@@ -1520,7 +1683,7 @@ const StudentPortal: React.FC = () => {
         // Try to fetch additional student data from backend
         let studentData = userData;
         try {
-          const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/students/${userData.id}`, {
+          const response = await fetch(`${BASE_URL}/api/students/${userData.id}`, {
             headers: {
               'Authorization': `Bearer ${userData.token}`
             }
@@ -1650,6 +1813,16 @@ const StudentPortal: React.FC = () => {
   const handleReferralCodeChange = async (code: string) => {
     setReferralCode(code);
     if (paymentModalData) {
+      // Block referral codes for AI Tools Mastery program
+      if (isAIToolsMasterySelected) {
+        setPaymentModalData({
+          ...paymentModalData,
+          discount: 0,
+          discountedPrice: paymentModalData.originalPrice,
+          referralCode: ''
+        });
+        return;
+      }
       if (code.trim() === '') {
         // Reset to original price if no code
         setPaymentModalData({
@@ -1663,7 +1836,7 @@ const StudentPortal: React.FC = () => {
 
       try {
         // Verify referral code with backend
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/courses/verify-referral`, {
+        const response = await fetch(`${BASE_URL}/api/courses/verify-referral`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1726,7 +1899,7 @@ const StudentPortal: React.FC = () => {
       const userData = JSON.parse(currentUser);
       
       // Submit payment with transaction ID
-      const paymentResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/payments`, {
+      const paymentResponse = await fetch(`${BASE_URL}/api/payments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1767,7 +1940,18 @@ const StudentPortal: React.FC = () => {
         }
       } else {
         const errorData = await paymentResponse.json();
-        alert(errorData.message || 'Failed to submit payment. Please try again.');
+        // Friendly handling when backend indicates student is already enrolled
+        if (typeof errorData?.message === 'string' && errorData.message.toLowerCase().includes('already enrolled')) {
+          alert('You are already enrolled in this course. Please check the My Courses tab to continue learning.');
+          // Close modal and guide user to courses
+          setShowPaymentModal(false);
+          setPaymentModalData(null);
+          setReferralCode('');
+          setTransactionId('');
+          setActiveTab('courses');
+        } else {
+          alert(errorData.message || 'Failed to submit payment. Please try again.');
+        }
       }
     } catch (error) {
       console.error('Payment submission error:', error);
@@ -1861,7 +2045,11 @@ const StudentPortal: React.FC = () => {
                       if (!currentUser) return;
                       
                       const userData = JSON.parse(currentUser);
-                      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/courses/purchased/${userData.email}`);
+                      const response = await fetch(`${BASE_URL}/api/courses/purchased/${userData.email}`, {
+                        headers: {
+                          Authorization: `Bearer ${userData.token}`
+                        }
+                      });
                       if (response.ok) {
                         const result = await response.json();
                         console.log("Enrolled data: ", result.data);
@@ -2348,20 +2536,22 @@ const StudentPortal: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Referral Code Message */}
-                    <div className="mb-4 p-2 bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 rounded">
-                      <div className="flex items-center gap-2">
-                        <span className="text-green-400 text-sm">🎯</span>
-                        <span className="text-xs font-medium text-green-400">
-                          Use referral code for 60% OFF!
-                        </span>
+                    {/* Referral Code Message (hidden for AI Tools Mastery) */}
+                    {!(course.id === 'ai-tools-mastery' || (course as any).courseId === 'AI-TOOLS-MASTERY' || (course.title || '').toLowerCase().includes('ai tools')) && (
+                      <div className="mb-4 p-2 bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 rounded">
+                        <div className="flex items-center gap-2">
+                          <span className="text-green-400 text-sm">🎯</span>
+                          <span className="text-xs font-medium text-green-400">
+                            Use referral code for 60% OFF!
+                          </span>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Pricing */}
                     <div className="mb-4">
                       <span className="text-2xl font-bold text-white">
-                        ₹{course.price.toLocaleString()}
+                        {'₹'}{course.price.toLocaleString()}
                       </span>
                     </div>
 
@@ -2442,7 +2632,7 @@ const StudentPortal: React.FC = () => {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-white text-xl font-bold">₹{purchase.amount.toLocaleString()}</p>
+                      <p className="text-white text-xl font-bold">{'₹'}{purchase.amount.toLocaleString()}</p>
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                         purchase.status === 'completed' ? 'bg-green-600 text-green-100' : 'bg-yellow-600 text-yellow-100'
                       }`}>
@@ -2881,54 +3071,51 @@ const StudentPortal: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 flex relative overflow-hidden">
-      {/* LaserFlow Background */}
-      <LaserFlow 
-        color="#00ff88"
-        horizontalBeamOffset={0.1}
-        verticalBeamOffset={0.0}
-        flowSpeed={0.8}
-        wispIntensity={0.4}
-        fogIntensity={0.3}
-        style={{ zIndex: 0 }}
-      />
-      {/* Sidebar */}
-      <div className="w-64 bg-gray-800 border-r border-gray-700 relative z-10">
-        {/* Header */}
-        <div className="p-4 border-b border-gray-700">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-              <AcademicCapIcon className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-white text-lg font-semibold">VStudents</span>
+    <div className="min-h-screen bg-black flex relative overflow-hidden">
+      {/* Background rotation: Lightning <-> Magnet Lines every 10s on dashboard */}
+      {activeTab === 'dashboard' && (
+        <div className="fixed inset-0" style={{ zIndex: 0, pointerEvents: 'none' }}>
+          <div className="absolute inset-0">
+            {showLightningBG ? (
+              <div className="absolute inset-0 opacity-40">
+                <Lightning hue={280} xOffset={0} speed={1} intensity={0.85} size={1} />
+              </div>
+            ) : (
+              <MagnetLines
+                rows={12}
+                columns={12}
+                containerSize="100vmin"
+                lineColor="#3b82f6"
+                lineWidth="0.6vmin"
+                lineHeight="4vmin"
+                baseAngle={0}
+                style={{
+                      position: 'fixed',
+                      top: 0,
+                      left: 0,
+                      width: '100vw',
+                      height: '100vh',
+                      opacity: 0.25,
+                      zIndex: 0,
+                      pointerEvents: 'none',
+                }}
+              />
+            )}
           </div>
         </div>
+      )}
 
-        {/* Navigation */}
-        <nav className="mt-4">
-          {sidebarItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              aria-label={item.label || item.id}
-              title={item.label || item.id}
-              className={`w-full flex items-center space-x-3 px-4 py-3 text-left transition-colors ${
-                activeTab === item.id 
-                  ? 'bg-green-600 text-white' 
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-              }`}
-            >
-              <item.icon className="w-5 h-5" aria-hidden="true" />
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </nav>
-      </div>
+      {/* Professional Sidebar navigation */}
+      <Sidebar
+        items={sidebarItems}
+        activeId={activeTab}
+        onSelect={(id) => setActiveTab(id)}
+      />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col relative z-10">
         {/* Top Header */}
-        <header className="bg-gray-800 border-b border-gray-700 px-6 py-4">
+        <header className="glass-effect bg-transparent px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <h1 className="text-white text-xl font-semibold">
@@ -2937,6 +3124,14 @@ const StudentPortal: React.FC = () => {
             </div>
             <div className="flex items-center space-x-4">
               <BellIcon className="w-6 h-6 text-gray-400 hover:text-white cursor-pointer" />
+              {/* Logout Button */}
+              <button
+                onClick={handleLogout}
+                className="px-3 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white text-sm font-medium border border-red-500/50"
+                aria-label="Logout"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </header>
@@ -2944,9 +3139,20 @@ const StudentPortal: React.FC = () => {
         {/* Content Area */}
         <main className="flex-1 p-6">
           {activeTab === 'dashboard' ? (
-            <>
+            <React.Fragment>
               {/* Student Profile Section */}
-              <div className="bg-gray-800 rounded-lg p-6 mb-6">
+              <MagicBento
+                enableStars={true}
+                enableSpotlight={true}
+                enableBorderGlow={true}
+                enableTilt={true}
+                enableMagnetism={true}
+                clickEffect={true}
+                spotlightRadius={300}
+                particleCount={10}
+                glowColor="132, 0, 255"
+                className="bg-gray-900/60 border border-gray-800 p-6 mb-6"
+              >
                 <div className="flex items-start space-x-6">
                   {/* Avatar */}
                   <div className="w-20 h-20 bg-gray-600 rounded-full flex items-center justify-center">
@@ -2954,7 +3160,7 @@ const StudentPortal: React.FC = () => {
                       {studentProfile?.name?.charAt(0) || 'U'}
                     </span>
                   </div>
-                  
+
                   {/* Profile Info */}
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
@@ -2966,8 +3172,10 @@ const StudentPortal: React.FC = () => {
                       </span>
                     </div>
                     <p className="text-gray-400 mb-2">Frontend Development Student</p>
-                    <p className="text-gray-500 text-sm mb-4">📍 {studentProfile?.location || 'Location not specified'}</p>
-                    
+                    <p className="text-gray-500 text-sm mb-4">
+                      📍 {studentProfile?.location || 'Location not specified'}
+                    </p>
+
                     {/* Detailed Profile Information */}
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div>
@@ -2995,7 +3203,7 @@ const StudentPortal: React.FC = () => {
                         <p className="text-white">{studentProfile?.experience || 'Beginner'}</p>
                       </div>
                     </div>
-                    
+
                     <div className="flex space-x-2">
                       <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm">
                         Online Learning
@@ -3008,7 +3216,19 @@ const StudentPortal: React.FC = () => {
 
                   {/* Right Side Content */}
                   <div className="w-80">
-                    <div className="bg-gray-800 rounded-lg p-4 mb-6">
+                    <MagicBento
+                      textAutoHide={true}
+                      enableStars={true}
+                      enableSpotlight={true}
+                      enableBorderGlow={true}
+                      enableTilt={true}
+                      enableMagnetism={true}
+                      clickEffect={true}
+                      spotlightRadius={300}
+                      particleCount={12}
+                      glowColor="132, 0, 255"
+                      className="mb-6"
+                    >
                       <h3 className="text-white text-lg font-semibold mb-4">Introduction Video</h3>
                       <div className="w-full h-32 bg-gray-700 rounded-lg flex items-center justify-center mb-3">
                         <div className="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center">
@@ -3016,18 +3236,19 @@ const StudentPortal: React.FC = () => {
                         </div>
                       </div>
                       <p className="text-gray-400 text-sm text-center mb-3">Upload your introduction video</p>
-                      <button 
+                      <button
                         className={`w-full px-4 py-2 rounded-lg text-sm transition-all duration-300 ${
-                          overallCompletionPercentage >= 80 
-                            ? 'bg-gray-700 text-white hover:bg-gray-600 cursor-pointer' 
+                          overallCompletionPercentage >= 80
+                            ? 'bg-gray-700 text-white hover:bg-gray-600 cursor-pointer'
                             : 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-60'
                         }`}
                         disabled={overallCompletionPercentage < 80}
                         onClick={() => {
                           if (overallCompletionPercentage < 80) {
-                            alert(`Video upload will be enabled after completing 80% of your courses, projects, and assignments. Current progress: ${overallCompletionPercentage}%`);
+                            alert(
+                              `Video upload will be enabled after completing 80% of your courses, projects, and assignments. Current progress: ${overallCompletionPercentage}%`
+                            );
                           } else {
-                            // Handle file upload logic here
                             const input = document.createElement('input');
                             input.type = 'file';
                             input.accept = 'video/*';
@@ -3042,25 +3263,37 @@ const StudentPortal: React.FC = () => {
                           🔒 Unlocks at 80% completion ({overallCompletionPercentage}% current)
                         </p>
                       )}
-                    </div>
+                    </MagicBento>
 
-                    <div className="bg-gray-800 rounded-lg p-4">
+                    <MagicBento
+                      textAutoHide={true}
+                      enableStars={true}
+                      enableSpotlight={true}
+                      enableBorderGlow={true}
+                      enableTilt={true}
+                      enableMagnetism={true}
+                      clickEffect={true}
+                      spotlightRadius={300}
+                      particleCount={12}
+                      glowColor="132, 0, 255"
+                    >
                       <h3 className="text-white text-lg font-semibold mb-4">Documents</h3>
                       <div className="space-y-4">
                         <div>
                           <p className="text-gray-400 text-sm mb-2">Upload your resume:</p>
-                          <button 
+                          <button
                             className={`w-full px-4 py-2 rounded-lg text-sm transition-all duration-300 ${
-                              overallCompletionPercentage >= 80 
-                                ? 'bg-gray-700 text-white hover:bg-gray-600 cursor-pointer' 
+                              overallCompletionPercentage >= 80
+                                ? 'bg-gray-700 text-white hover:bg-gray-600 cursor-pointer'
                                 : 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-60'
                             }`}
                             disabled={overallCompletionPercentage < 80}
                             onClick={() => {
                               if (overallCompletionPercentage < 80) {
-                                alert(`Resume upload will be enabled after completing 80% of your courses, projects, and assignments. Current progress: ${overallCompletionPercentage}%`);
+                                alert(
+                                  `Resume upload will be enabled after completing 80% of your courses, projects, and assignments. Current progress: ${overallCompletionPercentage}%`
+                                );
                               } else {
-                                // Handle file upload logic here
                                 const input = document.createElement('input');
                                 input.type = 'file';
                                 input.accept = '.pdf,.doc,.docx';
@@ -3076,18 +3309,18 @@ const StudentPortal: React.FC = () => {
                             </p>
                           )}
                         </div>
-                        
+
                         <div>
                           <p className="text-gray-400 text-sm mb-3">Course Materials:</p>
                           <div className="space-y-2">
-                            <div className="flex items-center space-x-3 p-2 bg-gray-700 rounded">
+                            <div className="flex items-center space-x-3 p-2 glass-effect bg-transparent rounded">
                               <div className="w-4 h-4 bg-red-500 rounded"></div>
                               <div className="flex-1">
                                 <span className="text-gray-300 text-sm">Student CV</span>
                                 <p className="text-gray-500 text-xs">PDF File</p>
                               </div>
                             </div>
-                            <div className="flex items-center space-x-3 p-2 bg-gray-700 rounded">
+                            <div className="flex items-center space-x-3 p-2 glass-effect bg-transparent rounded">
                               <div className="w-4 h-4 bg-blue-500 rounded"></div>
                               <div className="flex-1">
                                 <span className="text-gray-300 text-sm">Course Requirements</span>
@@ -3096,18 +3329,17 @@ const StudentPortal: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </MagicBento>
                   </div>
                 </div>
-              </div>
-
+              </MagicBento>
 
               {/* My Enrolled Courses */}
               <div>
                 <h3 className="text-white text-2xl font-bold mb-6">My Enrolled Courses</h3>
                 <div className="space-y-4">
                   {enrolledCourses.map((course) => (
-                    <div key={course.id} className="bg-gray-800 rounded-lg p-6">
+                    <MagicBento key={course.id} className="bg-gray-900/60 border border-gray-800 rounded-lg p-6">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                           <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -3121,25 +3353,23 @@ const StudentPortal: React.FC = () => {
                             <div className="mt-2">
                               <p className="text-gray-300 text-sm mb-1">Progress</p>
                               <div className="w-96 bg-gray-700 rounded-full h-2">
-                                <div 
-                                  className="bg-green-500 h-2 rounded-full transition-all duration-300" 
-                                  style={{width: `${course.progress}%`}}
+                                <div
+                                  className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                                  style={{ width: `${course.progress}%` }}
                                 />
                               </div>
-                              <p className="text-gray-400 text-sm mt-1">
-                                Next: {course.nextLesson}
-                              </p>
-                            </div>
+                          <p className="text-gray-400 text-sm mt-1">Next: {course.nextLesson}</p>
                           </div>
-                        </div>
-                        <div className="text-right">
+                          </div>
+                          </div>
+                          <div className="text-right">
                           <p className="text-white text-sm mb-1">
                             {course.completedLessons} of {course.totalLessons} lessons completed
                           </p>
                           <p className="text-white text-2xl font-bold">{course.progress}%</p>
                         </div>
-                      </div>
-                    </div>
+                          </div>
+                    </MagicBento>
                   ))}
                 </div>
               </div>
@@ -3147,7 +3377,7 @@ const StudentPortal: React.FC = () => {
               {/* Dashboard Boxes - Assignments, Test Results */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                 {/* Assignments Box */}
-                <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors">
+                <div className="glass-effect bg-transparent rounded-lg p-6 transition-colors">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -3164,7 +3394,7 @@ const StudentPortal: React.FC = () => {
                 </div>
 
                 {/* Test Results Box */}
-                <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors">
+                <div className="glass-effect bg-transparent rounded-lg p-6 transition-colors">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
@@ -3180,7 +3410,7 @@ const StudentPortal: React.FC = () => {
                   <p className="text-gray-400 text-sm">No tests available</p>
                 </div>
               </div>
-            </>
+            </React.Fragment>
           ) : (
             renderTabContent()
           )}
@@ -3217,62 +3447,66 @@ const StudentPortal: React.FC = () => {
               <h4 className="text-lg font-semibold text-white mb-2">
                 {paymentModalData.course.title}
               </h4>
-              <p className="text-gray-400 text-sm mb-3">
-                {paymentModalData.course.description}
-              </p>
+              <p className="text-gray-400 text-sm mb-3">{paymentModalData.course.description}</p>
             </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Referral Code (Optional)
-              </label>
-              <input
-                type="text"
-                value={referralCode}
-                onChange={(e) => handleReferralCodeChange(e.target.value)}
-                placeholder="Enter SAVE60 for 60% off"
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              {referralCode.toUpperCase() === 'SAVE60' && (
-                <p className="text-green-400 text-sm mt-1">
-                  ✓ 60% discount applied!
-                </p>
-              )}
-            </div>
+            {!isAIToolsMasterySelected && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Referral Code (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={referralCode}
+                  onChange={(e) => handleReferralCodeChange(e.target.value)}
+                  placeholder="Enter SAVE60 for 60% off"
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {referralCode.toUpperCase() === 'SAVE60' && (
+                  <p className="text-green-400 text-sm mt-1">✓ 60% discount applied!</p>
+                )}
+              </div>
+            )}
+            {isAIToolsMasterySelected && (
+              <div className="mb-4 bg-yellow-600/20 border border-yellow-600/30 rounded p-3 text-yellow-300 text-sm">
+                No offers available for A.I Tools Mastery - Professional Certification Program.
+              </div>
+            )}
 
             <div className="mb-6">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-gray-300">Original Price:</span>
-                <span className="text-gray-300">₹{paymentModalData.originalPrice.toLocaleString()}</span>
+                <span className="text-gray-300">
+                  {'₹'}{paymentModalData.originalPrice.toLocaleString()}
+                </span>
               </div>
-              {paymentModalData.discount > 0 && (
+              {!isAIToolsMasterySelected && paymentModalData.discount > 0 ? (
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-green-400">Discount ({paymentModalData.discount}%):</span>
-                  <span className="text-green-400">-₹{(paymentModalData.originalPrice - paymentModalData.discountedPrice).toLocaleString()}</span>
+                  <span className="text-green-400">{`Discount (${paymentModalData.discount}%):`}</span>
+                  <span className="text-green-400">
+                    -{'₹'}{(paymentModalData.originalPrice - paymentModalData.discountedPrice).toLocaleString()}
+                  </span>
                 </div>
-              )}
+              ) : null}
               <div className="flex justify-between items-center text-lg font-bold border-t border-gray-600 pt-2">
                 <span className="text-white">Total:</span>
-                <span className="text-blue-400">₹{Math.round(paymentModalData.discountedPrice).toLocaleString()}</span>
+                <span className="text-blue-400">
+                  {'₹'}{Math.round(paymentModalData.discountedPrice).toLocaleString()}
+                </span>
               </div>
             </div>
 
-            {/* QR Code Payment Section */}
             <div className="mb-6 text-center">
               <h4 className="text-lg font-semibold text-white mb-3">Scan QR Code to Pay</h4>
               <div className="bg-white p-4 rounded-lg inline-block mb-4">
-                <img 
-                  src="/img/qr.png" 
-                  alt="Payment QR Code" 
-                  className="w-48 h-48 mx-auto"
-                />
+                <img src="/img/qr.png" alt="Payment QR Code" className="w-48 h-48 mx-auto" />
               </div>
               <p className="text-gray-300 text-sm mb-4">
-                Scan the QR code above with your UPI app to make the payment of ₹{Math.round(paymentModalData.discountedPrice).toLocaleString()}
+                {'Scan the QR code above with your UPI app to make the payment of '}
+                {'₹'}{Math.round(paymentModalData.discountedPrice).toLocaleString()}
               </p>
             </div>
 
-            {/* Transaction ID Input */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Transaction ID *
@@ -3306,358 +3540,243 @@ const StudentPortal: React.FC = () => {
       )}
 
       {/* Project Submission Modal */}
-      {showProjectSubmissionModal && selectedProjectId && (() => {
-        const selectedProject = projects.find(p => p.id === selectedProjectId);
-        const isAIToolsProject = selectedProject?.courseId === 'ai-tools-mastery';
-        
-        return (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-900 rounded-lg p-6 max-w-md w-full mx-4 border border-gray-700">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-white">Submit Project</h3>
-                <button
-                  onClick={() => {
-                    setShowProjectSubmissionModal(false);
-                    setSelectedProjectId(null);
-                    setProjectGitUrl('');
-                    setProjectGoogleDriveUrl('');
-                  }}
-                  className="text-gray-400 hover:text-white"
-                  aria-label="Close project submission modal"
-                  title="Close"
-                >
-                  <span className="sr-only">Close</span>
-                  <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-                </button>
-              </div>
-              <div className="mb-4">
-                {isAIToolsProject ? (
-                  <>
-                    <p className="text-gray-300 text-sm mb-4">
-                      Submit your AI Tools project by providing a Google Drive URL. Make sure your folder is shared with view access so instructors can review your work.
-                    </p>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Google Drive Folder URL *
-                    </label>
-                    <input
-                      type="url"
-                      value={projectGoogleDriveUrl}
-                      onChange={(e) => setProjectGoogleDriveUrl(e.target.value)}
-                      placeholder="https://drive.google.com/drive/folders/your-folder-id"
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
-                      required
-                    />
-                    <p className="text-gray-400 text-xs mt-1">
-                      Example: https://drive.google.com/drive/folders/1ABC123xyz...
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-gray-300 text-sm mb-4">
-                      Submit your project by providing the Git repository URL. Make sure your repository is public so instructors can review your code.
-                    </p>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Git Repository URL *
-                    </label>
-                    <input
-                      type="url"
-                      value={projectGitUrl}
-                      onChange={(e) => setProjectGitUrl(e.target.value)}
-                      placeholder="https://github.com/username/project-name"
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
-                      required
-                    />
-                    <p className="text-gray-400 text-xs mt-1">
-                      Example: https://github.com/yourusername/your-project
-                    </p>
-                  </>
-                )}
-              </div>
+      {renderProjectSubmissionModal()}
 
-              {!isAIToolsProject && (
-                <div className="bg-blue-600/20 border border-blue-600/30 rounded-lg p-3 mb-4">
-                  <p className="text-blue-400 text-sm">
-                    💡 <strong>Tip:</strong> Don't know how to use Git? Click the "Learn Git" button in your project to get started with step-by-step instructions!
-                  </p>
-                </div>
-              )}
-
-              {isAIToolsProject && (
-                <div className="bg-purple-600/20 border border-purple-600/30 rounded-lg p-3 mb-4">
-                  <p className="text-purple-400 text-sm">
-                    📁 <strong>Tip:</strong> Create a well-organized folder structure with your AI-generated content, prompts used, and documentation. Make sure to set sharing permissions to "Anyone with the link can view".
-                  </p>
-                </div>
-              )}
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    setShowProjectSubmissionModal(false);
-                    setSelectedProjectId(null);
-                    setProjectGitUrl('');
-                    setProjectGoogleDriveUrl('');
-                  }}
-                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    const submissionUrl = isAIToolsProject ? projectGoogleDriveUrl.trim() : projectGitUrl.trim();
-                    if (submissionUrl) {
-                      // Here you would typically send the submission to your backend
-                      console.log('Submitting project:', selectedProjectId, 'with URL:', submissionUrl, 'Type:', isAIToolsProject ? 'Google Drive' : 'Git');
-                      alert(`Project submitted successfully! Your instructor will review your ${isAIToolsProject ? 'Google Drive folder' : 'Git repository'} soon.`);
-                      setShowProjectSubmissionModal(false);
-                      setSelectedProjectId(null);
-                      setProjectGitUrl('');
-                      setProjectGoogleDriveUrl('');
-                    }
-                  }}
-                  disabled={isAIToolsProject ? !projectGoogleDriveUrl.trim() : !projectGitUrl.trim()}
-                  className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
-                >
-                  Submit Project
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-            
       {/* Git Tutorial Modal */}
       {showGitTutorialModal && (
-        <div>
-          <button
-            onClick={() => setShowGitTutorialModal(false)}
-            className="absolute top-4 right-4 text-gray-400 hover:text-white"
-            aria-label="Close Git tutorial modal"
-            title="Close"
-          >
-            <span className="sr-only">Close</span>
-            <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-          </button>
-          <div className="space-y-6">
-            {/* Introduction */}
-            <div className="bg-gray-700/50 rounded-lg p-4">
-              <h4 className="text-lg font-semibold text-white mb-2">What is Git?</h4>
-              <p className="text-gray-300 text-sm">
-                Git is a version control system that helps you track changes in your code and collaborate with others. 
-                GitHub is a platform that hosts Git repositories online.
-              </p>
-            </div>
-
-            {/* Step 1: Install Git */}
-            <div className="bg-gray-700/50 rounded-lg p-4">
-              <h4 className="text-lg font-semibold text-white mb-3">Step 1: Install Git</h4>
-              <p className="text-gray-300 text-sm mb-2">Download and install Git from:</p>
-              <div className="bg-gray-800 rounded p-2 mb-2">
-                <code className="text-green-400">https://git-scm.com/downloads</code>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setShowGitTutorialModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white"
+              aria-label="Close Git tutorial modal"
+              title="Close"
+            >
+              <span className="sr-only">Close</span>
+              <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+            </button>
+            <div className="space-y-6">
+              {/* Introduction */}
+              <div className="bg-gray-700/50 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-2">What is Git?</h4>
+                <p className="text-gray-300 text-sm">
+                  Git is a version control system that helps you track changes in your code and collaborate with others.
+                  GitHub is a platform that hosts Git repositories online.
+                </p>
               </div>
-              <p className="text-gray-300 text-sm">Verify installation by running:</p>
-              <div className="bg-gray-800 rounded p-2">
-                <code className="text-green-400">git --version</code>
-              </div>
-            </div>
 
-            {/* Step 2: Configure Git */}
-            <div className="bg-gray-700/50 rounded-lg p-4">
-              <h4 className="text-lg font-semibold text-white mb-3">Step 2: Configure Git (First Time Setup)</h4>
-              <p className="text-gray-300 text-sm mb-2">Set your name and email:</p>
-              <div className="space-y-2">
-                <div className="bg-gray-800 rounded p-2">
-                  <code className="text-green-400">git config --global user.name "Your Name"</code>
+              {/* Step 1: Install Git */}
+              <div className="bg-gray-700/50 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-3">Step 1: Install Git</h4>
+                <p className="text-gray-300 text-sm mb-2">Download and install Git from:</p>
+                <div className="bg-gray-800 rounded p-2 mb-2">
+                  <code className="text-green-400">https://git-scm.com/downloads</code>
                 </div>
+                <p className="text-gray-300 text-sm">Verify installation by running:</p>
                 <div className="bg-gray-800 rounded p-2">
-                  <code className="text-green-400">git config --global user.email "your.email@example.com"</code>
+                  <code className="text-green-400">git --version</code>
                 </div>
               </div>
-              <p className="text-gray-300 text-sm mt-2">Check your configuration:</p>
-              <div className="bg-gray-800 rounded p-2">
-                <code className="text-green-400">git config --list</code>
-              </div>
-            </div>
 
-            {/* Step 3: Create Repository */}
-            <div className="bg-gray-700/50 rounded-lg p-4">
-              <h4 className="text-lg font-semibold text-white mb-3">Step 3: Create a Repository</h4>
-              
-              <div className="mb-4">
-                <h5 className="text-white font-medium mb-2">Option A: Create on GitHub first (Recommended)</h5>
-                <ol className="text-gray-300 text-sm space-y-1 list-decimal list-inside">
-                  <li>Go to <span className="text-blue-400">github.com</span> and sign in</li>
-                  <li>Click "New repository" or the "+" icon</li>
-                  <li>Enter repository name (e.g., "my-project")</li>
-                  <li>Make it <strong>Public</strong> so instructors can see it</li>
-                  <li>Check "Add a README file"</li>
-                  <li>Click "Create repository"</li>
+              {/* Step 2: Configure Git */}
+              <div className="bg-gray-700/50 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-3">Step 2: Configure Git (First Time Setup)</h4>
+                <p className="text-gray-300 text-sm mb-2">Set your name and email:</p>
+                <div className="space-y-2">
+                  <div className="bg-gray-800 rounded p-2">
+                    <code className="text-green-400">git config --global user.name "Your Name"</code>
+                  </div>
+                  <div className="bg-gray-800 rounded p-2">
+                    <code className="text-green-400">git config --global user.email "your.email@example.com"</code>
+                  </div>
+                </div>
+                <p className="text-gray-300 text-sm mt-2">Check your configuration:</p>
+                <div className="bg-gray-800 rounded p-2">
+                  <code className="text-green-400">git config --list</code>
+                </div>
+              </div>
+
+              {/* Step 3: Create Repository */}
+              <div className="bg-gray-700/50 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-3">Step 3: Create a Repository</h4>
+                <div className="mb-4">
+                  <h5 className="text-white font-medium mb-2">Option A: Create on GitHub first (Recommended)</h5>
+                  <ol className="text-gray-300 text-sm space-y-1 list-decimal list-inside">
+                    <li>Go to <span className="text-blue-400">github.com</span> and sign in</li>
+                    <li>Click "New repository" or the "+" icon</li>
+                    <li>Enter repository name (e.g., "my-project")</li>
+                    <li>Make it <strong>Public</strong> so instructors can see it</li>
+                    <li>Check "Add a README file"</li>
+                    <li>Click "Create repository"</li>
+                  </ol>
+                </div>
+                <div>
+                  <h5 className="text-white font-medium mb-2">Option B: Create locally first</h5>
+                  <div className="space-y-2">
+                    <div className="bg-gray-800 rounded p-2">
+                      <code className="text-green-400">mkdir my-project</code>
+                    </div>
+                    <div className="bg-gray-800 rounded p-2">
+                      <code className="text-green-400">cd my-project</code>
+                    </div>
+                    <div className="bg-gray-800 rounded p-2">
+                      <code className="text-green-400">git init</code>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 4: Clone Repository */}
+              <div className="bg-gray-700/50 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-3">Step 4: Clone Repository (If created on GitHub)</h4>
+                <p className="text-gray-300 text-sm mb-2">Copy the repository to your computer:</p>
+                <div className="bg-gray-800 rounded p-2 mb-2">
+                  <code className="text-green-400">git clone https://github.com/username/repository-name.git</code>
+                </div>
+                <div className="bg-gray-800 rounded p-2">
+                  <code className="text-green-400">cd repository-name</code>
+                </div>
+              </div>
+
+              {/* Step 5: Basic Git Workflow */}
+              <div className="bg-gray-700/50 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-3">Step 5: Basic Git Workflow</h4>
+                <div className="space-y-4">
+                  <div>
+                    <h5 className="text-white font-medium mb-2">1. Check status of your files:</h5>
+                    <div className="bg-gray-800 rounded p-2">
+                      <code className="text-green-400">git status</code>
+                    </div>
+                  </div>
+                  <div>
+                    <h5 className="text-white font-medium mb-2">2. Add files to staging area:</h5>
+                    <div className="space-y-2">
+                      <div className="bg-gray-800 rounded p-2">
+                        <code className="text-green-400">git add filename.txt</code>
+                        <span className="text-gray-400 ml-2"># Add specific file</span>
+                      </div>
+                      <div className="bg-gray-800 rounded p-2">
+                        <code className="text-green-400">git add .</code>
+                        <span className="text-gray-400 ml-2"># Add all files</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h5 className="text-white font-medium mb-2">3. Commit your changes:</h5>
+                    <div className="bg-gray-800 rounded p-2">
+                      <code className="text-green-400">git commit -m "Your commit message"</code>
+                    </div>
+                    <p className="text-gray-300 text-xs mt-1">Example: "Add project files" or "Fix login bug"</p>
+                  </div>
+                  <div>
+                    <h5 className="text-white font-medium mb-2">4. Push to GitHub:</h5>
+                    <div className="bg-gray-800 rounded p-2">
+                      <code className="text-green-400">git push origin main</code>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 6: Connect Local to Remote */}
+              <div className="bg-gray-700/50 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-3">Step 6: Connect Local Repository to GitHub</h4>
+                <p className="text-gray-300 text-sm mb-2">If you created the repository locally first:</p>
+                <div className="space-y-2">
+                  <div className="bg-gray-800 rounded p-2">
+                    <code className="text-green-400">git remote add origin https://github.com/username/repository-name.git</code>
+                  </div>
+                  <div className="bg-gray-800 rounded p-2">
+                    <code className="text-green-400">git branch -M main</code>
+                  </div>
+                  <div className="bg-gray-800 rounded p-2">
+                    <code className="text-green-400">git push -u origin main</code>
+                  </div>
+                </div>
+              </div>
+
+              {/* Common Commands */}
+              <div className="bg-gray-700/50 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-3">Common Git Commands</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h5 className="text-white font-medium mb-2">View Information:</h5>
+                    <div className="space-y-1 text-sm">
+                      <div className="bg-gray-800 rounded p-2">
+                        <code className="text-green-400">git status</code>
+                        <span className="text-gray-400 block text-xs">Check file status</span>
+                      </div>
+                      <div className="bg-gray-800 rounded p-2">
+                        <code className="text-green-400">git log</code>
+                        <span className="text-gray-400 block text-xs">View commit history</span>
+                      </div>
+                      <div className="bg-gray-800 rounded p-2">
+                        <code className="text-green-400">git diff</code>
+                        <span className="text-gray-400 block text-xs">See changes</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h5 className="text-white font-medium mb-2">Undo Changes:</h5>
+                    <div className="space-y-1 text-sm">
+                      <div className="bg-gray-800 rounded p-2">
+                        <code className="text-green-400">git reset filename</code>
+                        <span className="text-gray-400 block text-xs">Unstage file</span>
+                      </div>
+                      <div className="bg-gray-800 rounded p-2">
+                        <code className="text-green-400">git checkout -- filename</code>
+                        <span className="text-gray-400 block text-xs">Discard changes</span>
+                      </div>
+                      <div className="bg-gray-800 rounded p-2">
+                        <code className="text-green-400">git pull</code>
+                        <span className="text-gray-400 block text-xs">Get latest changes</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Start Guide */}
+              <div className="bg-blue-600/20 border border-blue-600/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-blue-400 mb-3">🚀 Quick Start for Your Project</h4>
+                <ol className="text-gray-300 text-sm space-y-2 list-decimal list-inside">
+                  <li>Create a new repository on GitHub (make it <strong>public</strong>)</li>
+                  <li>
+                    Clone it: <code className="bg-gray-800 px-1 rounded text-green-400">git clone [your-repo-url]</code>
+                  </li>
+                  <li>Add your project files to the folder</li>
+                  <li>
+                    Stage files: <code className="bg-gray-800 px-1 rounded text-green-400">git add .</code>
+                  </li>
+                  <li>
+                    Commit: <code className="bg-gray-800 px-1 rounded text-green-400">git commit -m "Initial project submission"</code>
+                  </li>
+                  <li>
+                    Push: <code className="bg-gray-800 px-1 rounded text-green-400">git push origin main</code>
+                  </li>
+                  <li>Copy the repository URL and submit it in your project!</li>
                 </ol>
               </div>
 
-              <div>
-                <h5 className="text-white font-medium mb-2">Option B: Create locally first</h5>
-                <div className="space-y-2">
-                  <div className="bg-gray-800 rounded p-2">
-                    <code className="text-green-400">mkdir my-project</code>
-                  </div>
-                  <div className="bg-gray-800 rounded p-2">
-                    <code className="text-green-400">cd my-project</code>
-                  </div>
-                  <div className="bg-gray-800 rounded p-2">
-                    <code className="text-green-400">git init</code>
-                  </div>
-                </div>
+              {/* Tips */}
+              <div className="bg-yellow-600/20 border border-yellow-600/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-yellow-400 mb-3">💡 Important Tips</h4>
+                <ul className="text-gray-300 text-sm space-y-1 list-disc list-inside">
+                  <li>Always make your repository <strong>public</strong> so instructors can access it</li>
+                  <li>Write clear commit messages describing what you changed</li>
+                  <li>Include a README.md file explaining your project</li>
+                  <li>Don't commit sensitive information (passwords, API keys)</li>
+                  <li>Commit frequently with small, logical changes</li>
+                </ul>
               </div>
             </div>
-
-            {/* Step 4: Clone Repository */}
-            <div className="bg-gray-700/50 rounded-lg p-4">
-              <h4 className="text-lg font-semibold text-white mb-3">Step 4: Clone Repository (If created on GitHub)</h4>
-              <p className="text-gray-300 text-sm mb-2">Copy the repository to your computer:</p>
-              <div className="bg-gray-800 rounded p-2 mb-2">
-                <code className="text-green-400">git clone https://github.com/username/repository-name.git</code>
-              </div>
-              <div className="bg-gray-800 rounded p-2">
-                <code className="text-green-400">cd repository-name</code>
-              </div>
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => setShowGitTutorialModal(false)}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors"
+              >
+                Got it! Close Tutorial
+              </button>
             </div>
-
-            {/* Step 5: Basic Git Workflow */}
-            <div className="bg-gray-700/50 rounded-lg p-4">
-              <h4 className="text-lg font-semibold text-white mb-3">Step 5: Basic Git Workflow</h4>
-              
-              <div className="space-y-4">
-                <div>
-                  <h5 className="text-white font-medium mb-2">1. Check status of your files:</h5>
-                  <div className="bg-gray-800 rounded p-2">
-                    <code className="text-green-400">git status</code>
-                  </div>
-                </div>
-
-                <div>
-                  <h5 className="text-white font-medium mb-2">2. Add files to staging area:</h5>
-                  <div className="space-y-2">
-                    <div className="bg-gray-800 rounded p-2">
-                      <code className="text-green-400">git add filename.txt</code>
-                      <span className="text-gray-400 ml-2"># Add specific file</span>
-                    </div>
-                    <div className="bg-gray-800 rounded p-2">
-                      <code className="text-green-400">git add .</code>
-                      <span className="text-gray-400 ml-2"># Add all files</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h5 className="text-white font-medium mb-2">3. Commit your changes:</h5>
-                  <div className="bg-gray-800 rounded p-2">
-                    <code className="text-green-400">git commit -m "Your commit message"</code>
-                  </div>
-                  <p className="text-gray-300 text-xs mt-1">Example: "Add project files" or "Fix login bug"</p>
-                </div>
-
-                <div>
-                  <h5 className="text-white font-medium mb-2">4. Push to GitHub:</h5>
-                  <div className="bg-gray-800 rounded p-2">
-                    <code className="text-green-400">git push origin main</code>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Step 6: Connect Local to Remote */}
-            <div className="bg-gray-700/50 rounded-lg p-4">
-              <h4 className="text-lg font-semibold text-white mb-3">Step 6: Connect Local Repository to GitHub</h4>
-              <p className="text-gray-300 text-sm mb-2">If you created the repository locally first:</p>
-              <div className="space-y-2">
-                <div className="bg-gray-800 rounded p-2">
-                  <code className="text-green-400">git remote add origin https://github.com/username/repository-name.git</code>
-                </div>
-                <div className="bg-gray-800 rounded p-2">
-                  <code className="text-green-400">git branch -M main</code>
-                </div>
-                <div className="bg-gray-800 rounded p-2">
-                  <code className="text-green-400">git push -u origin main</code>
-                </div>
-              </div>
-            </div>
-
-            {/* Common Commands */}
-            <div className="bg-gray-700/50 rounded-lg p-4">
-              <h4 className="text-lg font-semibold text-white mb-3">Common Git Commands</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h5 className="text-white font-medium mb-2">View Information:</h5>
-                  <div className="space-y-1 text-sm">
-                    <div className="bg-gray-800 rounded p-2">
-                      <code className="text-green-400">git status</code>
-                      <span className="text-gray-400 block text-xs">Check file status</span>
-                    </div>
-                    <div className="bg-gray-800 rounded p-2">
-                      <code className="text-green-400">git log</code>
-                      <span className="text-gray-400 block text-xs">View commit history</span>
-                    </div>
-                    <div className="bg-gray-800 rounded p-2">
-                      <code className="text-green-400">git diff</code>
-                      <span className="text-gray-400 block text-xs">See changes</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h5 className="text-white font-medium mb-2">Undo Changes:</h5>
-                  <div className="space-y-1 text-sm">
-                    <div className="bg-gray-800 rounded p-2">
-                      <code className="text-green-400">git reset filename</code>
-                      <span className="text-gray-400 block text-xs">Unstage file</span>
-                    </div>
-                    <div className="bg-gray-800 rounded p-2">
-                      <code className="text-green-400">git checkout -- filename</code>
-                      <span className="text-gray-400 block text-xs">Discard changes</span>
-                    </div>
-                    <div className="bg-gray-800 rounded p-2">
-                      <code className="text-green-400">git pull</code>
-                      <span className="text-gray-400 block text-xs">Get latest changes</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Start Guide */}
-            <div className="bg-blue-600/20 border border-blue-600/30 rounded-lg p-4">
-              <h4 className="text-lg font-semibold text-blue-400 mb-3">🚀 Quick Start for Your Project</h4>
-              <ol className="text-gray-300 text-sm space-y-2 list-decimal list-inside">
-                <li>Create a new repository on GitHub (make it <strong>public</strong>)</li>
-                <li>Clone it: <code className="bg-gray-800 px-1 rounded text-green-400">git clone [your-repo-url]</code></li>
-                <li>Add your project files to the folder</li>
-                <li>Stage files: <code className="bg-gray-800 px-1 rounded text-green-400">git add .</code></li>
-                <li>Commit: <code className="bg-gray-800 px-1 rounded text-green-400">git commit -m "Initial project submission"</code></li>
-                <li>Push: <code className="bg-gray-800 px-1 rounded text-green-400">git push origin main</code></li>
-                <li>Copy the repository URL and submit it in your project!</li>
-              </ol>
-            </div>
-
-            {/* Tips */}
-            <div className="bg-yellow-600/20 border border-yellow-600/30 rounded-lg p-4">
-              <h4 className="text-lg font-semibold text-yellow-400 mb-3">💡 Important Tips</h4>
-              <ul className="text-gray-300 text-sm space-y-1 list-disc list-inside">
-                <li>Always make your repository <strong>public</strong> so instructors can access it</li>
-                <li>Write clear commit messages describing what you changed</li>
-                <li>Include a README.md file explaining your project</li>
-                <li>Don't commit sensitive information (passwords, API keys)</li>
-                <li>Commit frequently with small, logical changes</li>
-              </ul>
-            </div>
-          </div>
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => setShowGitTutorialModal(false)}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors"
-            >
-              Got it! Close Tutorial
-            </button>
           </div>
         </div>
       )}
@@ -3676,7 +3795,6 @@ const StudentPortal: React.FC = () => {
                   <XMarkIcon className="w-6 h-6" />
                 </button>
               </div>
-              
               <div className="space-y-4">
                 {selectedStudyMaterials.map((material, index) => (
                   <div key={index} className="bg-gray-800 rounded-lg p-4">
@@ -3688,7 +3806,6 @@ const StudentPortal: React.FC = () => {
                   </div>
                 ))}
               </div>
-              
               <div className="mt-6 text-center">
                 <button
                   onClick={() => setShowStudyMaterialsModal(false)}
@@ -3716,7 +3833,6 @@ const StudentPortal: React.FC = () => {
                   <XMarkIcon className="w-6 h-6" />
                 </button>
               </div>
-              
               {!testResults ? (
                 <div className="space-y-6">
                   {selectedTestQuestions?.map((question, questionIndex) => (
@@ -3732,10 +3848,12 @@ const StudentPortal: React.FC = () => {
                               name={`question-${questionIndex}`}
                               value={optionIndex}
                               checked={currentTestAnswers[questionIndex] === optionIndex}
-                              onChange={() => setCurrentTestAnswers(prev => ({
-                                ...prev,
-                                [questionIndex]: optionIndex
-                              }))}
+                              onChange={() =>
+                                setCurrentTestAnswers((prev) => ({
+                                  ...prev,
+                                  [questionIndex]: optionIndex,
+                                }))
+                              }
                               className="text-purple-600"
                             />
                             <span className="text-gray-300">{option}</span>
@@ -3744,13 +3862,15 @@ const StudentPortal: React.FC = () => {
                       </div>
                     </div>
                   ))}
-                  
                   <div className="text-center">
                     <button
                       onClick={() => {
-                        const score = selectedTestQuestions?.reduce((acc, question, index) => {
-                          return acc + (currentTestAnswers[index] === question.correctAnswer ? 1 : 0);
-                        }, 0) || 0;
+                        const score = selectedTestQuestions?.reduce(
+                          (acc, question, index) => {
+                            return acc + (currentTestAnswers[index] === question.correctAnswer ? 1 : 0);
+                          },
+                          0
+                        ) || 0;
                         setTestResults({ score, total: selectedTestQuestions?.length || 0 });
                       }}
                       disabled={Object.keys(currentTestAnswers).length !== selectedTestQuestions?.length}
@@ -3765,7 +3885,9 @@ const StudentPortal: React.FC = () => {
                   <div className="bg-gray-800 rounded-lg p-8 mb-6">
                     <h4 className="text-2xl font-bold text-white mb-4">Test Results</h4>
                     <div className="text-6xl font-bold mb-4">
-                      <span className={testResults.score >= testResults.total * 0.7 ? 'text-green-400' : 'text-red-400'}>
+                      <span
+                        className={testResults.score >= testResults.total * 0.7 ? 'text-green-400' : 'text-red-400'}
+                      >
                         {Math.round((testResults.score / testResults.total) * 100)}%
                       </span>
                     </div>
@@ -3778,7 +3900,6 @@ const StudentPortal: React.FC = () => {
                       <p className="text-red-400 mt-2">Keep studying and try again!</p>
                     )}
                   </div>
-                  
                   <div className="space-x-4">
                     <button
                       onClick={() => {
@@ -3816,25 +3937,20 @@ const StudentPortal: React.FC = () => {
                 ✕
               </button>
             </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Main Content */}
               <div className="lg:col-span-2">
-                {/* Course Header */}
                 <div className="mb-6">
                   <div className="flex items-center gap-2 mb-4">
                     <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium">
                       {selectedCourseForDetails.level.charAt(0).toUpperCase() + selectedCourseForDetails.level.slice(1)}
                     </span>
                     <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium">
-                      {selectedCourseForDetails.category.charAt(0).toUpperCase() + selectedCourseForDetails.category.slice(1)}
+                      {selectedCourseForDetails.category.charAt(0).toUpperCase() +
+                        selectedCourseForDetails.category.slice(1)}
                     </span>
                   </div>
-                  
-                  <p className="text-gray-300 mb-4">
-                    {selectedCourseForDetails.description}
-                  </p>
-                  
+                  <p className="text-gray-300 mb-4">{selectedCourseForDetails.description}</p>
                   <div className="flex flex-wrap gap-4 text-sm text-gray-400">
                     <div className="flex items-center gap-2">
                       <span>⏱️</span>
@@ -3850,27 +3966,22 @@ const StudentPortal: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <span>⭐</span>
-                      <span>{selectedCourseForDetails.rating} ({selectedCourseForDetails.students.toLocaleString()} students)</span>
+                      <span>
+                        {selectedCourseForDetails.rating} ({selectedCourseForDetails.students.toLocaleString()} students)
+                      </span>
                     </div>
                   </div>
                 </div>
-
-                {/* Technologies */}
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold text-white mb-3">Technologies You'll Learn</h3>
                   <div className="flex flex-wrap gap-2">
                     {selectedCourseForDetails.technologies.map((tech, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-gray-700 text-gray-300 rounded-full text-sm"
-                      >
+                      <span key={index} className="px-3 py-1 bg-gray-700 text-gray-300 rounded-full text-sm">
                         {tech}
                       </span>
                     ))}
                   </div>
                 </div>
-
-                {/* Course Modules */}
                 {selectedCourseForDetails.modules && selectedCourseForDetails.modules.length > 0 && (
                   <div className="mb-6">
                     <h3 className="text-lg font-semibold text-white mb-3">Course Curriculum</h3>
@@ -3897,11 +4008,19 @@ const StudentPortal: React.FC = () => {
                   </div>
                 )}
               </div>
-
-              {/* Enrollment Card */}
               <div className="lg:col-span-1">
-                <div className="sticky top-6 bg-gray-800 border border-gray-700 rounded-lg p-6">
-                  {/* Course Image */}
+                <MagicBento
+                  enableStars={true}
+                  enableSpotlight={true}
+                  enableBorderGlow={true}
+                  enableTilt={false}
+                  enableMagnetism={true}
+                  clickEffect={true}
+                  spotlightRadius={280}
+                  particleCount={8}
+                  glowColor="132, 0, 255"
+                  className="sticky top-6 bg-gray-800 rounded-lg p-6"
+                >
                   <div className="mb-4">
                     <img
                       src={selectedCourseForDetails.image}
@@ -3909,18 +4028,12 @@ const StudentPortal: React.FC = () => {
                       className="w-full h-32 object-cover rounded-lg"
                     />
                   </div>
-
-                  {/* Pricing */}
                   <div className="mb-4">
                     <div className="text-2xl font-bold text-green-400 mb-1">
-                      ₹{selectedCourseForDetails.price.toLocaleString()}
+                      {'₹'}{selectedCourseForDetails.price.toLocaleString()}
                     </div>
-                    <div className="text-sm text-gray-400">
-                      One-time payment • Lifetime access
-                    </div>
+                    <div className="text-sm text-gray-400">One-time payment • Lifetime access</div>
                   </div>
-
-                  {/* Course Info */}
                   <div className="mb-4 space-y-2">
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-gray-400">Instructor</span>
@@ -3939,8 +4052,6 @@ const StudentPortal: React.FC = () => {
                       <span className="text-white">{selectedCourseForDetails.projects}</span>
                     </div>
                   </div>
-
-                  {/* Referral Code Message */}
                   <div className="mb-4 p-3 bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 rounded">
                     <div className="flex items-center gap-2">
                       <span className="text-green-400 text-sm">🎯</span>
@@ -3949,17 +4060,15 @@ const StudentPortal: React.FC = () => {
                       </span>
                     </div>
                   </div>
-
-                  {/* Enroll Button */}
                   {selectedCourseForDetails.students >= selectedCourseForDetails.maxStudents ? (
-                    <button 
+                    <button
                       disabled
                       className="w-full bg-gray-600 text-gray-300 py-3 px-4 rounded-lg font-medium cursor-not-allowed mb-4"
                     >
                       Slots Closed
                     </button>
                   ) : (
-                    <button 
+                    <button
                       onClick={() => {
                         setShowCourseDetails(false);
                         handlePurchaseCourse(selectedCourseForDetails.id);
@@ -3969,8 +4078,6 @@ const StudentPortal: React.FC = () => {
                       Enroll Now
                     </button>
                   )}
-
-                  {/* Features */}
                   <div className="pt-4 border-t border-gray-700">
                     <h4 className="font-medium text-white mb-3">What's Included:</h4>
                     <ul className="space-y-2 text-sm text-gray-300">
@@ -3996,7 +4103,7 @@ const StudentPortal: React.FC = () => {
                       </li>
                     </ul>
                   </div>
-                </div>
+                </MagicBento>
               </div>
             </div>
           </div>

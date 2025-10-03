@@ -11,6 +11,8 @@ declare global {
   }
 }
 
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+
 interface StudentDetails {
   firstName: string;
   lastName: string;
@@ -147,7 +149,7 @@ const StudentRegistration = () => {
       console.log(registrationData);
 
       // Call backend API to register student
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/students/register`, {
+      const response = await fetch(`${BASE_URL}/api/students/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -155,9 +157,23 @@ const StudentRegistration = () => {
         body: JSON.stringify(registrationData)
       });
 
-      const result = await response.json();
+      let result: any = null;
+      let rawText = '';
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        // Fallback to text when response is not JSON
+        rawText = await response.text();
+      }
 
-      if (result.success) {
+      if (!response.ok) {
+        const errorMessage = (result && (result.message || result.error)) || rawText || `Registration failed. Status ${response.status}`;
+        console.error('Registration failed:', errorMessage);
+        setErrors({ email: errorMessage || 'Registration failed. Please try again.' });
+        return;
+      }
+
+      if (result && result.success) {
         console.log('Student registered successfully in database:', result.data);
         
         // Store user data locally for immediate access
@@ -170,12 +186,14 @@ const StudentRegistration = () => {
         
         setStep(3); // Move to final step (registration complete)
       } else {
-        console.error('Registration failed:', result.message);
-        setErrors({ email: result.message || 'Registration failed. Please try again.' });
+        const errMsg = (result && result.message) || 'Registration failed. Please try again.';
+        console.error('Registration failed:', errMsg);
+        setErrors({ email: errMsg });
       }
     } catch (err) {
       console.error('Registration error:', err);
-      setErrors({ email: 'Unable to connect to server. Please try again.' });
+      const fallbackMessage = err instanceof Error ? err.message : 'Unable to connect to server. Please try again.';
+      setErrors({ email: fallbackMessage });
     } finally {
       setIsLoading(false);
     }
