@@ -1605,21 +1605,33 @@ const AdminPanel: React.FC = () => {
                                         <span className={`px-4 py-2 rounded-lg text-sm font-medium ${
                                           hasConfirmedPayment
                                             ? 'bg-green-500/20 text-green-300 border border-green-500/30'
-                                            : 'bg-gray-600/20 text-gray-400 border border-gray-600/30'
+                                            : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                                         }`}>
-                                          {hasConfirmedPayment ? '✅ Payment Confirmed' : '🔒 Payment Pending'}
+                                          {hasConfirmedPayment ? '✅ Payment Confirmed' : '⏳ Payment Pending Review'}
                                         </span>
                                       </div>
                                       
-                                      {/* Payment Status Dropdown */}
+                                      {/* Payment Status Dropdown - Admin Control */}
                                       <div className="flex justify-center items-center space-x-2">
-                                        <label className="text-white/60 text-sm">Payment Status:</label>
+                                        <label className="text-white/60 text-sm">Admin Control:</label>
                                         <select
                                            value={(() => {
                                              const paymentId = coursePayment?.paymentId || `new_payment_${student._id}_${enrollment.courseId._id}`;
                                              const changeKey = `${student._id}-${paymentId}`;
                                              const pendingChange = pendingPaymentChanges[changeKey];
-                                             return pendingChange?.newStatus || coursePayment?.confirmationStatus || 'pending';
+                                             
+                                             // If there's a pending change, use that
+                                             if (pendingChange) {
+                                               return pendingChange.newStatus;
+                                             }
+                                             
+                                             // If there's an existing payment, use its status
+                                             if (coursePayment && coursePayment.confirmationStatus) {
+                                               return coursePayment.confirmationStatus;
+                                             }
+                                             
+                                             // Default to 'pending' for new enrollments without payments
+                                             return 'pending';
                                            })()}
                                            onChange={(e) => {
                                              let paymentId;
@@ -1651,8 +1663,9 @@ const AdminPanel: React.FC = () => {
                                               onClick={() => savePaymentStatusChange(changeKey)}
                                               disabled={isSaving}
                                               className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+                                              title="Save payment status change"
                                             >
-                                              {isSaving ? 'Saving...' : 'Save'}
+                                              {isSaving ? 'Saving...' : 'Save Changes'}
                                             </button>
                                           );
                                         })()}

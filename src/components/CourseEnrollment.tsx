@@ -769,9 +769,9 @@ const CourseEnrollment: React.FC = () => {
                       <div className="bg-yellow-600/20 border border-yellow-600/30 rounded-lg p-2 text-yellow-300 text-xs">
                         ⚠️ <strong>Important:</strong> {referralCode ? 'Your referral code will be validated during payment verification.' : 'Make sure to enter the correct transaction ID.'}
                         <br />
-                        🕒 Course access will be granted within 24 hours after payment confirmation.
+                        � The course will appear in your "My Courses" tab immediately (with pending status).
                         <br />
-                        📚 Once confirmed, the course will appear in your "My Courses" tab.
+                        � Course access will be granted within 24 hours after admin confirms your payment.
                       </div>
                     </div>
                   </div>

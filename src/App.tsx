@@ -27,8 +27,8 @@ import AssignmentPage from './components/AssignmentPage';
 import AIStudyMaterial from './components/AIStudyMaterial';
 import AIToolsProjectPage from './components/AIToolsProjectPage';
 import DevOpsProjectPage from './components/DevOpsProjectPage';
-import htmlpart1 from '../video-explanations/topics/html/htmlpart1.mp4'
-import htmlpart2 from '../video-explanations/topics/html/htmlpart2.mp4'
+import htmlpart1 from '../video-explanations/topics/html/htmlpart1.mp4';
+import htmlpart2 from '../video-explanations/topics/html/htmlpart2.mp4';
 
 const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 

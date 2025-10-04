@@ -2119,15 +2119,53 @@ const StudentPortal: React.FC = () => {
                   isStarted: false
                 };
                 
-                // Use payment status directly from course data
-                const confirmationStatus = course.confirmationStatus || 'unknown';
+                // Use payment and enrollment status from course data
+                const confirmationStatus = course.confirmationStatus || course.enrollmentConfirmationStatus || 'unknown';
+                const enrollmentStatus = course.enrollmentStatus || course.status || 'unknown';
                 const transactionId = course.transactionId;
                 
-                // Determine if course access is allowed
-                const isAccessAllowed = confirmationStatus === 'confirmed';
-                const isPending = confirmationStatus === 'waiting_for_confirmation';
-                const isRejected = confirmationStatus === 'rejected';
-                const hasNoPayment = confirmationStatus === 'no_payment_record';
+                // Debug logging
+                console.log(`🔍 Course ${course.title} Status Debug:`, {
+                  confirmationStatus,
+                  enrollmentStatus,
+                  paymentStatus: course.paymentStatus,
+                  enrollmentConfirmationStatus: course.enrollmentConfirmationStatus,
+                  adminConfirmedBy: course.adminConfirmedBy,
+                  fullCourse: course
+                });
+                
+                // Simplified and more flexible access logic
+                // Priority: Payment confirmation status > Enrollment status > Payment status
+                const isAccessAllowed = (
+                  confirmationStatus === 'confirmed' || 
+                  course.paymentStatus === 'completed' ||
+                  (course.adminConfirmedBy && course.adminConfirmedAt) // Admin confirmed the payment
+                );
+                
+                const isPending = (
+                  confirmationStatus === 'waiting_for_confirmation' || 
+                  enrollmentStatus === 'pending_payment' ||
+                  course.paymentStatus === 'pending' ||
+                  (!isAccessAllowed && !isRejected && course.transactionId) // Has transaction but not confirmed
+                );
+                
+                const isRejected = (
+                  confirmationStatus === 'rejected' || 
+                  enrollmentStatus === 'payment_rejected' ||
+                  course.paymentStatus === 'failed'
+                );
+                
+                const hasNoPayment = (
+                  confirmationStatus === 'no_payment_record' ||
+                  (!course.transactionId && !course.paymentId)
+                );
+                
+                console.log(`🎯 Course ${course.title} Final Status:`, {
+                  isAccessAllowed,
+                  isPending, 
+                  isRejected,
+                  hasNoPayment
+                });
                 
                 return (
                   <div key={course.id} className="bg-gray-800 rounded-lg p-6">
@@ -2155,6 +2193,7 @@ const StudentPortal: React.FC = () => {
                             {isPending ? 'Payment Pending Admin Confirmation' :
                              isRejected ? 'Payment Rejected - Please Contact Support' :
                              hasNoPayment ? 'No Payment Record Found' :
+                             enrollmentStatus === 'pending_payment' ? 'Course Added - Awaiting Payment Confirmation' :
                              'Payment Status Unknown'}
                           </span>
                         </div>
@@ -2173,10 +2212,20 @@ const StudentPortal: React.FC = () => {
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
                             <h4 className="text-white text-lg font-semibold">{course.title}</h4>
-                            {/* Show payment status badge */}
+                            {/* Show status badges */}
                             {isAccessAllowed && (
                               <span className="px-2 py-1 text-xs font-medium bg-green-600/20 text-green-400 rounded-full">
-                                Confirmed
+                                ✅ Active
+                              </span>
+                            )}
+                            {isPending && (
+                              <span className="px-2 py-1 text-xs font-medium bg-yellow-600/20 text-yellow-400 rounded-full">
+                                ⏳ Pending
+                              </span>
+                            )}
+                            {isRejected && (
+                              <span className="px-2 py-1 text-xs font-medium bg-red-600/20 text-red-400 rounded-full">
+                                ❌ Rejected
                               </span>
                             )}
                           </div>
@@ -2258,9 +2307,29 @@ const StudentPortal: React.FC = () => {
                             </button>
                           </div>
                         )}
-                        {!isAccessAllowed && !isPending && !isRejected && (
+                        {!isAccessAllowed && !isPending && !isRejected && !hasNoPayment && (
                           <div className="text-center">
-                            <div className="text-gray-400 text-sm mb-2">❓ Status Unknown</div>
+                            <div className="text-gray-400 text-sm mb-2">
+                              ❓ Status Unknown
+                              <br />
+                              <span className="text-xs">
+                                Debug: {confirmationStatus} / {enrollmentStatus} / {course.paymentStatus}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => {
+                                console.log('Course debug info:', course);
+                                alert(`Course Status Debug:\nConfirmation: ${confirmationStatus}\nEnrollment: ${enrollmentStatus}\nPayment: ${course.paymentStatus}\nCheck console for full details.`);
+                              }}
+                              className="bg-gray-600 hover:bg-gray-700 text-gray-400 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                            >
+                              Debug Info
+                            </button>
+                          </div>
+                        )}
+                        {hasNoPayment && (
+                          <div className="text-center">
+                            <div className="text-blue-400 text-sm mb-2">💳 No Payment Record</div>
                             <button
                               disabled
                               className="bg-gray-600 text-gray-400 px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed"
